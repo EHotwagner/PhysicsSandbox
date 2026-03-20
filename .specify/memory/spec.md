@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-20
-**Revision**: Updated with 002-physics-simulation archival
+**Revision**: Updated with 003-3d-viewer archival
 
 ## Overview
 
@@ -36,6 +36,18 @@ An operator sets and changes the global gravity vector at any time, affecting al
 ### US-009: Continuous State Streaming (P1)
 Every simulation step streams the complete world state (all body poses, velocities, angular velocities, time, running flag) to the server for downstream fan-out. [Source: specs/002-physics-simulation]
 
+### US-010: View Live Simulation (P1)
+A user launches the 3D viewer alongside the running simulation. The viewer connects to the server, subscribes to the state stream, and renders all physics bodies as colored 3D shapes (spheres blue, boxes orange) at correct positions and orientations. Updates in real time as simulation advances. [Source: specs/003-3d-viewer]
+
+### US-011: Camera Control via Commands and Input (P2)
+A user controls the camera via interactive mouse/keyboard input (click-drag orbit, scroll zoom, middle-click pan) and via precise REPL commands (SetCamera, SetZoom) forwarded through the server. REPL commands override the current camera state when received. [Source: specs/003-3d-viewer]
+
+### US-012: Wireframe Toggle (P3)
+A user toggles wireframe rendering mode from the REPL client. When enabled, all bodies are drawn as wireframe outlines instead of solid shapes. [Source: specs/003-3d-viewer]
+
+### US-013: Simulation Status Display (P3)
+The viewer displays simulation metadata — current time and running/paused status — as a text overlay. [Source: specs/003-3d-viewer]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -69,6 +81,22 @@ Every simulation step streams the complete world state (all body poses, velociti
 - **FR-029**: Simulation rejects bodies with zero or negative mass. [Source: specs/002-physics-simulation]
 - **FR-030**: Simulation registered in Aspire AppHost with WithReference(server).WaitFor(server). [Source: specs/002-physics-simulation]
 - **FR-031**: Proto contracts extended with RemoveBody, ApplyImpulse, ApplyTorque, ClearForces commands and Body angular_velocity/orientation fields. Backward compatible. [Source: specs/002-physics-simulation]
+- **FR-032**: Viewer connects to server and subscribes to simulation state stream on startup. [Source: specs/003-3d-viewer]
+- **FR-033**: Viewer renders each body as a 3D shape (sphere, box) with shape-type-based colors (spheres blue, boxes orange, unknown red). [Source: specs/003-3d-viewer]
+- **FR-034**: Viewer positions and orients bodies from proto Vec3 position and Vec4 quaternion orientation. [Source: specs/003-3d-viewer]
+- **FR-035**: Viewer updates the rendered scene each time a new simulation state is received. [Source: specs/003-3d-viewer]
+- **FR-036**: Viewer applies SetCamera commands by repositioning camera to specified position, target, and up vector. [Source: specs/003-3d-viewer]
+- **FR-037**: Viewer applies SetZoom commands by scaling camera distance from target. [Source: specs/003-3d-viewer]
+- **FR-038**: Viewer applies ToggleWireframe commands by switching between solid and flat materials. Entity recreation on toggle. [Source: specs/003-3d-viewer]
+- **FR-039**: Viewer displays simulation time and running/paused indicator as a DebugText overlay. [Source: specs/003-3d-viewer]
+- **FR-040**: Viewer provides default camera position (10,8,10) looking at origin on startup. [Source: specs/003-3d-viewer]
+- **FR-041**: Viewer handles late-join gracefully — renders first state received without errors. [Source: specs/003-3d-viewer]
+- **FR-042**: Viewer supports interactive mouse/keyboard camera: left-drag orbit, scroll zoom, middle-drag pan. [Source: specs/003-3d-viewer]
+- **FR-043**: REPL camera commands override interactive camera state (applied after interactive input each frame). [Source: specs/003-3d-viewer]
+- **FR-044**: Viewer displays ground reference grid at Y=0 via Add3DGround + AddGroundGizmo. [Source: specs/003-3d-viewer]
+- **FR-045**: Viewer registered in Aspire AppHost with WithReference(server).WaitFor(server). [Source: specs/003-3d-viewer]
+- **FR-046**: Viewer uses AddServiceDefaults via background host for OpenTelemetry and structured logging. [Source: specs/003-3d-viewer]
+- **FR-047**: Proto extended with StreamViewCommands RPC on PhysicsHub service; server extended with readViewCommand and StreamViewCommands override. [Source: specs/003-3d-viewer]
 
 ## Key Entities
 
@@ -86,6 +114,9 @@ Every simulation step streams the complete world state (all body poses, velociti
 - **CommandAck**: Acknowledgment with success flag and message. [Source: specs/001-server-hub]
 - **PhysicsHub**: Client/viewer-facing gRPC service. [Source: specs/001-server-hub]
 - **SimulationLink**: Simulation-facing gRPC service (bidirectional streaming). [Source: specs/001-server-hub]
+- **SceneState**: Viewer's internal state — tracked body entities (Map<string, Entity>), simulation time, running flag, wireframe flag. [Source: specs/003-3d-viewer]
+- **CameraState**: Camera parameters — position, target, up (Vector3), zoom level (float). [Source: specs/003-3d-viewer]
+- **ShapeKind**: Discriminated union for visual classification — Sphere, Box, Unknown. Maps to colors and Stride PrimitiveModelType. [Source: specs/003-3d-viewer]
 
 ## Edge Cases
 
@@ -99,6 +130,10 @@ Every simulation step streams the complete world state (all body poses, velociti
 - Extremely large forces: simulation continues without crashing (results may be unrealistic). [Source: specs/002-physics-simulation]
 - Empty world set to play: continues stepping and streaming empty state. [Source: specs/002-physics-simulation]
 - Force/impulse/torque on non-existent body: success ack, no-op. [Source: specs/002-physics-simulation]
+- Viewer starts before simulation sends state: shows empty scene, renders once state arrives. [Source: specs/003-3d-viewer]
+- Viewer server connection drops: displays last known state, auto-reconnects with exponential backoff (1s→30s). [Source: specs/003-3d-viewer]
+- Unknown or unset body shape type: rendered as small red sphere (fallback). [Source: specs/003-3d-viewer]
+- Viewer receives state with zero bodies: displays empty scene (ground grid, skybox only). [Source: specs/003-3d-viewer]
 
 ## Success Criteria
 
@@ -114,3 +149,10 @@ Every simulation step streams the complete world state (all body poses, velociti
 - **SC-010**: Zero skipped steps in state streaming; backpressure paces rather than drops. [Source: specs/002-physics-simulation]
 - **SC-011**: Stable operation with 100+ bodies simultaneously. [Source: specs/002-physics-simulation]
 - **SC-012**: 37 unit tests + 10 existing tests pass. [Source: specs/002-physics-simulation]
+- **SC-013**: All bodies visible in viewer within 1 second of state receipt. [Source: specs/003-3d-viewer]
+- **SC-014**: Camera commands reflected in viewer within 1 second. [Source: specs/003-3d-viewer]
+- **SC-015**: Viewer maintains responsive display during continuous state updates. [Source: specs/003-3d-viewer]
+- **SC-016**: Wireframe toggle without viewer restart. [Source: specs/003-3d-viewer]
+- **SC-017**: Viewer starts and displays scene within 5 seconds when server running. [Source: specs/003-3d-viewer]
+- **SC-018**: Viewer renders 100 bodies simultaneously. [Source: specs/003-3d-viewer]
+- **SC-019**: 66 total tests passing (16 viewer + 13 server + 37 simulation). [Source: specs/003-3d-viewer]

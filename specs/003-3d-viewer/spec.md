@@ -2,7 +2,7 @@
 
 **Feature Branch**: `003-3d-viewer`
 **Created**: 2026-03-20
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "this feature is the viewer. it has to show the simulation state it gets from the server and adjust the ui according to commands from the server (camera...)."
 
 ## Clarifications

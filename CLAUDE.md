@@ -3,12 +3,11 @@
 Last updated: 2026-03-20
 
 ## Active Technologies
-- F# on .NET 10.0 (viewer service), C# on .NET 10.0 (proto contracts, server changes) + Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Grpc.Net.Client 2.x, Google.Protobuf 3.x (003-3d-viewer)
-- N/A (real-time streaming, no persistence) (003-3d-viewer)
 
 - F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
 - .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x
 - BepuFSharp 0.1.0 (local NuGet, physics engine wrapper), Grpc.Net.Client 2.x
+- Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, 3D viewer)
 - xUnit 2.x, Aspire.Hosting.Testing 10.x
 
 ## Project Structure
@@ -21,10 +20,12 @@ src/
   PhysicsSandbox.Shared.Contracts/  # Proto gRPC contracts
   PhysicsServer/                    # F# server hub (message router)
   PhysicsSimulation/                # F# physics simulation (gRPC client, BepuFSharp)
+  PhysicsViewer/                    # F# 3D viewer (Stride3D + gRPC client)
 tests/
-  PhysicsServer.Tests/              # F# unit tests
+  PhysicsServer.Tests/              # F# unit tests (13 tests)
   PhysicsSimulation.Tests/          # F# unit tests (37 tests)
-  PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests
+  PhysicsViewer.Tests/              # F# unit tests (16 tests)
+  PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (5 tests)
 ```
 
 ## Commands
@@ -33,11 +34,14 @@ tests/
 # Build
 dotnet build PhysicsSandbox.slnx
 
-# Run (starts Aspire dashboard + server + simulation)
+# Build (headless/CI, skip Stride asset compiler)
+dotnet build PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true
+
+# Run (starts Aspire dashboard + server + simulation + viewer)
 dotnet run --project src/PhysicsSandbox.AppHost
 
 # Test
-dotnet test PhysicsSandbox.slnx
+dotnet test PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true
 ```
 
 ## Code Style
@@ -47,8 +51,8 @@ dotnet test PhysicsSandbox.slnx
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
-- 003-3d-viewer: Added F# on .NET 10.0 (viewer service), C# on .NET 10.0 (proto contracts, server changes) + Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Grpc.Net.Client 2.x, Google.Protobuf 3.x
 
+- 003-3d-viewer: PhysicsViewer with Stride3D (code-only), real-time body rendering, interactive + REPL camera control, wireframe toggle, status overlay, ground grid. Proto extended with StreamViewCommands RPC. Server extended with readViewCommand. 16 viewer tests, 3 new server tests
 - 002-physics-simulation: PhysicsSimulation service with BepuFSharp physics engine, lifecycle control (play/pause/step), body management, forces/impulses/torques, gravity, state streaming. Proto extended with 4 new commands + angular_velocity/orientation. 37 unit tests
 - 001-server-hub: Aspire AppHost, gRPC contracts (PhysicsHub + SimulationLink), PhysicsServer hub with state caching and single-simulation enforcement, ServiceDefaults, 13 tests
 
@@ -71,3 +75,15 @@ Proto `Sphere`/`Box` type names conflict with BepuFSharp shapes in F#. Use type 
 
 ### Plane Bodies
 Planes are approximated as large static boxes (BepuPhysics2 has no infinite plane). Static bodies are not tracked in the simulation state stream.
+
+### Stride3D Vector3 Interop
+Stride's `Vector3` uses `inref<>` operator overloads that don't work with F# `+`/`*`. Use `Vector3.Add(&a, &b, &result)` or helper functions. Same applies to `Vector3.Cross` — must use `byref` calling convention.
+
+### Stride3D Camera Controller Conflict
+Do not use Stride's `Add3DCameraController()` alongside a custom CameraController — they fight for input. Use `Add3DCamera()` only and apply camera transforms manually.
+
+### Stride3D Linux Dependencies
+Viewer needs `openal`, `freetype2`, `sdl2`, `ttf-liberation` system packages. FreeImage requires `freeimage.so` symlink (`ln -sf /usr/lib/libfreeimage.so /usr/lib/freeimage.so`). GLSL shader compiler binary must be at `linux-x64/glslangValidator.bin`.
+
+### Stride3D Asset Compiler
+`StrideCompilerSkipBuild=true` skips asset compilation for CI/headless builds. For live GPU runs, build without this flag (requires fonts + FreeImage). The viewer's `.fsproj` defaults to `false` unless overridden.

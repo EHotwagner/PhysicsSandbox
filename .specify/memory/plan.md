@@ -1,12 +1,12 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-20
-**Revision**: Updated with 002-physics-simulation archival
+**Revision**: Updated with 003-3d-viewer archival
 
 ## Technical Context
 
 **Language/Version**: F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
-**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0 (local NuGet), Grpc.Net.Client 2.x
+**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0 (local NuGet), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages)
 **Storage**: N/A (in-memory physics world, stateless message routing)
 **Testing**: xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x
 **Target Platform**: Linux (rootless Podman for containers)
@@ -37,26 +37,39 @@ src/
 │   │   └── SimulationLinkService.fsi/.fs # Simulation-facing gRPC
 │   └── Program.fs                       # Host setup
 │
-└── PhysicsSimulation/                   # F# — physics simulation (gRPC client)
-    ├── World/
-    │   ├── SimulationWorld.fsi/.fs      # BepuFSharp world wrapper, body/force management
-    ├── Commands/
-    │   ├── CommandHandler.fsi/.fs       # Command dispatch (9 command types)
-    ├── Client/
-    │   ├── SimulationClient.fsi/.fs     # Bidirectional streaming client, simulation loop
-    └── Program.fs                       # Host setup, Aspire service defaults
+├── PhysicsSimulation/                   # F# — physics simulation (gRPC client)
+│   ├── World/
+│   │   ├── SimulationWorld.fsi/.fs      # BepuFSharp world wrapper, body/force management
+│   ├── Commands/
+│   │   ├── CommandHandler.fsi/.fs       # Command dispatch (9 command types)
+│   ├── Client/
+│   │   ├── SimulationClient.fsi/.fs     # Bidirectional streaming client, simulation loop
+│   └── Program.fs                       # Host setup, Aspire service defaults
+│
+└── PhysicsViewer/                       # F# — 3D viewer (Stride3D + gRPC client)
+    ├── Rendering/
+    │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, wireframe
+    │   └── CameraController.fsi/.fs     # Camera state, input, REPL commands
+    ├── Streaming/
+    │   └── ViewerClient.fsi/.fs         # gRPC streaming client with auto-reconnect
+    └── Program.fs                       # Host + Stride game loop
 
 tests/
 ├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests
-│   └── ServerHubTests.cs
-├── PhysicsServer.Tests/                 # F# — unit tests (10 tests)
+│   └── ServerHubTests.cs               # 5 tests (SendCommand, StreamState, SendViewCommand, StreamViewCommands x2)
+├── PhysicsServer.Tests/                 # F# — unit tests (13 tests)
 │   ├── StateCacheTests.fs
-│   ├── MessageRouterTests.fs
+│   ├── MessageRouterTests.fs            # Includes readViewCommand tests
 │   └── PublicApiBaseline.txt            # Surface-area baseline
-└── PhysicsSimulation.Tests/             # F# — unit tests (37 tests)
-    ├── SimulationWorldTests.fs          # Lifecycle, bodies, forces, gravity, stress
-    ├── CommandHandlerTests.fs           # Command dispatch, edge cases
-    └── SurfaceAreaTests.fs              # Public API baseline verification
+├── PhysicsSimulation.Tests/             # F# — unit tests (37 tests)
+│   ├── SimulationWorldTests.fs          # Lifecycle, bodies, forces, gravity, stress
+│   ├── CommandHandlerTests.fs           # Command dispatch, edge cases
+│   └── SurfaceAreaTests.fs              # Public API baseline verification
+└── PhysicsViewer.Tests/                 # F# — unit tests (16 tests)
+    ├── SceneManagerTests.fs             # Shape classification, state accessors
+    ├── CameraControllerTests.fs         # Camera math, command application
+    ├── SurfaceAreaTests.fs              # Public API baseline verification
+    └── PublicApiBaseline.txt            # Surface-area baseline
 ```
 
 ## Configuration
@@ -65,6 +78,9 @@ tests/
 - `ASPNETCORE_KESTREL__ENDPOINTDEFAULTS__PROTOCOLS=Http1AndHttp2` — set by AppHost on server resource for gRPC
 - `NuGet.config` — local feed at `~/.local/share/nuget-local/` for BepuFSharp package
 - Simulation connects to server via Aspire service discovery (`services__server__https__0` env var)
+- Viewer connects to server via same Aspire service discovery env vars
+- Stride3D uses OpenGL graphics API (`<StrideGraphicsApi>OpenGL</StrideGraphicsApi>`) for container/GPU-passthrough compatibility
+- Stride asset compiler disabled by default (`StrideCompilerSkipBuild`); builds without it for CI, enable for live runs with GPU
 
 ## Engineering Exceptions
 
@@ -76,8 +92,7 @@ tests/
 
 ## Future Services (Planned)
 
-- **Spec 003**: Client (REPL + command sending + state display)
-- **Spec 004**: Viewer (3D rendering + state/camera streaming)
+- **Spec 004**: Client (REPL + command sending + state display)
 
 ## Known Issues & Gotchas
 
@@ -89,3 +104,8 @@ tests/
 - Proto `Sphere`/`Box` type names conflict with BepuFSharp shapes in F#; use type aliases (`ProtoSphere`, `ProtoBox`) to disambiguate. [Source: specs/002-physics-simulation]
 - Simulation is a Worker service (not Web), acts as gRPC client — no Kestrel config needed on the simulation project itself. [Source: specs/002-physics-simulation]
 - Plane bodies are approximated as large static boxes (BepuPhysics2 has no infinite plane). Statics are not tracked in state stream. [Source: specs/002-physics-simulation]
+- Stride3D `Vector3` uses `inref<>` operator overloads that don't work with F# `+`/`*`; use `Vector3.Add(&a, &b, &result)` or helper functions. Same for `Vector3.Cross`. [Source: specs/003-3d-viewer]
+- Stride's `Game.Run()` blocks the main thread; gRPC streams run on background tasks with `ConcurrentQueue<T>` bridging. [Source: specs/003-3d-viewer]
+- Stride's `Add3DCameraController()` conflicts with custom CameraController — do not use both. [Source: specs/003-3d-viewer]
+- Viewer needs `openal`, `freetype2`, `sdl2`, `ttf-liberation` system packages and `freeimage.so` symlink on Linux. [Source: specs/003-3d-viewer]
+- Viewer uses `DebugTextSystem.Print` for status overlay (no font assets needed). [Source: specs/003-3d-viewer]
