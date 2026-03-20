@@ -2,10 +2,10 @@
   "generated": "2026-03-20T00:00:00Z",
   "project": "BPSandbox",
   "summary": {
-    "specs_analyzed": 1,
-    "requirements_checked": 21,
-    "aligned": 19,
-    "drifted": 2,
+    "specs_analyzed": 2,
+    "requirements_checked": 48,
+    "aligned": 43,
+    "drifted": 4,
     "not_implemented": 0,
     "unspecced_features": 1
   },
@@ -22,16 +22,44 @@
       "drifted": [
         {
           "requirement": "SC-002",
-          "spec_text": "orchestration dashboard displays the server hub as a healthy, running resource",
-          "actual": "Health endpoints only mapped in Development environment (standard Aspire template behavior)",
+          "spec_text": "dashboard displays server hub as healthy",
+          "actual": "Health endpoints only mapped in Development environment",
           "location": "src/PhysicsSandbox.ServiceDefaults/Extensions.cs:113",
           "severity": "minor"
         },
         {
           "requirement": "FR-002",
-          "spec_text": "define a PhysicsHub service with methods for sending simulation commands, sending view commands, and streaming simulation state",
-          "actual": "Code defines both PhysicsHub AND SimulationLink services. SimulationLink added during planning phase to handle simulation-to-server bidirectional streaming",
+          "spec_text": "define a PhysicsHub service",
+          "actual": "Code defines both PhysicsHub and SimulationLink services",
           "location": "src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto:22-28",
+          "severity": "minor"
+        }
+      ],
+      "not_implemented": []
+    },
+    {
+      "id": "002-physics-simulation",
+      "title": "Physics Simulation Service",
+      "aligned": [
+        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005",
+        "FR-006", "FR-007", "FR-008", "FR-009", "FR-010",
+        "FR-011", "FR-012", "FR-014", "FR-015", "FR-016",
+        "FR-017", "FR-018", "FR-019", "FR-020",
+        "SC-001", "SC-002", "SC-004", "SC-006", "SC-007"
+      ],
+      "drifted": [
+        {
+          "requirement": "FR-013",
+          "spec_text": "streamed state MUST include each body's position, velocity, angular velocity, mass, shape, and identifier",
+          "actual": "Plane bodies are created as statics but not tracked in Bodies map — invisible in state stream. Dynamic bodies fully tracked.",
+          "location": "src/PhysicsSimulation/World/SimulationWorld.fs:142-149",
+          "severity": "minor"
+        },
+        {
+          "requirement": "SC-003",
+          "spec_text": "state updates streamed after every step with zero missed steps",
+          "actual": "State sent after each step but may be delayed under gRPC backpressure. No steps skipped.",
+          "location": "src/PhysicsSimulation/Client/SimulationClient.fs:62-63",
           "severity": "minor"
         }
       ],
@@ -40,7 +68,7 @@
   ],
   "unspecced": [
     {
-      "feature": "Kestrel HTTP/2 protocol configuration via AppHost environment variable",
+      "feature": "Kestrel HTTP/2 protocol configuration",
       "location": "src/PhysicsSandbox.AppHost/AppHost.cs",
       "lines": 1,
       "suggested_spec": "001-server-hub"

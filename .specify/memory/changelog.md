@@ -1,5 +1,28 @@
 # Merged Features Log
 
+## Physics Simulation Service — 2026-03-20
+**Branch:** 002-physics-simulation
+**Spec:** specs/002-physics-simulation
+
+**What was added:**
+- PhysicsSimulation service — F# background worker connecting to server via SimulationLink bidirectional gRPC stream
+- BepuFSharp (BepuPhysics2 wrapper) integration via local NuGet package for rigid body dynamics
+- Lifecycle control: play, pause, single-step at 60Hz fixed timestep
+- Body management: add/remove dynamic bodies (sphere, box) and static planes
+- Force system: persistent forces, one-shot impulses, torques, clear-forces, global gravity
+- State streaming: complete world state (position, velocity, angular velocity, orientation) after every step
+- Proto contract extensions: RemoveBody, ApplyImpulse, ApplyTorque, ClearForces commands + Body angular_velocity/orientation fields
+- 37 unit tests (lifecycle, bodies, forces, gravity, edge cases, 100-body stress test, surface-area baselines)
+
+**New Components:**
+- `src/PhysicsSimulation/` — F# simulation service (World, Commands, Client modules with .fsi signatures)
+- `tests/PhysicsSimulation.Tests/` — F# unit tests
+- `NuGet.config` — local NuGet feed for BepuFSharp
+
+**Tasks Completed:** 39/45 tasks (6 integration tests deferred — require Aspire containers)
+
+---
+
 ## Contracts and Server Hub — 2026-03-20
 **Branch:** 001-server-hub
 **Spec:** specs/001-server-hub

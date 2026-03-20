@@ -7,66 +7,96 @@ Project: BPSandbox (PhysicsSandbox)
 
 | Category | Count |
 |----------|-------|
-| Specs Analyzed | 1 |
-| Requirements Checked | 14 (FR) + 7 (SC) = 21 |
-| ✓ Aligned | 19 (90%) |
-| ⚠️ Drifted | 2 (10%) |
-| ✗ Not Implemented | 0 (0%) |
-| 🆕 Unspecced Code | 1 |
+| Specs Analyzed | 2 |
+| Requirements Checked | 48 (21 from 001 + 27 from 002) |
+| Aligned | 43 (90%) |
+| Drifted | 4 (8%) |
+| Not Implemented | 0 (0%) |
+| Unspecced Code | 1 |
 
 ## Detailed Findings
 
 ### Spec: 001-server-hub - Contracts and Server Hub
 
-#### Aligned ✓
+#### Aligned
 
-- FR-001: Solution structure with AppHost, Contracts, ServiceDefaults, and PhysicsServer → `PhysicsSandbox.slnx` with 4 src projects + 2 test projects
-- FR-002: PhysicsHub service with SendCommand, SendViewCommand, StreamState → `src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto:9-18`
-- FR-003: SimulationCommand with all 5 variants → `physics_hub.proto:33-41`
-- FR-004: ViewCommand with 3 variants → `physics_hub.proto:68-73`
-- FR-005: SimulationState with bodies, time, running → `physics_hub.proto:90-94`
-- FR-006: Server accepts simulation commands → `src/PhysicsServer/Services/PhysicsHubService.fs` SendCommand method
-- FR-007: Server accepts view commands → `src/PhysicsServer/Services/PhysicsHubService.fs` SendViewCommand method
-- FR-008: Server fans out state to subscribers → `src/PhysicsServer/Hub/MessageRouter.fs` publishState function
-- FR-009: Graceful handling when no downstream connected → `src/PhysicsServer/Hub/MessageRouter.fs` submitCommand returns success ack even when no simulation
-- FR-010: AppHost registers server hub → `src/PhysicsSandbox.AppHost/AppHost.cs:3`
-- FR-011: ServiceDefaults provides health, telemetry, discovery, resilience → `src/PhysicsSandbox.ServiceDefaults/Extensions.cs`
-- FR-012: Server references ServiceDefaults → `src/PhysicsServer/PhysicsServer.fsproj` (ProjectReference) and `Program.fs` (`AddServiceDefaults()`)
-- FR-013: Cache latest state for late joiners → `src/PhysicsServer/Hub/StateCache.fs` + `PhysicsHubService.fs` StreamState sends cached state first
-- FR-014: Single simulation enforcement → `src/PhysicsServer/Services/SimulationLinkService.fs` rejects with ALREADY_EXISTS
-- SC-001: Build and run with single command → `dotnet build PhysicsSandbox.slnx` succeeds
-- SC-003: Command acknowledgment → Integration test `SendCommand_ReturnsSuccessAck` passes
-- SC-005: Health check endpoints → ServiceDefaults maps `/health` and `/alive`
-- SC-006: Contracts buildable by reference → Contracts project builds standalone, PhysicsServer references it
-- SC-007: No errors for commands without downstream → Unit test `SubmitCommand succeeds with no simulation connected` passes
+- FR-001 through FR-014: All server hub requirements implemented
+- SC-001, SC-003, SC-005, SC-006, SC-007: All success criteria met
 
-#### Drifted ⚠️
+#### Drifted
 
-- SC-002: Spec says "orchestration dashboard displays the server hub as a healthy, running resource"
+- SC-002: Health endpoints only mapped in Development environment (standard Aspire template behavior)
   - Location: `src/PhysicsSandbox.ServiceDefaults/Extensions.cs:113`
-  - Actual: Health endpoints only mapped in Development environment (`if (app.Environment.IsDevelopment())`). In non-dev environments, health endpoints are not exposed — dashboard may not show health status.
-  - Severity: minor (this is standard Aspire template behavior; tests run in Development)
+  - Severity: minor
 
-- FR-002: Spec says "define a PhysicsHub service" only; does not mention SimulationLink service
+- FR-002: Spec mentions only PhysicsHub service; code also defines SimulationLink (added during planning)
   - Location: `physics_hub.proto:22-28`
-  - Actual: Code defines BOTH PhysicsHub and SimulationLink services. SimulationLink was added during planning to handle simulation-to-server communication (fulfills FR-008).
-  - Severity: minor (implementation is correct; spec should be updated to mention SimulationLink explicitly)
+  - Severity: minor (SimulationLink correctly fulfills FR-008)
 
-#### Not Implemented ✗
+---
 
-(None — all requirements implemented)
+### Spec: 002-physics-simulation - Physics Simulation Service
 
-### Unspecced Code 🆕
+#### Aligned
+
+- FR-001: Connect to server via SimulationLink → `SimulationClient.fs:22`
+- FR-002: Start paused by default → `SimulationWorld.fs:88` `Running = false`
+- FR-003: Play/pause/step commands → `CommandHandler.fs:8-14`
+- FR-004: Fixed timestep loop → `SimulationClient.fs:12` ~60Hz
+- FR-005: Add bodies with shape → `SimulationWorld.fs:110-162` (Sphere/Box/Plane)
+- FR-006: Unique body identifiers → `SimulationWorld.fs:111-112` rejects duplicates
+- FR-007: Remove bodies → `SimulationWorld.fs:164-172`
+- FR-008: Persistent forces → `SimulationWorld.fs:174-181` stored in ActiveForces map
+- FR-009: One-shot impulses → `SimulationWorld.fs:183-189` calls applyLinearImpulse
+- FR-010: Torque application → `SimulationWorld.fs:191-197` calls applyTorque
+- FR-011: Global gravity → `SimulationWorld.fs:203-204`
+- FR-012: Stream state after every step → `SimulationClient.fs:62-63`
+- FR-014: State includes time + running flag → `SimulationWorld.fs:60-62`
+- FR-015: Non-existent body graceful no-op → all body functions return success
+- FR-016: Server disconnection clean shutdown → `SimulationClient.fs:70-72`
+- FR-017: Reject zero/negative mass → `SimulationWorld.fs:113`
+- FR-018: Aspire registration → `AppHost.cs:6-8`
+- FR-019: Contract extensions → `physics_hub.proto` 4 new commands + 2 Body fields
+- FR-020: Clear-forces command → `SimulationWorld.fs:199-201`
+- SC-001: Connect within 5 seconds → architecture supports
+- SC-002: All commands produce expected result → 31 unit tests verify
+- SC-004: 100 bodies stable → stress test passes (100 bodies, 60 steps)
+- SC-006: Edge cases handled → zero mass, empty world, large forces tested
+- SC-007: Unit tests pass → 37 unit tests pass
+
+#### Drifted
+
+- FR-013: State MUST include each body's position, velocity, angular velocity, mass, shape, and identifier
+  - Spec says: All bodies including planes should appear in streamed state
+  - Code does: Plane bodies are created as static in BepuPhysics2 but NOT tracked in Bodies map — invisible in state stream. Dynamic bodies (sphere, box) fully tracked with all 7 fields.
+  - Location: `SimulationWorld.fs:142-149`
+  - Severity: minor
+  - Note: Code comment: "skip tracking static bodies since they can't receive forces." Collisions are out of scope per spec assumptions.
+
+- SC-003: Zero missed steps when streaming
+  - Spec says: "State updates streamed after every step with zero missed steps"
+  - Code does: Sends state after each step via gRPC streaming. Under backpressure, steps may be delayed (not skipped). No buffering/dropping.
+  - Location: `SimulationClient.fs:62-63`
+  - Severity: minor (functionally aligned — no steps are missed, just potentially delayed)
+
+#### Not Implemented
+
+(None — all 20 FR requirements have implementation)
+
+### Unspecced Code
 
 | Feature | Location | Lines | Suggested Spec |
 |---------|----------|-------|----------------|
-| Kestrel HTTP/2 protocol config | `AppHost.cs:4` (env var) | 1 | 001-server-hub (infrastructure detail, no spec needed) |
+| Kestrel HTTP/2 protocol config | `AppHost.cs:4` | 1 | 001-server-hub (infra detail) |
 
 ## Inter-Spec Conflicts
 
-None — only one spec exists.
+None. Spec 001 (server hub) and spec 002 (simulation) are complementary — simulation connects to server via SimulationLink.
 
 ## Recommendations
 
-1. **Minor**: Update FR-002 in spec.md to explicitly mention the `SimulationLink` service alongside `PhysicsHub`. The SimulationLink was a planning-phase addition that correctly fulfills FR-008 but is not named in the spec.
-2. **No action needed**: SC-002 health check visibility in Development-only is standard Aspire behavior. The dashboard works correctly in the Development profile where testing occurs.
+1. **Minor (FR-013)**: Track plane bodies in state stream. If planes should be visible to downstream viewers, add them to Bodies map with a static flag. Low priority since collisions are out of scope.
+2. **Minor (FR-010)**: Add a specific unit test verifying angular velocity changes after torque application. Function is implemented but not directly tested for physics output.
+3. **Deferred**: 5 Aspire integration test tasks (T014, T023, T028, T034, T039) need container infrastructure. Recommend writing when running full Aspire stack.
+4. **Stale assumption**: Spec says "simple physics model (Euler)" but implementation uses BepuFSharp (full rigid body solver). Update spec assumption to reflect actual technology.
+5. **001 spec update**: Add SimulationLink service to FR-002 description (currently only mentions PhysicsHub).

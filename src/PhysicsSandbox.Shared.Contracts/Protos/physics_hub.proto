@@ -37,6 +37,10 @@ message SimulationCommand {
     SetGravity set_gravity = 3;
     StepSimulation step = 4;
     PlayPause play_pause = 5;
+    RemoveBody remove_body = 6;
+    ApplyImpulse apply_impulse = 7;
+    ApplyTorque apply_torque = 8;
+    ClearForces clear_forces = 9;
   }
 }
 
@@ -99,12 +103,39 @@ message Body {
   Vec3 velocity = 3;
   double mass = 4;
   Shape shape = 5;
+  Vec3 angular_velocity = 6;
+  Vec4 orientation = 7;
 }
 
 message Vec3 {
   double x = 1;
   double y = 2;
   double z = 3;
+}
+
+message Vec4 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+  double w = 4;
+}
+
+message RemoveBody {
+  string body_id = 1;
+}
+
+message ApplyImpulse {
+  string body_id = 1;
+  Vec3 impulse = 2;
+}
+
+message ApplyTorque {
+  string body_id = 1;
+  Vec3 torque = 2;
+}
+
+message ClearForces {
+  string body_id = 1;
 }
 
 message Shape {

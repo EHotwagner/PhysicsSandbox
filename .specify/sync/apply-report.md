@@ -10,6 +10,9 @@ Applied: 2026-03-20
 |------|-------------|-------------|-------------|
 | 001-server-hub | FR-002 | Modified | Added SimulationLink service to contracts requirement |
 | 001-server-hub | SC-002 | Modified | Scoped dashboard health visibility to Development mode |
+| 002-physics-simulation | FR-013 | Modified | Clarified state includes dynamic bodies only; statics excluded |
+| 002-physics-simulation | SC-003 | Modified | Clarified zero skipped (not zero latency); backpressure pacing |
+| 002-physics-simulation | Assumptions | Modified | Replaced Euler integrator with BepuFSharp; added plane static note |
 
 ### New Specs Created
 
@@ -27,9 +30,10 @@ Applied: 2026-03-20
 
 ## Backup
 
-Original spec backed up to: `.specify/sync/backups/001-server-hub-spec-2026-03-20.md`
+- 001: `.specify/sync/backups/001-server-hub-spec-2026-03-20.md`
+- 002: `.specify/sync/backups/002-physics-simulation-spec-2026-03-20.md`
 
 ## Next Steps
 
-1. Review updated spec: `specs/001-server-hub/spec.md`
-2. Commit changes when ready
+1. Review updated spec: `specs/002-physics-simulation/spec.md`
+2. Drift is now fully resolved — 0 remaining drift items
