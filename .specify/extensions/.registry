@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "extensions": {
+    "archive": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:ffa3831c0dd8aceeadad88efe4411676142d654dfbc1987e6e030ba6cdceb83e",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "claude": [
+          "speckit.archive.run"
+        ]
+      },
+      "installed_at": "2026-03-19T17:48:52.560737+00:00"
+    },
+    "sync": {
+      "version": "0.1.0",
+      "source": "local",
+      "manifest_hash": "sha256:94eb5685bb305f9bb7a9ac921d7b03557999626df7de74bc643e03416e1bca06",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "claude": [
+          "speckit.sync.analyze",
+          "speckit.drift",
+          "speckit.sync.propose",
+          "speckit.sync.apply",
+          "speckit.sync.conflicts",
+          "speckit.sync.backfill"
+        ]
+      },
+      "installed_at": "2026-03-19T17:51:11.967638+00:00"
+    },
+    "status": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:25d080d9f1a0ea2fc62de2464479143c7c008b9131d32755f351413605d7946f",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "claude": [
+          "speckit.status.show",
+          "speckit.status"
+        ]
+      },
+      "installed_at": "2026-03-19T17:52:19.040283+00:00"
+    }
+  }
+}

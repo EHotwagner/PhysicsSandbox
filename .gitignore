@@ -1,0 +1,24 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.DotSettings.user
+packages/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.sln.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.nupkg
+*.snupkg
+
+# Environment
+.env*

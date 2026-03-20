@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PhysicsSandbox.AppHost/PhysicsSandbox.AppHost.csproj" />
+    <Project Path="src/PhysicsSandbox.ServiceDefaults/PhysicsSandbox.ServiceDefaults.csproj" />
+    <Project Path="src/PhysicsSandbox.Shared.Contracts/PhysicsSandbox.Shared.Contracts.csproj" />
+    <Project Path="src/PhysicsServer/PhysicsServer.fsproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PhysicsSandbox.Integration.Tests/PhysicsSandbox.Integration.Tests.csproj" />
+    <Project Path="tests/PhysicsServer.Tests/PhysicsServer.Tests.fsproj" />
+  </Folder>
+</Solution>

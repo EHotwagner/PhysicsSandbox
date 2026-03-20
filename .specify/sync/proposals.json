@@ -1,0 +1,49 @@
+{
+  "generated": "2026-03-20T00:00:00Z",
+  "based_on": "2026-03-20T00:00:00Z",
+  "summary": {
+    "backfill": 2,
+    "align": 0,
+    "human_decision": 0,
+    "new_specs": 0,
+    "remove_from_spec": 0
+  },
+  "proposals": [
+    {
+      "id": "P1",
+      "spec_id": "001-server-hub",
+      "requirement": "FR-002",
+      "direction": "BACKFILL",
+      "spec_text": "The shared contracts project MUST define a `PhysicsHub` service with methods for sending simulation commands, sending view commands, and streaming simulation state.",
+      "actual": "Code defines both PhysicsHub AND SimulationLink services",
+      "proposed_text": "The shared contracts project MUST define a `PhysicsHub` service with methods for sending simulation commands, sending view commands, and streaming simulation state; and a `SimulationLink` service with a bidirectional streaming method for the simulation to push state and receive commands.",
+      "rationale": "SimulationLink was a deliberate planning-phase design decision to separate client and simulation interfaces. Documented in research.md.",
+      "confidence": "HIGH",
+      "status": "applied"
+    },
+    {
+      "id": "P2",
+      "spec_id": "001-server-hub",
+      "requirement": "SC-002",
+      "direction": "BACKFILL",
+      "spec_text": "The orchestration dashboard is accessible and displays the server hub as a healthy, running resource.",
+      "actual": "Health endpoints only mapped in Development environment",
+      "proposed_text": "The orchestration dashboard is accessible and displays the server hub as a healthy, running resource in Development mode.",
+      "rationale": "Development-only health endpoints is standard Aspire template security practice. Sandbox always runs in Development mode.",
+      "confidence": "HIGH",
+      "status": "applied"
+    },
+    {
+      "id": "P3",
+      "spec_id": "001-server-hub",
+      "requirement": null,
+      "direction": "BACKFILL",
+      "feature": "Kestrel HTTP/2 protocol configuration",
+      "location": "src/PhysicsSandbox.AppHost/AppHost.cs",
+      "proposed_text": null,
+      "rationale": "Infrastructure implementation detail. No spec change needed — spec correctly describes WHAT (gRPC) not HOW (HTTP/2 config).",
+      "confidence": "HIGH",
+      "status": "applied"
+    }
+  ]
+}

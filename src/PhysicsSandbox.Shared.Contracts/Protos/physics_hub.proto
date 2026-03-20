@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package physics_sandbox;
+
+option csharp_namespace = "PhysicsSandbox.Shared.Contracts";
+
+// ─── Client/Viewer-facing service ───────────────────────────────────────────
+
+service PhysicsHub {
+  // Client sends a simulation command (add body, apply force, etc.)
+  rpc SendCommand (SimulationCommand) returns (CommandAck);
+
+  // Client sends a view command (camera, wireframe, zoom)
+  rpc SendViewCommand (ViewCommand) returns (CommandAck);
+
+  // Client/Viewer subscribes to simulation state updates.
+  // Late joiners receive the most recent cached state as the first message.
+  rpc StreamState (StateRequest) returns (stream SimulationState);
+}
+
+// ─── Simulation-facing service ──────────────────────────────────────────────
+
+service SimulationLink {
+  // Simulation connects and establishes a bidirectional stream:
+  //   - Simulation pushes SimulationState upstream
+  //   - Server pushes SimulationCommand downstream
+  // Only one simulation may be connected at a time (ALREADY_EXISTS if occupied).
+  rpc ConnectSimulation (stream SimulationState) returns (stream SimulationCommand);
+}
+
+// ─── Messages ───────────────────────────────────────────────────────────────
+
+message SimulationCommand {
+  oneof command {
+    AddBody add_body = 1;
+    ApplyForce apply_force = 2;
+    SetGravity set_gravity = 3;
+    StepSimulation step = 4;
+    PlayPause play_pause = 5;
+  }
+}
+
+message AddBody {
+  string id = 1;
+  Vec3 position = 2;
+  Vec3 velocity = 3;
+  double mass = 4;
+  Shape shape = 5;
+}
+
+message ApplyForce {
+  string body_id = 1;
+  Vec3 force = 2;
+}
+
+message SetGravity {
+  Vec3 gravity = 1;
+}
+
+message StepSimulation {
+  double delta_time = 1;
+}
+
+message PlayPause {
+  bool running = 1;
+}
+
+message ViewCommand {
+  oneof command {
+    SetCamera set_camera = 1;
+    ToggleWireframe toggle_wireframe = 2;
+    SetZoom set_zoom = 3;
+  }
+}
+
+message SetCamera {
+  Vec3 position = 1;
+  Vec3 target = 2;
+  Vec3 up = 3;
+}
+
+message ToggleWireframe {
+  bool enabled = 1;
+}
+
+message SetZoom {
+  double level = 1;
+}
+
+message SimulationState {
+  repeated Body bodies = 1;
+  double time = 2;
+  bool running = 3;
+}
+
+message Body {
+  string id = 1;
+  Vec3 position = 2;
+  Vec3 velocity = 3;
+  double mass = 4;
+  Shape shape = 5;
+}
+
+message Vec3 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message Shape {
+  oneof shape {
+    Sphere sphere = 1;
+    Box box = 2;
+    Plane plane = 3;
+  }
+}
+
+message Sphere {
+  double radius = 1;
+}
+
+message Box {
+  Vec3 half_extents = 1;
+}
+
+message Plane {
+  Vec3 normal = 1;
+}
+
+message CommandAck {
+  bool success = 1;
+  string message = 2;
+}
+
+message StateRequest {
+  // Empty — subscribes the caller to state updates.
+}

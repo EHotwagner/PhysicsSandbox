@@ -1,0 +1,28 @@
+{
+  "applied_at": "2026-03-20T00:00:00Z",
+  "specs_updated": [
+    {
+      "spec": "001-server-hub",
+      "requirement": "FR-002",
+      "change_type": "modified",
+      "before": "The shared contracts project MUST define a `PhysicsHub` service with methods for sending simulation commands, sending view commands, and streaming simulation state.",
+      "after": "The shared contracts project MUST define a `PhysicsHub` service with methods for sending simulation commands, sending view commands, and streaming simulation state; and a `SimulationLink` service with a bidirectional streaming method for the simulation to push state and receive commands."
+    },
+    {
+      "spec": "001-server-hub",
+      "requirement": "SC-002",
+      "change_type": "modified",
+      "before": "The orchestration dashboard is accessible and displays the server hub as a healthy, running resource.",
+      "after": "The orchestration dashboard is accessible and displays the server hub as a healthy, running resource in Development mode."
+    }
+  ],
+  "new_specs_created": [],
+  "tasks_generated": [],
+  "not_applied": [
+    {
+      "proposal": "P3",
+      "reason": "No spec change needed — infrastructure implementation detail"
+    }
+  ],
+  "backup": ".specify/sync/backups/001-server-hub-spec-2026-03-20.md"
+}
