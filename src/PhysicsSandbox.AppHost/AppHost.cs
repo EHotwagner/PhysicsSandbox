@@ -9,7 +9,8 @@ builder.AddProject<Projects.PhysicsSimulation>("simulation")
 
 builder.AddProject<Projects.PhysicsViewer>("viewer")
     .WithReference(server)
-    .WaitFor(server);
+    .WaitFor(server)
+    .WithEnvironment("DISPLAY", Environment.GetEnvironmentVariable("DISPLAY") ?? ":0");
 
 builder.AddProject<Projects.PhysicsClient>("client")
     .WithReference(server)

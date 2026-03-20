@@ -22,9 +22,13 @@ type SimulationLinkService(router: MessageRouter) =
                 let readTask =
                     task {
                         try
-                            while not context.CancellationToken.IsCancellationRequested
-                                  && requestStream.MoveNext(context.CancellationToken).Result do
-                                do! publishState router requestStream.Current
+                            let mutable keepReading = true
+                            while not context.CancellationToken.IsCancellationRequested && keepReading do
+                                let! hasNext = requestStream.MoveNext(context.CancellationToken)
+                                if hasNext then
+                                    do! publishState router requestStream.Current
+                                else
+                                    keepReading <- false
                         with
                         | :? RpcException -> ()
                         | _ -> ()
