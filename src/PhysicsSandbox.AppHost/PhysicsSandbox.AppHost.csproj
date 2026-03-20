@@ -5,6 +5,7 @@
     <ProjectReference Include="..\PhysicsSimulation\PhysicsSimulation.fsproj" />
     <ProjectReference Include="..\PhysicsViewer\PhysicsViewer.fsproj" />
     <ProjectReference Include="..\PhysicsClient\PhysicsClient.fsproj" />
+    <ProjectReference Include="..\PhysicsSandbox.Mcp\PhysicsSandbox.Mcp.fsproj" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -9,7 +9,13 @@ open PhysicsSandbox.Mcp.GrpcConnection
 let main args =
     let serverAddress =
         if args.Length > 0 then args.[0]
-        else "https://localhost:7180"
+        else
+            let envHttps = Environment.GetEnvironmentVariable("services__server__https__0")
+            let envHttp = Environment.GetEnvironmentVariable("services__server__http__0")
+            match envHttps, envHttp with
+            | url, _ when not (String.IsNullOrEmpty url) -> url
+            | _, url when not (String.IsNullOrEmpty url) -> url
+            | _ -> "https://localhost:7180"
 
     let builder = Host.CreateApplicationBuilder(args)
 

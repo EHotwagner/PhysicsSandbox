@@ -16,4 +16,8 @@ builder.AddProject<Projects.PhysicsClient>("client")
     .WithReference(server)
     .WaitFor(server);
 
+builder.AddProject<Projects.PhysicsSandbox_Mcp>("mcp")
+    .WithReference(server)
+    .WaitFor(server);
+
 builder.Build().Run();

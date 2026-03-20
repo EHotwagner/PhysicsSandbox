@@ -30,7 +30,7 @@ tests/
   PhysicsSimulation.Tests/          # F# unit tests (37 tests)
   PhysicsViewer.Tests/              # F# unit tests (16 tests)
   PhysicsClient.Tests/              # F# unit tests (52 tests)
-  PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (32 tests)
+  PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (33 tests)
 ```
 
 ## Commands
@@ -42,7 +42,7 @@ dotnet build PhysicsSandbox.slnx
 # Build (headless/CI, skip Stride asset compiler)
 dotnet build PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true
 
-# Run (starts Aspire dashboard + server + simulation + viewer)
+# Run (starts Aspire dashboard + server + simulation + viewer + client + mcp)
 dotnet run --project src/PhysicsSandbox.AppHost
 
 # Test
@@ -61,10 +61,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
-
+- 006-mcp-aspire-orchestration: MCP server added to Aspire AppHost orchestration. Service discovery via env vars (services__server__https/http__0), auto-starts with AppHost, visible in dashboard. 3 new integration tests.
 - 005-mcp-server-testing: MCP server (15 tools for interactive physics debugging via AI assistants), simulation SSL + reconnection fix, viewer DISPLAY env fix, 20+ integration tests. ModelContextProtocol 1.1.0.
 - 004-client-repl: PhysicsClient REPL library with 9 F# modules — Session (gRPC connection), SimulationCommands (all proto commands), ViewCommands (camera/zoom/wireframe), Presets (7 body presets), Generators (random bodies + scene builders), Steering (push/launch/spin/stop), StateDisplay (Spectre.Console tables), LiveWatch (cancellable live state feed). Auto-generated human-readable IDs, Result-based error handling, FSI-loadable. 52 unit tests
-- 003-3d-viewer: PhysicsViewer with Stride3D (code-only), real-time body rendering, interactive + REPL camera control, wireframe toggle, status overlay, ground grid. Proto extended with StreamViewCommands RPC. Server extended with readViewCommand. 16 viewer tests, 3 new server tests
 
 ## Known Issues & Gotchas
 
