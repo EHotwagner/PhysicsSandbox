@@ -1,0 +1,3 @@
+QueryTools
+  static member get_state
+  static member get_status

@@ -1,0 +1,4 @@
+ViewTools
+  static member set_camera
+  static member set_zoom
+  static member toggle_wireframe

@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-20
-**Revision**: Updated with 004-client-repl archival
+**Revision**: Updated with 005-mcp-server-testing archival
 
 ## Overview
 
@@ -62,6 +62,18 @@ A user queries simulation state via formatted Spectre.Console tables, inspects i
 
 ### US-018: Viewer Control from REPL (P3)
 A user controls the 3D viewer's camera position, zoom, and wireframe mode from the REPL via dedicated functions. [Source: specs/004-client-repl]
+
+### US-019: MCP-Based Physics Exploration (P1)
+A developer in an AI-assisted environment (e.g., Claude Code) interacts with the running PhysicsSandbox system through MCP tool calls — sending simulation commands, view commands, reading state, and checking connection status — without writing gRPC client code. [Source: specs/005-mcp-server-testing]
+
+### US-020: Fix Known Connection Issues (P1)
+A developer expects the simulation to maintain a stable gRPC connection with SSL dev certificate bypass, and the viewer to receive the DISPLAY environment variable from Aspire. Simulation auto-reconnects with exponential backoff (1s → 10s max) on stream failure, preserving world state. [Source: specs/005-mcp-server-testing]
+
+### US-021: Comprehensive Regression Test Suite (P2)
+A developer runs the integration test suite exercising all gRPC RPCs end-to-end through the Aspire stack — command routing, state streaming, simulation lifecycle, error conditions, and concurrent subscribers — in a headless environment. [Source: specs/005-mcp-server-testing]
+
+### US-022: MCP Server Configuration and Discovery (P3)
+A developer adds the PhysicsSandbox MCP server to their AI assistant's configuration, launching it as a standalone stdio process connected to the PhysicsServer's gRPC endpoint. [Source: specs/005-mcp-server-testing]
 
 ## Functional Requirements
 
@@ -125,6 +137,18 @@ A user controls the 3D viewer's camera position, zoom, and wireframe mode from t
 - **FR-058**: Client library loadable in F# Interactive (FSI) via #r directive. Convenience .fsx script provided. [Source: specs/004-client-repl]
 - **FR-059**: All client library functions return Result<'T, string> — no unhandled exceptions. RpcException mapped to Error strings. [Source: specs/004-client-repl]
 - **FR-060**: Client library registered in Aspire AppHost with WithReference(server).WaitFor(server). [Source: specs/004-client-repl]
+- **FR-061**: MCP server exposes ~15 fine-grained tools (one per operation): add_body, apply_force, apply_impulse, apply_torque, set_gravity, step, play, pause, remove_body, clear_forces, set_camera, set_zoom, toggle_wireframe, get_state, get_status. [Source: specs/005-mcp-server-testing]
+- **FR-062**: MCP get_state tool returns cached simulation state from background StreamState subscription with staleness timestamp. Instant response (no per-call stream). [Source: specs/005-mcp-server-testing]
+- **FR-063**: Each MCP tool accepts structured parameters matching gRPC schemas and returns human-readable results ("Success/Failed/Error" format). [Source: specs/005-mcp-server-testing]
+- **FR-064**: MCP server communicates via stdio transport (standard MCP convention for local tool servers). [Source: specs/005-mcp-server-testing]
+- **FR-065**: MCP server handles gRPC connection failures gracefully with descriptive error messages through the MCP protocol. [Source: specs/005-mcp-server-testing]
+- **FR-066**: Simulation service maintains stable gRPC connection over HTTPS with dev certificate bypass and auto-reconnection using exponential backoff (1s → 10s max) on stream failure. World state preserved across reconnections. [Source: specs/005-mcp-server-testing]
+- **FR-067**: Viewer service receives DISPLAY environment variable from Aspire orchestrator (fallback `:0`). [Source: specs/005-mcp-server-testing]
+- **FR-068**: Integration tests cover all PhysicsHub RPCs end-to-end through Aspire stack (32 tests across 5 classes). [Source: specs/005-mcp-server-testing]
+- **FR-069**: Integration tests verify simulation connection, command delivery, and state streaming with real physics data (gravity, forces, impulses, torques produce position/velocity changes). [Source: specs/005-mcp-server-testing]
+- **FR-070**: Integration tests cover error conditions: commands without simulation, empty commands, rapid command stress (200 commands). [Source: specs/005-mcp-server-testing]
+- **FR-071**: Integration tests verify concurrent state stream subscribers receive consistent data and late joiners receive cached state. [Source: specs/005-mcp-server-testing]
+- **FR-072**: All integration tests run without GPU, display server, or manual setup (headless-compatible). [Source: specs/005-mcp-server-testing]
 
 ## Key Entities
 
@@ -149,6 +173,8 @@ A user controls the 3D viewer's camera position, zoom, and wireframe mode from t
 - **BodyPreset**: Named pre-configured body parameters (shape, mass, size) instantiated with optional overrides. 7 presets: marble, bowlingBall, beachBall, crate, brick, boulder, die. [Source: specs/004-client-repl]
 - **Direction**: Discriminated union for steering — Up (+Y), Down (-Y), North (-Z), South (+Z), East (+X), West (-X). [Source: specs/004-client-repl]
 - **IdGenerator**: Thread-safe per-shape-type counter producing human-readable IDs ("sphere-1", "box-3"). CAS-based ConcurrentDictionary. [Source: specs/004-client-repl]
+- **MCP Tool**: A named operation exposed by the MCP server, corresponding to a gRPC RPC. Each has an input schema and returns human-readable text. 15 tools across 3 categories: simulation (10), view (3), query (2). [Source: specs/005-mcp-server-testing]
+- **GrpcConnection**: MCP server's gRPC bridge — holds PhysicsHubClient, background StreamState subscription with cached SimulationState, LastUpdateTime, StreamConnected flag. Registered as DI singleton. [Source: specs/005-mcp-server-testing]
 
 ## Edge Cases
 
@@ -171,6 +197,12 @@ A user controls the 3D viewer's camera position, zoom, and wireframe mode from t
 - Client generators with zero or negative count: validates input, returns Error. [Source: specs/004-client-repl]
 - Client state display with stale data: shows last known state with "Last updated: Xs ago" when >5 seconds old. [Source: specs/004-client-repl]
 - Multiple REPL sessions to same server: each Session is independent. [Source: specs/004-client-repl]
+- MCP server cannot reach PhysicsServer: returns clear connection-failure errors per tool invocation, no crash. [Source: specs/005-mcp-server-testing]
+- Simulation disconnects mid-stream: MCP get_state returns last cached state with staleness indicator. [Source: specs/005-mcp-server-testing]
+- Multiple MCP clients simultaneously: each creates independent gRPC channel. [Source: specs/005-mcp-server-testing]
+- Server command channel full (100 capacity): MCP relays "dropped" response. [Source: specs/005-mcp-server-testing]
+- Integration tests without GPU/display: tests only exercise gRPC communication, not rendering. [Source: specs/005-mcp-server-testing]
+- Simulation gRPC stream dies but process alive: auto-reconnects with exponential backoff (1s → 10s max), preserving world state. [Source: specs/005-mcp-server-testing]
 
 ## Success Criteria
 
@@ -200,3 +232,10 @@ A user controls the 3D viewer's camera position, zoom, and wireframe mode from t
 - **SC-024**: Library loads and connects in FSI. [Source: specs/004-client-repl]
 - **SC-025**: Steering functions produce observable motion in expected direction. [Source: specs/004-client-repl]
 - **SC-026**: 123 total tests passing (52 client + 16 viewer + 13 server + 37 simulation + 5 integration). [Source: specs/004-client-repl]
+- **SC-027**: All PhysicsHub and SimulationLink query operations invocable from MCP client — 100% RPC coverage as MCP tools. [Source: specs/005-mcp-server-testing]
+- **SC-028**: Simulation maintains stable connection for at least 10 minutes under normal operation after SSL fix. [Source: specs/005-mcp-server-testing]
+- **SC-029**: Integration test suite covers at least 15 distinct scenarios across command routing, state streaming, simulation lifecycle, and error conditions. Actual: 32 tests. [Source: specs/005-mcp-server-testing]
+- **SC-030**: All integration tests pass in headless CI within 5 minutes. [Source: specs/005-mcp-server-testing]
+- **SC-031**: MCP command → state change round-trip completes within 5 seconds end-to-end. [Source: specs/005-mcp-server-testing]
+- **SC-032**: Zero regressions — all existing 118 unit tests + 5 integration tests pass after changes. [Source: specs/005-mcp-server-testing]
+- **SC-033**: 150 total tests passing (52 client + 16 viewer + 13 server + 37 simulation + 32 integration). [Source: specs/005-mcp-server-testing]

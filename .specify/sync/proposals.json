@@ -1,79 +1,42 @@
 {
   "generated": "2026-03-20T00:00:00Z",
-  "based_on": "drift-report from 2026-03-20",
+  "based_on": "drift-report from 2026-03-20 (full project)",
   "summary": {
-    "backfill": 4,
+    "backfill": 0,
     "align": 0,
     "human_decision": 0,
-    "new_specs": 0,
-    "remove_from_spec": 0
+    "new_specs": 1,
+    "remove_from_spec": 0,
+    "no_change": 1
   },
+  "prior_proposals": [
+    {"id": "P1", "spec_id": "001-server-hub", "requirement": "FR-002", "direction": "BACKFILL", "status": "applied"},
+    {"id": "P2", "spec_id": "001-server-hub", "requirement": "SC-002", "direction": "BACKFILL", "status": "applied"},
+    {"id": "P3", "spec_id": "001-server-hub", "requirement": null, "direction": "BACKFILL", "status": "applied"},
+    {"id": "P4", "spec_id": "002-physics-simulation", "requirement": "FR-013", "direction": "BACKFILL", "status": "applied"},
+    {"id": "P5", "spec_id": "002-physics-simulation", "requirement": "SC-003", "direction": "BACKFILL", "status": "applied"},
+    {"id": "P6", "spec_id": "002-physics-simulation", "requirement": "Assumptions", "direction": "BACKFILL", "status": "applied"}
+  ],
   "proposals": [
     {
-      "id": "P1",
-      "spec_id": "001-server-hub",
-      "requirement": "FR-002",
-      "direction": "BACKFILL",
-      "spec_text": "define a PhysicsHub service",
-      "actual": "Code defines both PhysicsHub and SimulationLink services",
-      "proposed_text": "Update FR-002 to include SimulationLink service",
+      "id": "P7",
+      "direction": "NEW_SPEC",
+      "feature": "Demo Scripts",
+      "location": "demos/",
+      "lines": 500,
+      "suggested_spec_id": "006-demos",
+      "draft_requirements": ["FR-001: 10+ demo scripts", "FR-002: self-contained demos", "FR-003: automated runner", "FR-004: uses PhysicsClient API", "FR-005: runnable via dotnet fsi", "FR-006: shared prelude"],
       "confidence": "HIGH",
-      "status": "applied"
+      "status": "pending"
     },
     {
-      "id": "P2",
-      "spec_id": "001-server-hub",
-      "requirement": "SC-002",
-      "direction": "BACKFILL",
-      "spec_text": "dashboard displays server hub as healthy",
-      "actual": "Health endpoints only in Development environment",
-      "proposed_text": "Add 'in Development mode' qualifier",
+      "id": "P8",
+      "direction": "NO_CHANGE",
+      "feature": "Error Report",
+      "location": "2026-03-20-Error-Report.md",
+      "rationale": "Historical artifact; all fixes applied in spec 005. Recommend archiving.",
       "confidence": "HIGH",
-      "status": "applied"
-    },
-    {
-      "id": "P3",
-      "spec_id": "001-server-hub",
-      "requirement": null,
-      "direction": "BACKFILL",
-      "feature": "Kestrel HTTP/2 protocol configuration",
-      "proposed_text": null,
-      "rationale": "Infrastructure detail, no spec change needed",
-      "confidence": "HIGH",
-      "status": "applied"
-    },
-    {
-      "id": "P4",
-      "spec_id": "002-physics-simulation",
-      "requirement": "FR-013",
-      "direction": "BACKFILL",
-      "spec_text": "state MUST include each body's properties",
-      "actual": "Plane bodies (statics) not tracked in state stream; dynamic bodies fully tracked",
-      "proposed_text": "Clarify FR-013 applies to dynamic bodies; add assumption about static body exclusion",
-      "confidence": "HIGH",
-      "status": "applied"
-    },
-    {
-      "id": "P5",
-      "spec_id": "002-physics-simulation",
-      "requirement": "SC-003",
-      "direction": "BACKFILL",
-      "spec_text": "zero missed steps",
-      "actual": "Zero skipped steps; may delay under backpressure",
-      "proposed_text": "Clarify SC-003 means zero skipped steps with backpressure pacing",
-      "confidence": "HIGH",
-      "status": "applied"
-    },
-    {
-      "id": "P6",
-      "spec_id": "002-physics-simulation",
-      "requirement": "Assumptions",
-      "direction": "BACKFILL",
-      "spec_text": "simple physics model (Euler or semi-implicit Euler)",
-      "actual": "Uses BepuFSharp (BepuPhysics2 full rigid body engine)",
-      "proposed_text": "Update assumption to reflect BepuFSharp usage",
-      "confidence": "HIGH",
-      "status": "applied"
+      "status": "pending"
     }
   ]
 }

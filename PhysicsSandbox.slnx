@@ -7,6 +7,7 @@
     <Project Path="src/PhysicsSimulation/PhysicsSimulation.fsproj" />
     <Project Path="src/PhysicsViewer/PhysicsViewer.fsproj" />
     <Project Path="src/PhysicsClient/PhysicsClient.fsproj" />
+    <Project Path="src/PhysicsSandbox.Mcp/PhysicsSandbox.Mcp.fsproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PhysicsSandbox.Integration.Tests/PhysicsSandbox.Integration.Tests.csproj" />

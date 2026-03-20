@@ -1,5 +1,31 @@
 # Merged Features Log
 
+## MCP Server and Integration Testing — 2026-03-20
+**Branch:** 005-mcp-server-testing
+**Spec:** specs/005-mcp-server-testing
+
+**What was added:**
+- PhysicsSandbox.Mcp — F# MCP server exposing 15 tools for interactive physics debugging via AI assistants (Claude Code, etc.)
+- 10 simulation tools (add_body, apply_force/impulse/torque, set_gravity, step, play, pause, remove_body, clear_forces)
+- 3 view tools (set_camera, set_zoom, toggle_wireframe)
+- 2 query tools (get_state with cached snapshot + staleness, get_status with connection health)
+- Background StreamState subscription with exponential backoff reconnection
+- Simulation SSL fix: dev certificate bypass + auto-reconnection (1s → 10s exponential backoff), preserving world state
+- Viewer DISPLAY environment variable propagation from Aspire AppHost
+- 27 new integration tests (32 total) across 5 test classes: SimulationConnectionTests, CommandRoutingTests, StateStreamingTests, ErrorConditionTests, ServerHubTests
+- Tests exercise real physics (gravity, forces, impulses, torques) with state verification
+
+**New Components:**
+- `src/PhysicsSandbox.Mcp/` — F# MCP server (GrpcConnection, SimulationTools, ViewTools, QueryTools, Program)
+- `tests/PhysicsSandbox.Integration.Tests/SimulationConnectionTests.cs` — 7 connection lifecycle tests
+- `tests/PhysicsSandbox.Integration.Tests/CommandRoutingTests.cs` — 10 command routing tests
+- `tests/PhysicsSandbox.Integration.Tests/StateStreamingTests.cs` — 4 state streaming tests
+- `tests/PhysicsSandbox.Integration.Tests/ErrorConditionTests.cs` — 5 error condition tests
+
+**Tasks Completed:** 29/29 tasks
+
+---
+
 ## Client REPL Library — 2026-03-20
 **Branch:** 004-client-repl
 **Spec:** specs/004-client-repl

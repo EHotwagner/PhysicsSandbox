@@ -1,12 +1,12 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-20
-**Revision**: Updated with 004-client-repl archival
+**Revision**: Updated with 005-mcp-server-testing archival
 
 ## Technical Context
 
 **Language/Version**: F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
-**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0 (local NuGet), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Spectre.Console 0.49.x (client TUI display)
+**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0 (local NuGet), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 (MCP server)
 **Storage**: N/A (in-memory physics world, stateless message routing)
 **Testing**: xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x
 **Target Platform**: Linux (rootless Podman for containers)
@@ -71,10 +71,22 @@ src/
     │   └── LiveWatch.fsi/.fs            # Cancellable live state feed with filters
     ├── Program.fs                       # Aspire entry point
     └── PhysicsClient.fsx                # FSI convenience script
+│
+└── PhysicsSandbox.Mcp/                 # F# — MCP server (interactive debugging via AI assistants)
+    ├── GrpcConnection.fsi/.fs          # gRPC channel + background state stream cache
+    ├── SimulationTools.fsi/.fs         # 10 simulation command MCP tools
+    ├── ViewTools.fsi/.fs               # 3 view command MCP tools
+    ├── QueryTools.fsi/.fs              # get_state, get_status MCP tools
+    └── Program.fs                      # Host + stdio MCP transport
 
 tests/
-├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests
-│   └── ServerHubTests.cs               # 5 tests (SendCommand, StreamState, SendViewCommand, StreamViewCommands x2)
+├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests (32 tests)
+│   ├── ServerHubTests.cs               # 6 tests (SendCommand, StreamState, SendViewCommand, StreamViewCommands)
+│   ├── SimulationConnectionTests.cs    # 7 tests (connection lifecycle, physics verification, 30s stability)
+│   ├── CommandRoutingTests.cs          # 10 tests (all 9 command types + ClearForces end-to-end)
+│   ├── StateStreamingTests.cs          # 4 tests (concurrent subscribers, late-joiner, view command forwarding)
+│   ├── ErrorConditionTests.cs          # 5 tests (no simulation, empty command, rapid stress)
+│   └── xunit.runner.json              # Test runner configuration
 ├── PhysicsServer.Tests/                 # F# — unit tests (13 tests)
 │   ├── StateCacheTests.fs
 │   ├── MessageRouterTests.fs            # Includes readViewCommand tests
@@ -107,6 +119,7 @@ tests/
 - Simulation connects to server via Aspire service discovery (`services__server__https__0` env var)
 - Viewer connects to server via same Aspire service discovery env vars
 - Client connects to server via same Aspire service discovery env vars (fallback: `http://localhost:5000`)
+- MCP server connects to PhysicsServer via command-line arg (default: `https://localhost:7180`); not Aspire-managed
 - Stride3D uses OpenGL graphics API (`<StrideGraphicsApi>OpenGL</StrideGraphicsApi>`) for container/GPU-passthrough compatibility
 - Stride asset compiler disabled by default (`StrideCompilerSkipBuild`); builds without it for CI, enable for live runs with GPU
 
@@ -120,7 +133,7 @@ tests/
 
 ## Future Services (Planned)
 
-All four services (Server, Simulation, Viewer, Client) are now implemented.
+All four services (Server, Simulation, Viewer, Client) are now implemented. MCP server added as standalone debugging tool (not an Aspire-managed service).
 
 ## Known Issues & Gotchas
 
@@ -141,3 +154,9 @@ All four services (Server, Simulation, Viewer, Client) are now implemented.
 - Client gRPC channels are lazy — `GrpcChannel.ForAddress` succeeds immediately; failures surface on first RPC call. [Source: specs/004-client-repl]
 - Client IdGenerator uses ConcurrentDictionary.AddOrUpdate which may invoke the update delegate multiple times under contention — but always produces correct results. Use unique shape keys in tests to avoid cross-test interference. [Source: specs/004-client-repl]
 - Spectre.Console Live context with Ctrl+C cancellation: must set `args.Cancel = true` in CancelKeyPress handler to prevent process termination. [Source: specs/004-client-repl]
+- MCP server must log to stderr only — stdout is the stdio MCP transport. Use `LogToStandardErrorThreshold = LogLevel.Trace` in host configuration. [Source: specs/005-mcp-server-testing]
+- MCP `[<McpServerToolType>]` requires static methods on types — F# types with static members compile correctly for SDK discovery via `WithToolsFromAssembly()`. [Source: specs/005-mcp-server-testing]
+- Simulation SSL: must use SocketsHttpHandler with `RemoteCertificateValidationCallback` returning true (same as PhysicsClient and integration tests). Without this, bidirectional stream fails silently on HTTPS. [Source: specs/005-mcp-server-testing]
+- Simulation reconnection: exponential backoff (1s → 10s max) preserves BepuPhysics world across stream reconnections. Only exits on CancellationToken cancellation. [Source: specs/005-mcp-server-testing]
+- Viewer DISPLAY env: Aspire doesn't propagate DISPLAY automatically; must add `.WithEnvironment("DISPLAY", ...)` in AppHost. Fallback to `:0`. [Source: specs/005-mcp-server-testing]
+- Integration tests need `xunit.runner.json` with `"diagnosticMessages": true` for timeout debugging. Tests use 30s+ timeouts for simulation stability verification. [Source: specs/005-mcp-server-testing]

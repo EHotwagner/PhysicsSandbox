@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "physics-sandbox": {
+      "command": "dotnet",
+      "args": ["run", "--project", "src/PhysicsSandbox.Mcp"],
+      "cwd": "/path/to/BPSandbox"
+    }
+  }
+}

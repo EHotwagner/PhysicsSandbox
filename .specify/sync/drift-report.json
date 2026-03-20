@@ -2,37 +2,63 @@
   "generated": "2026-03-20T00:00:00Z",
   "project": "PhysicsSandbox",
   "summary": {
-    "specs_analyzed": 1,
-    "requirements_checked": 14,
-    "aligned": 12,
-    "drifted": 2,
+    "specs_analyzed": 5,
+    "requirements_checked": 76,
+    "aligned": 76,
+    "drifted": 0,
     "not_implemented": 0,
-    "unspecced_features": 0
+    "unspecced_features": 2
   },
   "specs": [
     {
+      "id": "001-server-hub",
+      "title": "Contracts and Server Hub",
+      "aligned": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "FR-008", "FR-009", "FR-010", "FR-011", "FR-012", "FR-013", "FR-014"],
+      "drifted": [],
+      "not_implemented": []
+    },
+    {
+      "id": "002-physics-simulation",
+      "title": "Physics Simulation Service",
+      "aligned": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "FR-008", "FR-009", "FR-010", "FR-011", "FR-012", "FR-013", "FR-014", "FR-015", "FR-016", "FR-017", "FR-018", "FR-019", "FR-020"],
+      "drifted": [],
+      "not_implemented": []
+    },
+    {
+      "id": "003-3d-viewer",
+      "title": "3D Viewer",
+      "aligned": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "FR-008", "FR-009", "FR-010", "FR-011", "FR-012", "FR-013", "FR-014", "FR-015", "FR-016"],
+      "drifted": [],
+      "not_implemented": []
+    },
+    {
       "id": "004-client-repl",
       "title": "Client REPL Library",
-      "aligned": ["FR-001", "FR-002", "FR-002a", "FR-004", "FR-005", "FR-006", "FR-007", "FR-008", "FR-009", "FR-011", "FR-012"],
-      "drifted": [
-        {
-          "requirement": "FR-003",
-          "spec_text": "Body IDs can be optionally overridden by the user",
-          "actual": "Preset functions do not expose id parameter; auto-generate only. SimulationCommands.addSphere does accept id option.",
-          "location": "src/PhysicsClient/Bodies/Presets.fs",
-          "severity": "minor"
-        },
-        {
-          "requirement": "FR-010",
-          "spec_text": "MUST be loadable in FSI without requiring a full application build",
-          "actual": "DLL is FSI-loadable but no convenience .fsx script was created as planned in research.md",
-          "location": "src/PhysicsClient/PhysicsClient.fsproj",
-          "severity": "minor"
-        }
-      ],
+      "aligned": ["FR-001", "FR-002", "FR-002a", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "FR-008", "FR-009", "FR-010", "FR-011", "FR-012"],
+      "drifted": [],
+      "not_implemented": []
+    },
+    {
+      "id": "005-mcp-server-testing",
+      "title": "MCP Server and Integration Testing",
+      "aligned": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "FR-008", "FR-009", "FR-010", "FR-011", "FR-012"],
+      "drifted": [],
       "not_implemented": []
     }
   ],
-  "unspecced": [],
+  "unspecced": [
+    {
+      "feature": "Demo Scripts",
+      "location": "demos/",
+      "lines": 500,
+      "suggested_spec": "006-demos"
+    },
+    {
+      "feature": "Error Report",
+      "location": "2026-03-20-Error-Report.md",
+      "lines": 200,
+      "suggested_spec": null
+    }
+  ],
   "conflicts": []
 }

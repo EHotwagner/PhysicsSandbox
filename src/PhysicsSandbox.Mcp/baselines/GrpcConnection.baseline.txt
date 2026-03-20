@@ -1,0 +1,9 @@
+GrpcConnection
+  new : serverAddress: string -> GrpcConnection
+  member Client : PhysicsHub.PhysicsHubClient
+  member LatestState : SimulationState option
+  member LastUpdateTime : DateTimeOffset
+  member StreamConnected : bool
+  member ServerAddress : string
+  member Start : unit -> unit
+  interface IDisposable
