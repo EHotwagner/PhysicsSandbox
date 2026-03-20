@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PhysicsServer\PhysicsServer.fsproj" />
+    <ProjectReference Include="..\PhysicsSimulation\PhysicsSimulation.fsproj" />
   </ItemGroup>
 
   <PropertyGroup>

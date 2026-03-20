@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="World/SimulationWorld.fsi" />
+    <Compile Include="World/SimulationWorld.fs" />
+    <Compile Include="Commands/CommandHandler.fsi" />
+    <Compile Include="Commands/CommandHandler.fs" />
+    <Compile Include="Client/SimulationClient.fsi" />
+    <Compile Include="Client/SimulationClient.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepuFSharp" Version="0.1.0" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PhysicsSandbox.Shared.Contracts\PhysicsSandbox.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\PhysicsSandbox.ServiceDefaults\PhysicsSandbox.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -6,6 +6,7 @@ Last updated: 2026-03-20
 
 - F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
 - .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x
+- BepuFSharp 0.1.0 (local NuGet, physics engine wrapper), Grpc.Net.Client 2.x
 - xUnit 2.x, Aspire.Hosting.Testing 10.x
 
 ## Project Structure
@@ -17,8 +18,10 @@ src/
   PhysicsSandbox.ServiceDefaults/   # C# shared health/telemetry
   PhysicsSandbox.Shared.Contracts/  # Proto gRPC contracts
   PhysicsServer/                    # F# server hub (message router)
+  PhysicsSimulation/                # F# physics simulation (gRPC client, BepuFSharp)
 tests/
   PhysicsServer.Tests/              # F# unit tests
+  PhysicsSimulation.Tests/          # F# unit tests (37 tests)
   PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests
 ```
 
@@ -28,7 +31,7 @@ tests/
 # Build
 dotnet build PhysicsSandbox.slnx
 
-# Run (starts Aspire dashboard + server)
+# Run (starts Aspire dashboard + server + simulation)
 dotnet run --project src/PhysicsSandbox.AppHost
 
 # Test
@@ -43,6 +46,7 @@ dotnet test PhysicsSandbox.slnx
 
 ## Recent Changes
 
+- 002-physics-simulation: PhysicsSimulation service with BepuFSharp physics engine, lifecycle control (play/pause/step), body management, forces/impulses/torques, gravity, state streaming. Proto extended with 4 new commands + angular_velocity/orientation. 37 unit tests
 - 001-server-hub: Aspire AppHost, gRPC contracts (PhysicsHub + SimulationLink), PhysicsServer hub with state caching and single-simulation enforcement, ServiceDefaults, 13 tests
 
 ## Known Issues & Gotchas
@@ -56,5 +60,11 @@ Aspire integration tests connecting via HTTPS need `RemoteCertificateValidationC
 ### Solution Format
 Solution file is `.slnx` (XML-based, .NET 10 default), not `.sln`.
 
-<!-- MANUAL ADDITIONS START -->
-<!-- MANUAL ADDITIONS END -->
+### BepuFSharp NuGet Packaging
+Pack BepuFSharp with `-p:NoWarn=NU5104` to suppress prerelease dependency warnings from BepuPhysics2 beta packages. Local NuGet feed at `~/.local/share/nuget-local/`.
+
+### Proto Type Name Conflicts
+Proto `Sphere`/`Box` type names conflict with BepuFSharp shapes in F#. Use type aliases (`ProtoSphere = PhysicsSandbox.Shared.Contracts.Sphere`) to disambiguate.
+
+### Plane Bodies
+Planes are approximated as large static boxes (BepuPhysics2 has no infinite plane). Static bodies are not tracked in the simulation state stream.
