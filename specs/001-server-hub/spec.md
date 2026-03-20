@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-server-hub`
 **Created**: 2026-03-20
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "Create a physics sandbox. The Aspire server is the first feature — it is the center of this distributed application. Services will be added later."
 
 ## User Scenarios & Testing *(mandatory)*
