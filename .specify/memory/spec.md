@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-20
-**Revision**: Updated with 003-3d-viewer archival
+**Revision**: Updated with 004-client-repl archival
 
 ## Overview
 
@@ -47,6 +47,21 @@ A user toggles wireframe rendering mode from the REPL client. When enabled, all 
 
 ### US-013: Simulation Status Display (P3)
 The viewer displays simulation metadata — current time and running/paused status — as a text overlay. [Source: specs/003-3d-viewer]
+
+### US-014: Connect and Control Simulation from REPL (P1)
+A user loads the client library in FSI, connects to the server, and uses functions to add bodies, apply forces, and control playback (play/pause/step). All commands return Result-based acknowledgements. [Source: specs/004-client-repl]
+
+### US-015: Ready-Made Body Builders (P2)
+A user populates scenes quickly using pre-configured presets (marble, bowling ball, crate, etc.), random generators, and scene builders (stack, row, grid, pyramid). Auto-generated human-readable IDs with optional overrides. [Source: specs/004-client-repl]
+
+### US-016: Body Steering and Motion Control (P2)
+A user steers bodies with intent-based functions — push in a direction, launch toward a target, spin, stop — without calculating physics vectors manually. [Source: specs/004-client-repl]
+
+### US-017: State Display and Monitoring (P3)
+A user queries simulation state via formatted Spectre.Console tables, inspects individual bodies, and runs a cancellable live-watch mode with filtering (by body ID, shape, velocity threshold). Staleness timestamps shown when state is >5s old. [Source: specs/004-client-repl]
+
+### US-018: Viewer Control from REPL (P3)
+A user controls the 3D viewer's camera position, zoom, and wireframe mode from the REPL via dedicated functions. [Source: specs/004-client-repl]
 
 ## Functional Requirements
 
@@ -97,6 +112,19 @@ The viewer displays simulation metadata — current time and running/paused stat
 - **FR-045**: Viewer registered in Aspire AppHost with WithReference(server).WaitFor(server). [Source: specs/003-3d-viewer]
 - **FR-046**: Viewer uses AddServiceDefaults via background host for OpenTelemetry and structured logging. [Source: specs/003-3d-viewer]
 - **FR-047**: Proto extended with StreamViewCommands RPC on PhysicsHub service; server extended with readViewCommand and StreamViewCommands override. [Source: specs/003-3d-viewer]
+- **FR-048**: Client library provides connect function returning opaque Session handle; disconnect and explicit reconnect (no auto-reconnect). [Source: specs/004-client-repl]
+- **FR-049**: Client library wraps all 9 proto simulation commands (addSphere/addBox/addPlane, removeBody, applyForce/Impulse/Torque, clearForces, setGravity, play, pause, step) as Result-returning functions. [Source: specs/004-client-repl]
+- **FR-050**: Client library provides clear-all function that removes all session-tracked bodies via individual RemoveBody commands. [Source: specs/004-client-repl]
+- **FR-051**: Client library provides 7 body presets (marble, bowlingBall, beachBall, crate, brick, boulder, die) with optional position, mass, and ID overrides. Auto-generated human-readable IDs ("sphere-1", "box-3"). [Source: specs/004-client-repl]
+- **FR-052**: Client library provides randomized body generators (randomSpheres, randomBoxes, randomBodies) with seedable RNG and configurable bounds. [Source: specs/004-client-repl]
+- **FR-053**: Client library provides scene-builder functions: stack, row, grid, pyramid. [Source: specs/004-client-repl]
+- **FR-054**: Client library provides steering functions: push (named direction + magnitude), pushVec (raw vector), launch (toward target), spin (torque axis), stop (clear forces + counter-impulse). [Source: specs/004-client-repl]
+- **FR-055**: Client library provides state query functions: listBodies (Spectre.Console table), inspect (body panel), status (simulation panel), snapshot (raw state). [Source: specs/004-client-repl]
+- **FR-056**: Client library provides cancellable live-watch mode with filtering by body ID, shape type, and velocity threshold. Uses Spectre.Console Live context. [Source: specs/004-client-repl]
+- **FR-057**: Client library provides viewer control functions: setCamera, setZoom, wireframe. [Source: specs/004-client-repl]
+- **FR-058**: Client library loadable in F# Interactive (FSI) via #r directive. Convenience .fsx script provided. [Source: specs/004-client-repl]
+- **FR-059**: All client library functions return Result<'T, string> — no unhandled exceptions. RpcException mapped to Error strings. [Source: specs/004-client-repl]
+- **FR-060**: Client library registered in Aspire AppHost with WithReference(server).WaitFor(server). [Source: specs/004-client-repl]
 
 ## Key Entities
 
@@ -117,6 +145,10 @@ The viewer displays simulation metadata — current time and running/paused stat
 - **SceneState**: Viewer's internal state — tracked body entities (Map<string, Entity>), simulation time, running flag, wireframe flag. [Source: specs/003-3d-viewer]
 - **CameraState**: Camera parameters — position, target, up (Vector3), zoom level (float). [Source: specs/003-3d-viewer]
 - **ShapeKind**: Discriminated union for visual classification — Sphere, Box, Unknown. Maps to colors and Stride PrimitiveModelType. [Source: specs/003-3d-viewer]
+- **Session**: Client connection handle — holds GrpcChannel, PhysicsHubClient, CancellationTokenSource, body ID registry, cached latest SimulationState, last-update timestamp, connection status. [Source: specs/004-client-repl]
+- **BodyPreset**: Named pre-configured body parameters (shape, mass, size) instantiated with optional overrides. 7 presets: marble, bowlingBall, beachBall, crate, brick, boulder, die. [Source: specs/004-client-repl]
+- **Direction**: Discriminated union for steering — Up (+Y), Down (-Y), North (-Z), South (+Z), East (+X), West (-X). [Source: specs/004-client-repl]
+- **IdGenerator**: Thread-safe per-shape-type counter producing human-readable IDs ("sphere-1", "box-3"). CAS-based ConcurrentDictionary. [Source: specs/004-client-repl]
 
 ## Edge Cases
 
@@ -134,6 +166,11 @@ The viewer displays simulation metadata — current time and running/paused stat
 - Viewer server connection drops: displays last known state, auto-reconnects with exponential backoff (1s→30s). [Source: specs/003-3d-viewer]
 - Unknown or unset body shape type: rendered as small red sphere (fallback). [Source: specs/003-3d-viewer]
 - Viewer receives state with zero bodies: displays empty scene (ground grid, skybox only). [Source: specs/003-3d-viewer]
+- Client commands after server disconnect: returns clear Error, no hang or crash. User calls reconnect explicitly. [Source: specs/004-client-repl]
+- Client references non-existent body ID: server CommandAck error surfaced as Result Error. [Source: specs/004-client-repl]
+- Client generators with zero or negative count: validates input, returns Error. [Source: specs/004-client-repl]
+- Client state display with stale data: shows last known state with "Last updated: Xs ago" when >5 seconds old. [Source: specs/004-client-repl]
+- Multiple REPL sessions to same server: each Session is independent. [Source: specs/004-client-repl]
 
 ## Success Criteria
 
@@ -156,3 +193,10 @@ The viewer displays simulation metadata — current time and running/paused stat
 - **SC-017**: Viewer starts and displays scene within 5 seconds when server running. [Source: specs/003-3d-viewer]
 - **SC-018**: Viewer renders 100 bodies simultaneously. [Source: specs/003-3d-viewer]
 - **SC-019**: 66 total tests passing (16 viewer + 13 server + 37 simulation). [Source: specs/003-3d-viewer]
+- **SC-020**: User goes from loading library to running simulation in ≤5 function calls. [Source: specs/004-client-repl]
+- **SC-021**: All 7 body presets produce valid bodies with correct shape and mass. [Source: specs/004-client-repl]
+- **SC-022**: Random generators produce varied bodies (no duplicates in batch of 10+). [Source: specs/004-client-repl]
+- **SC-023**: All 9 simulation commands and 3 view commands accessible via dedicated functions. [Source: specs/004-client-repl]
+- **SC-024**: Library loads and connects in FSI. [Source: specs/004-client-repl]
+- **SC-025**: Steering functions produce observable motion in expected direction. [Source: specs/004-client-repl]
+- **SC-026**: 123 total tests passing (52 client + 16 viewer + 13 server + 37 simulation + 5 integration). [Source: specs/004-client-repl]

@@ -1,5 +1,32 @@
 # Merged Features Log
 
+## Client REPL Library — 2026-03-20
+**Branch:** 004-client-repl
+**Spec:** specs/004-client-repl
+
+**What was added:**
+- PhysicsClient library — F# REPL-friendly library for controlling physics simulation and 3D viewer via gRPC
+- 9 modules with .fsi signatures: Session, SimulationCommands, ViewCommands, Presets, Generators, Steering, StateDisplay, LiveWatch, IdGenerator
+- Session management: connect/disconnect/reconnect, background state caching, body registry tracking
+- All 9 proto simulation commands + 3 view commands wrapped as Result-returning functions
+- 7 body presets (marble, bowlingBall, beachBall, crate, brick, boulder, die) with optional position/mass/ID overrides
+- Random generators (spheres, boxes, mixed) with seedable RNG + scene builders (stack, row, grid, pyramid)
+- Steering functions: push (named direction), pushVec, launch (toward target), spin, stop (counter-impulse)
+- Spectre.Console state display: body tables, body inspection panels, simulation status, staleness timestamps
+- Cancellable live-watch mode with filtering by body ID, shape type, velocity threshold
+- Thread-safe human-readable ID generation ("sphere-1", "box-3")
+- FSI convenience script (PhysicsClient.fsx)
+- 52 unit tests (IdGenerator, Session, SimulationCommands, Presets, Generators, Steering, StateDisplay, SurfaceArea)
+
+**New Components:**
+- `src/PhysicsClient/` — F# client library (Bodies/, Connection/, Commands/, Steering/, Display/ modules)
+- `tests/PhysicsClient.Tests/` — F# unit tests
+- `src/PhysicsClient/PhysicsClient.fsx` — FSI convenience script
+
+**Tasks Completed:** 51/52 tasks
+
+---
+
 ## 3D Viewer — 2026-03-20
 **Branch:** 003-3d-viewer
 **Spec:** specs/003-3d-viewer

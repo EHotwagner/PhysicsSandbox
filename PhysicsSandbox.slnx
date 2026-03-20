@@ -6,9 +6,11 @@
     <Project Path="src/PhysicsServer/PhysicsServer.fsproj" />
     <Project Path="src/PhysicsSimulation/PhysicsSimulation.fsproj" />
     <Project Path="src/PhysicsViewer/PhysicsViewer.fsproj" />
+    <Project Path="src/PhysicsClient/PhysicsClient.fsproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PhysicsSandbox.Integration.Tests/PhysicsSandbox.Integration.Tests.csproj" />
+    <Project Path="tests/PhysicsClient.Tests/PhysicsClient.Tests.fsproj" />
     <Project Path="tests/PhysicsSimulation.Tests/PhysicsSimulation.Tests.fsproj" />
     <Project Path="tests/PhysicsServer.Tests/PhysicsServer.Tests.fsproj" />
     <Project Path="tests/PhysicsViewer.Tests/PhysicsViewer.Tests.fsproj" />

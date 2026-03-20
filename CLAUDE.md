@@ -8,6 +8,7 @@ Last updated: 2026-03-20
 - .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x
 - BepuFSharp 0.1.0 (local NuGet, physics engine wrapper), Grpc.Net.Client 2.x
 - Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, 3D viewer)
+- Spectre.Console (client library TUI display)
 - xUnit 2.x, Aspire.Hosting.Testing 10.x
 
 ## Project Structure
@@ -21,10 +22,12 @@ src/
   PhysicsServer/                    # F# server hub (message router)
   PhysicsSimulation/                # F# physics simulation (gRPC client, BepuFSharp)
   PhysicsViewer/                    # F# 3D viewer (Stride3D + gRPC client)
+  PhysicsClient/                    # F# REPL client library (gRPC client, Spectre.Console)
 tests/
   PhysicsServer.Tests/              # F# unit tests (13 tests)
   PhysicsSimulation.Tests/          # F# unit tests (37 tests)
   PhysicsViewer.Tests/              # F# unit tests (16 tests)
+  PhysicsClient.Tests/              # F# unit tests (52 tests)
   PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (5 tests)
 ```
 
@@ -52,9 +55,9 @@ dotnet test PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true
 
 ## Recent Changes
 
+- 004-client-repl: PhysicsClient REPL library with 9 F# modules — Session (gRPC connection), SimulationCommands (all proto commands), ViewCommands (camera/zoom/wireframe), Presets (7 body presets), Generators (random bodies + scene builders), Steering (push/launch/spin/stop), StateDisplay (Spectre.Console tables), LiveWatch (cancellable live state feed). Auto-generated human-readable IDs, Result-based error handling, FSI-loadable. 52 unit tests
 - 003-3d-viewer: PhysicsViewer with Stride3D (code-only), real-time body rendering, interactive + REPL camera control, wireframe toggle, status overlay, ground grid. Proto extended with StreamViewCommands RPC. Server extended with readViewCommand. 16 viewer tests, 3 new server tests
 - 002-physics-simulation: PhysicsSimulation service with BepuFSharp physics engine, lifecycle control (play/pause/step), body management, forces/impulses/torques, gravity, state streaming. Proto extended with 4 new commands + angular_velocity/orientation. 37 unit tests
-- 001-server-hub: Aspire AppHost, gRPC contracts (PhysicsHub + SimulationLink), PhysicsServer hub with state caching and single-simulation enforcement, ServiceDefaults, 13 tests
 
 ## Known Issues & Gotchas
 

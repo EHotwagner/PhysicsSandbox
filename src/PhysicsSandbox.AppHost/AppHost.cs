@@ -11,4 +11,8 @@ builder.AddProject<Projects.PhysicsViewer>("viewer")
     .WithReference(server)
     .WaitFor(server);
 
+builder.AddProject<Projects.PhysicsClient>("client")
+    .WithReference(server)
+    .WaitFor(server);
+
 builder.Build().Run();

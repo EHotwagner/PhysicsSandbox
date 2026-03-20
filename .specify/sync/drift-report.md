@@ -1,72 +1,79 @@
 # Spec Drift Report
 
 Generated: 2026-03-20
-Project: BPSandbox (PhysicsViewer — 003-3d-viewer)
+Project: PhysicsSandbox — 004-client-repl
 
 ## Summary
 
 | Category | Count |
 |----------|-------|
 | Specs Analyzed | 1 |
-| Requirements Checked | 16 FR + 6 SC |
-| Aligned | 13 (81%) |
-| Drifted | 3 (19%) |
+| Requirements Checked | 14 |
+| Aligned | 12 (86%) |
+| Drifted | 2 (14%) |
 | Not Implemented | 0 (0%) |
-| Unspecced Code | 1 |
+| Unspecced Code | 0 |
 
 ## Detailed Findings
 
-### Spec: 003-3d-viewer — 3D Viewer
+### Spec: 004-client-repl — Client REPL Library
 
 #### Aligned
 
-- FR-001: Connect to server and subscribe to state stream → `ViewerClient.streamState` + `Program.fs:57-65`
-- FR-002: Render bodies as 3D shapes → `SceneManager.fs:54-68`
-- FR-003: Position and orient from quaternion → `SceneManager.fs:46-52,70-72`
-- FR-004: Update scene on each state → `Program.fs:80-88`
-- FR-005: Apply SetCamera commands → `CameraController.fs:24-30` + `Program.fs:96`
-- FR-007: Apply ToggleWireframe → `SceneManager.fs:103-109`
-- FR-008: Display simulation time → `Program.fs:111-117`
-- FR-009: Indicate running/paused → `Program.fs:113-117`
-- FR-010: Default camera position → `CameraController.fs:14-18` + `Program.fs:46`
-- FR-011: Handle late-join → `ViewerClient.fs:39-50` + server caches state
-- FR-012: Differentiate by shape color → `SceneManager.fs:34-38`
-- FR-014: Interactive mouse/keyboard camera → `CameraController.fs:42-90`
-- FR-016: Ground reference grid at Y=0 → `Program.fs:37-43`
+- FR-001: Connect function returning session handle → `Session.connect` in `Connection/Session.fs`
+- FR-002: All simulation commands → `SimulationCommands` module with 13 functions
+- FR-002a: Clear-all function → `SimulationCommands.clearAll` iterates bodyRegistry, returns count
+- FR-003: Ready-made body presets (≥5, auto-IDs) → 7 presets in `Presets` module with optional position and mass overrides
+- FR-004: Randomized body generation → `Generators.randomSpheres/randomBoxes/randomBodies` with optional seed
+- FR-005: Scene-builder functions (≥3 patterns) → `Generators.stack/row/grid/pyramid` (4 patterns)
+- FR-006: Steering functions → `Steering` module with push/pushVec/launch/spin/stop + Direction DU
+- FR-007: State query functions → `StateDisplay.listBodies/inspect/status/snapshot`
+- FR-008: Cancellable live-watch with filtering → `LiveWatch.watch` with Ctrl+C cancellation, bodyIds/shapeFilter/minVelocity filters
+- FR-009: Viewer control → `ViewCommands.setCamera/setZoom/wireframe`
+- FR-011: Result-based error handling → All functions return `Result<'T, string>`
+- FR-012: Formatted text output → Spectre.Console tables, staleness timestamps
 
-#### Drifted
+#### Drifted ⚠️
 
-- **FR-006**: Spec says "apply SetZoom by adjusting camera zoom" but code stores zoom level without applying it to camera entity. `applyToCamera` does not adjust FOV or distance based on zoom.
-  - Location: `src/PhysicsViewer/Rendering/CameraController.fs:92-104`
-  - Severity: moderate
-  - Fix: Scale camera offset by `1.0 / zoomLevel` in `applyToCamera`.
-
-- **FR-013**: Spec says "register with Aspire for health checks". AppHost registers viewer but Program.fs never calls `AddServiceDefaults()` — no health endpoints exposed.
-  - Location: `src/PhysicsViewer/Program.fs` (missing)
-  - Severity: moderate
-  - Fix: Add background `WebApplication` host with `AddServiceDefaults()` + `MapDefaultEndpoints()`.
-
-- **FR-015**: Spec says "REPL commands override current camera state". Code processes REPL commands BEFORE interactive input, so interactive input overwrites REPL in same frame.
-  - Location: `src/PhysicsViewer/Program.fs:90-108`
+- **FR-003**: Spec says "Body IDs can be optionally overridden by the user." Preset functions accept `?position` and `?mass` overrides but do not expose an `?id` parameter — they always auto-generate IDs. Users must use `SimulationCommands.addSphere` directly for custom IDs.
+  - Location: `src/PhysicsClient/Bodies/Presets.fs`
   - Severity: minor
-  - Fix: Move `applyInput` before view command queue drain so REPL is applied last.
 
-#### Not Implemented
+- **FR-010**: Spec says "MUST be loadable in FSI without requiring a full application build." The compiled DLL is FSI-loadable, but no convenience `.fsx` script was created as planned in research.md (R2). The `OutputType=Exe` for Aspire does not prevent FSI loading.
+  - Location: `src/PhysicsClient/PhysicsClient.fsproj`
+  - Severity: minor
 
-None.
+#### Not Implemented ✗
+
+None — all 14 functional requirements have corresponding implementations.
 
 ### Success Criteria
 
-- SC-001 through SC-006: All aligned except SC-002 (drifted due to FR-006 zoom gap).
+| Criterion | Status | Notes |
+|-----------|--------|-------|
+| SC-001: ≤5 calls to running sim | ✓ Aligned | connect → addSphere → play = 3 calls |
+| SC-002: All presets valid | ✓ Aligned | 7 presets, correct shape/mass per data-model |
+| SC-003: Varied random bodies | ✓ Aligned | Seedable RNG, varied position/size/mass |
+| SC-004: Accurate state queries | ✓ Aligned | Reads cached SimulationState |
+| SC-005: All commands accessible | ✓ Aligned | 9 proto sim commands + 3 view commands |
+| SC-006: Loads in FSI | ⚠️ Drifted | DLL loadable, no .fsx convenience script |
+| SC-007: Steering produces motion | ✓ Aligned | Direction DU maps correctly |
 
-### Unspecced Code
+### Edge Case Coverage
 
-| Feature | Location | Description |
-|---------|----------|-------------|
-| Reconnection with exponential backoff | `ViewerClient.fs:20-37` | Auto-reconnect with 1s→30s backoff (covered by edge case, not a formal FR) |
+| Edge Case | Status | Implementation |
+|-----------|--------|----------------|
+| Commands after disconnect | ✓ | `sendCommand` checks `IsConnected` |
+| Invalid body ID | ✓ | Server CommandAck error propagated |
+| Zero/negative generator count | ✓ | Validates count > 0, returns Error |
+| Stale state timestamp | ✓ | `stalenessInfo` shows age > 5s |
+| Multiple REPL sessions | ✓ | Independent Session per connect |
+
+## Inter-Spec Conflicts
+
+None — uses existing proto contracts without modification.
 
 ## Recommendations
 
-1. **Fix FR-015 (minor)**: Swap order — apply `applyInput` first, then drain REPL commands so they override.
-2. **Fix FR-006 (moderate)**: Apply zoom level in `applyToCamera` by scaling camera distance.
-3. **Fix FR-013 (moderate)**: Add `AddServiceDefaults()` via background web host.
+1. **Minor — Add `?id` to Presets** (FR-003): Add optional `id: string option` parameter to each preset function. Low effort.
+2. **Minor — Create `.fsx` script** (FR-010): Add `PhysicsClient.fsx` with `#r` directives for FSI convenience.

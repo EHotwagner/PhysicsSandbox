@@ -1,12 +1,12 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-20
-**Revision**: Updated with 003-3d-viewer archival
+**Revision**: Updated with 004-client-repl archival
 
 ## Technical Context
 
 **Language/Version**: F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
-**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0 (local NuGet), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages)
+**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0 (local NuGet), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Spectre.Console 0.49.x (client TUI display)
 **Storage**: N/A (in-memory physics world, stateless message routing)
 **Testing**: xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x
 **Target Platform**: Linux (rootless Podman for containers)
@@ -46,13 +46,31 @@ src/
 │   │   ├── SimulationClient.fsi/.fs     # Bidirectional streaming client, simulation loop
 │   └── Program.fs                       # Host setup, Aspire service defaults
 │
-└── PhysicsViewer/                       # F# — 3D viewer (Stride3D + gRPC client)
-    ├── Rendering/
-    │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, wireframe
-    │   └── CameraController.fsi/.fs     # Camera state, input, REPL commands
-    ├── Streaming/
-    │   └── ViewerClient.fsi/.fs         # gRPC streaming client with auto-reconnect
-    └── Program.fs                       # Host + Stride game loop
+├── PhysicsViewer/                       # F# — 3D viewer (Stride3D + gRPC client)
+│   ├── Rendering/
+│   │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, wireframe
+│   │   └── CameraController.fsi/.fs     # Camera state, input, REPL commands
+│   ├── Streaming/
+│   │   └── ViewerClient.fsi/.fs         # gRPC streaming client with auto-reconnect
+│   └── Program.fs                       # Host + Stride game loop
+│
+└── PhysicsClient/                       # F# — REPL client library (gRPC client, Spectre.Console)
+    ├── Bodies/
+    │   ├── IdGenerator.fsi/.fs          # Thread-safe human-readable ID generation
+    │   ├── Presets.fsi/.fs              # 7 body presets (marble, bowlingBall, crate, etc.)
+    │   └── Generators.fsi/.fs           # Random generators + scene builders
+    ├── Connection/
+    │   └── Session.fsi/.fs              # gRPC connection, state caching, body registry
+    ├── Commands/
+    │   ├── SimulationCommands.fsi/.fs   # All simulation command wrappers
+    │   └── ViewCommands.fsi/.fs         # Camera, zoom, wireframe wrappers
+    ├── Steering/
+    │   └── Steering.fsi/.fs             # Push, launch, spin, stop + Direction DU
+    ├── Display/
+    │   ├── StateDisplay.fsi/.fs         # Spectre.Console tables, panels, staleness
+    │   └── LiveWatch.fsi/.fs            # Cancellable live state feed with filters
+    ├── Program.fs                       # Aspire entry point
+    └── PhysicsClient.fsx                # FSI convenience script
 
 tests/
 ├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests
@@ -65,11 +83,20 @@ tests/
 │   ├── SimulationWorldTests.fs          # Lifecycle, bodies, forces, gravity, stress
 │   ├── CommandHandlerTests.fs           # Command dispatch, edge cases
 │   └── SurfaceAreaTests.fs              # Public API baseline verification
-└── PhysicsViewer.Tests/                 # F# — unit tests (16 tests)
-    ├── SceneManagerTests.fs             # Shape classification, state accessors
-    ├── CameraControllerTests.fs         # Camera math, command application
-    ├── SurfaceAreaTests.fs              # Public API baseline verification
-    └── PublicApiBaseline.txt            # Surface-area baseline
+├── PhysicsViewer.Tests/                 # F# — unit tests (16 tests)
+│   ├── SceneManagerTests.fs             # Shape classification, state accessors
+│   ├── CameraControllerTests.fs         # Camera math, command application
+│   ├── SurfaceAreaTests.fs              # Public API baseline verification
+│   └── PublicApiBaseline.txt            # Surface-area baseline
+└── PhysicsClient.Tests/                 # F# — unit tests (52 tests)
+    ├── IdGeneratorTests.fs              # Sequential IDs, reset, thread safety
+    ├── SessionTests.fs                  # Connection lifecycle
+    ├── SimulationCommandsTests.fs       # Proto message construction, Vec3 conversion
+    ├── PresetsTests.fs                  # Preset parameters, mass values
+    ├── GeneratorsTests.fs               # Scene builder validation, count checks
+    ├── SteeringTests.fs                 # Direction-to-Vec3 mapping
+    ├── StateDisplayTests.fs             # Vec3 formatting, velocity magnitude, shapes
+    └── SurfaceAreaTests.fs              # Public API baseline for all 9 modules
 ```
 
 ## Configuration
@@ -79,6 +106,7 @@ tests/
 - `NuGet.config` — local feed at `~/.local/share/nuget-local/` for BepuFSharp package
 - Simulation connects to server via Aspire service discovery (`services__server__https__0` env var)
 - Viewer connects to server via same Aspire service discovery env vars
+- Client connects to server via same Aspire service discovery env vars (fallback: `http://localhost:5000`)
 - Stride3D uses OpenGL graphics API (`<StrideGraphicsApi>OpenGL</StrideGraphicsApi>`) for container/GPU-passthrough compatibility
 - Stride asset compiler disabled by default (`StrideCompilerSkipBuild`); builds without it for CI, enable for live runs with GPU
 
@@ -92,7 +120,7 @@ tests/
 
 ## Future Services (Planned)
 
-- **Spec 004**: Client (REPL + command sending + state display)
+All four services (Server, Simulation, Viewer, Client) are now implemented.
 
 ## Known Issues & Gotchas
 
@@ -109,3 +137,7 @@ tests/
 - Stride's `Add3DCameraController()` conflicts with custom CameraController — do not use both. [Source: specs/003-3d-viewer]
 - Viewer needs `openal`, `freetype2`, `sdl2`, `ttf-liberation` system packages and `freeimage.so` symlink on Linux. [Source: specs/003-3d-viewer]
 - Viewer uses `DebugTextSystem.Print` for status overlay (no font assets needed). [Source: specs/003-3d-viewer]
+- Client library uses `OutputType=Exe` for Aspire orchestration but is also FSI-loadable via `#r` on the compiled DLL. [Source: specs/004-client-repl]
+- Client gRPC channels are lazy — `GrpcChannel.ForAddress` succeeds immediately; failures surface on first RPC call. [Source: specs/004-client-repl]
+- Client IdGenerator uses ConcurrentDictionary.AddOrUpdate which may invoke the update delegate multiple times under contention — but always produces correct results. Use unique shape keys in tests to avoid cross-test interference. [Source: specs/004-client-repl]
+- Spectre.Console Live context with Ctrl+C cancellation: must set `args.Cancel = true` in CancelKeyPress handler to prevent process termination. [Source: specs/004-client-repl]

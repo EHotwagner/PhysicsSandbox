@@ -4,6 +4,7 @@
     <ProjectReference Include="..\PhysicsServer\PhysicsServer.fsproj" />
     <ProjectReference Include="..\PhysicsSimulation\PhysicsSimulation.fsproj" />
     <ProjectReference Include="..\PhysicsViewer\PhysicsViewer.fsproj" />
+    <ProjectReference Include="..\PhysicsClient\PhysicsClient.fsproj" />
   </ItemGroup>
 
   <PropertyGroup>

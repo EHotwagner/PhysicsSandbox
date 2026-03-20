@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="IdGeneratorTests.fs" />
+    <Compile Include="SessionTests.fs" />
+    <Compile Include="SimulationCommandsTests.fs" />
+    <Compile Include="PresetsTests.fs" />
+    <Compile Include="GeneratorsTests.fs" />
+    <Compile Include="SteeringTests.fs" />
+    <Compile Include="StateDisplayTests.fs" />
+    <Compile Include="SurfaceAreaTests.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="xunit" Version="2.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PhysicsClient\PhysicsClient.fsproj" />
+    <ProjectReference Include="..\..\src\PhysicsSandbox.Shared.Contracts\PhysicsSandbox.Shared.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
