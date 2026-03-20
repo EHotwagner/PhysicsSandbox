@@ -1,0 +1,25 @@
+# PhysicsViewer Public API Baseline
+# Any change to this file must be reviewed and intentional.
+
+## PhysicsViewer.SceneManager
+applyState
+applyWireframe
+classifyShape
+create
+isRunning
+isWireframe
+simulationTime
+
+## PhysicsViewer.CameraController
+applyInput
+applySetCamera
+applySetZoom
+applyToCamera
+defaultCamera
+position
+target
+zoomLevel
+
+## PhysicsViewer.ViewerClient
+streamState
+streamViewCommands

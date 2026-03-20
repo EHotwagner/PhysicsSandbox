@@ -42,3 +42,13 @@ type PhysicsHubService(router: MessageRouter) =
 
             do! tcs.Task
         }
+
+    override _.StreamViewCommands
+        (request: StateRequest, responseStream: IServerStreamWriter<ViewCommand>, context: ServerCallContext)
+        =
+        task {
+            while not context.CancellationToken.IsCancellationRequested do
+                match! readViewCommand router context.CancellationToken with
+                | Some cmd -> do! responseStream.WriteAsync(cmd)
+                | None -> ()
+        }

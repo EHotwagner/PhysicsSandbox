@@ -1,102 +1,72 @@
 # Spec Drift Report
 
 Generated: 2026-03-20
-Project: BPSandbox (PhysicsSandbox)
+Project: BPSandbox (PhysicsViewer — 003-3d-viewer)
 
 ## Summary
 
 | Category | Count |
 |----------|-------|
-| Specs Analyzed | 2 |
-| Requirements Checked | 48 (21 from 001 + 27 from 002) |
-| Aligned | 43 (90%) |
-| Drifted | 4 (8%) |
+| Specs Analyzed | 1 |
+| Requirements Checked | 16 FR + 6 SC |
+| Aligned | 13 (81%) |
+| Drifted | 3 (19%) |
 | Not Implemented | 0 (0%) |
 | Unspecced Code | 1 |
 
 ## Detailed Findings
 
-### Spec: 001-server-hub - Contracts and Server Hub
+### Spec: 003-3d-viewer — 3D Viewer
 
 #### Aligned
 
-- FR-001 through FR-014: All server hub requirements implemented
-- SC-001, SC-003, SC-005, SC-006, SC-007: All success criteria met
+- FR-001: Connect to server and subscribe to state stream → `ViewerClient.streamState` + `Program.fs:57-65`
+- FR-002: Render bodies as 3D shapes → `SceneManager.fs:54-68`
+- FR-003: Position and orient from quaternion → `SceneManager.fs:46-52,70-72`
+- FR-004: Update scene on each state → `Program.fs:80-88`
+- FR-005: Apply SetCamera commands → `CameraController.fs:24-30` + `Program.fs:96`
+- FR-007: Apply ToggleWireframe → `SceneManager.fs:103-109`
+- FR-008: Display simulation time → `Program.fs:111-117`
+- FR-009: Indicate running/paused → `Program.fs:113-117`
+- FR-010: Default camera position → `CameraController.fs:14-18` + `Program.fs:46`
+- FR-011: Handle late-join → `ViewerClient.fs:39-50` + server caches state
+- FR-012: Differentiate by shape color → `SceneManager.fs:34-38`
+- FR-014: Interactive mouse/keyboard camera → `CameraController.fs:42-90`
+- FR-016: Ground reference grid at Y=0 → `Program.fs:37-43`
 
 #### Drifted
 
-- SC-002: Health endpoints only mapped in Development environment (standard Aspire template behavior)
-  - Location: `src/PhysicsSandbox.ServiceDefaults/Extensions.cs:113`
+- **FR-006**: Spec says "apply SetZoom by adjusting camera zoom" but code stores zoom level without applying it to camera entity. `applyToCamera` does not adjust FOV or distance based on zoom.
+  - Location: `src/PhysicsViewer/Rendering/CameraController.fs:92-104`
+  - Severity: moderate
+  - Fix: Scale camera offset by `1.0 / zoomLevel` in `applyToCamera`.
+
+- **FR-013**: Spec says "register with Aspire for health checks". AppHost registers viewer but Program.fs never calls `AddServiceDefaults()` — no health endpoints exposed.
+  - Location: `src/PhysicsViewer/Program.fs` (missing)
+  - Severity: moderate
+  - Fix: Add background `WebApplication` host with `AddServiceDefaults()` + `MapDefaultEndpoints()`.
+
+- **FR-015**: Spec says "REPL commands override current camera state". Code processes REPL commands BEFORE interactive input, so interactive input overwrites REPL in same frame.
+  - Location: `src/PhysicsViewer/Program.fs:90-108`
   - Severity: minor
-
-- FR-002: Spec mentions only PhysicsHub service; code also defines SimulationLink (added during planning)
-  - Location: `physics_hub.proto:22-28`
-  - Severity: minor (SimulationLink correctly fulfills FR-008)
-
----
-
-### Spec: 002-physics-simulation - Physics Simulation Service
-
-#### Aligned
-
-- FR-001: Connect to server via SimulationLink → `SimulationClient.fs:22`
-- FR-002: Start paused by default → `SimulationWorld.fs:88` `Running = false`
-- FR-003: Play/pause/step commands → `CommandHandler.fs:8-14`
-- FR-004: Fixed timestep loop → `SimulationClient.fs:12` ~60Hz
-- FR-005: Add bodies with shape → `SimulationWorld.fs:110-162` (Sphere/Box/Plane)
-- FR-006: Unique body identifiers → `SimulationWorld.fs:111-112` rejects duplicates
-- FR-007: Remove bodies → `SimulationWorld.fs:164-172`
-- FR-008: Persistent forces → `SimulationWorld.fs:174-181` stored in ActiveForces map
-- FR-009: One-shot impulses → `SimulationWorld.fs:183-189` calls applyLinearImpulse
-- FR-010: Torque application → `SimulationWorld.fs:191-197` calls applyTorque
-- FR-011: Global gravity → `SimulationWorld.fs:203-204`
-- FR-012: Stream state after every step → `SimulationClient.fs:62-63`
-- FR-014: State includes time + running flag → `SimulationWorld.fs:60-62`
-- FR-015: Non-existent body graceful no-op → all body functions return success
-- FR-016: Server disconnection clean shutdown → `SimulationClient.fs:70-72`
-- FR-017: Reject zero/negative mass → `SimulationWorld.fs:113`
-- FR-018: Aspire registration → `AppHost.cs:6-8`
-- FR-019: Contract extensions → `physics_hub.proto` 4 new commands + 2 Body fields
-- FR-020: Clear-forces command → `SimulationWorld.fs:199-201`
-- SC-001: Connect within 5 seconds → architecture supports
-- SC-002: All commands produce expected result → 31 unit tests verify
-- SC-004: 100 bodies stable → stress test passes (100 bodies, 60 steps)
-- SC-006: Edge cases handled → zero mass, empty world, large forces tested
-- SC-007: Unit tests pass → 37 unit tests pass
-
-#### Drifted
-
-- FR-013: State MUST include each body's position, velocity, angular velocity, mass, shape, and identifier
-  - Spec says: All bodies including planes should appear in streamed state
-  - Code does: Plane bodies are created as static in BepuPhysics2 but NOT tracked in Bodies map — invisible in state stream. Dynamic bodies (sphere, box) fully tracked with all 7 fields.
-  - Location: `SimulationWorld.fs:142-149`
-  - Severity: minor
-  - Note: Code comment: "skip tracking static bodies since they can't receive forces." Collisions are out of scope per spec assumptions.
-
-- SC-003: Zero missed steps when streaming
-  - Spec says: "State updates streamed after every step with zero missed steps"
-  - Code does: Sends state after each step via gRPC streaming. Under backpressure, steps may be delayed (not skipped). No buffering/dropping.
-  - Location: `SimulationClient.fs:62-63`
-  - Severity: minor (functionally aligned — no steps are missed, just potentially delayed)
+  - Fix: Move `applyInput` before view command queue drain so REPL is applied last.
 
 #### Not Implemented
 
-(None — all 20 FR requirements have implementation)
+None.
+
+### Success Criteria
+
+- SC-001 through SC-006: All aligned except SC-002 (drifted due to FR-006 zoom gap).
 
 ### Unspecced Code
 
-| Feature | Location | Lines | Suggested Spec |
-|---------|----------|-------|----------------|
-| Kestrel HTTP/2 protocol config | `AppHost.cs:4` | 1 | 001-server-hub (infra detail) |
-
-## Inter-Spec Conflicts
-
-None. Spec 001 (server hub) and spec 002 (simulation) are complementary — simulation connects to server via SimulationLink.
+| Feature | Location | Description |
+|---------|----------|-------------|
+| Reconnection with exponential backoff | `ViewerClient.fs:20-37` | Auto-reconnect with 1s→30s backoff (covered by edge case, not a formal FR) |
 
 ## Recommendations
 
-1. **Minor (FR-013)**: Track plane bodies in state stream. If planes should be visible to downstream viewers, add them to Bodies map with a static flag. Low priority since collisions are out of scope.
-2. **Minor (FR-010)**: Add a specific unit test verifying angular velocity changes after torque application. Function is implemented but not directly tested for physics output.
-3. **Deferred**: 5 Aspire integration test tasks (T014, T023, T028, T034, T039) need container infrastructure. Recommend writing when running full Aspire stack.
-4. **Stale assumption**: Spec says "simple physics model (Euler)" but implementation uses BepuFSharp (full rigid body solver). Update spec assumption to reflect actual technology.
-5. **001 spec update**: Add SimulationLink service to FR-002 description (currently only mentions PhysicsHub).
+1. **Fix FR-015 (minor)**: Swap order — apply `applyInput` first, then drain REPL commands so they override.
+2. **Fix FR-006 (moderate)**: Apply zoom level in `applyToCamera` by scaling camera distance.
+3. **Fix FR-013 (moderate)**: Add `AddServiceDefaults()` via background web host.

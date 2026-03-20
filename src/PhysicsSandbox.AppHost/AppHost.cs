@@ -7,4 +7,8 @@ builder.AddProject<Projects.PhysicsSimulation>("simulation")
     .WithReference(server)
     .WaitFor(server);
 
+builder.AddProject<Projects.PhysicsViewer>("viewer")
+    .WithReference(server)
+    .WaitFor(server);
+
 builder.Build().Run();

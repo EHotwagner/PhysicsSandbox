@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <StrideGraphicsApi>OpenGL</StrideGraphicsApi>
+    <!-- Asset compiler: enabled by default for live runs; pass -p:StrideCompilerSkipBuild=true for CI/headless -->
+    <StrideCompilerSkipBuild Condition="'$(StrideCompilerSkipBuild)' == ''">false</StrideCompilerSkipBuild>
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Rendering/SceneManager.fsi" />
+    <Compile Include="Rendering/SceneManager.fs" />
+    <Compile Include="Rendering/CameraController.fsi" />
+    <Compile Include="Rendering/CameraController.fs" />
+    <Compile Include="Streaming/ViewerClient.fsi" />
+    <Compile Include="Streaming/ViewerClient.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Stride.CommunityToolkit" Version="1.0.0-preview.62" />
+    <PackageReference Include="Stride.CommunityToolkit.Bepu" Version="1.0.0-preview.62" />
+    <PackageReference Include="Stride.CommunityToolkit.Skyboxes" Version="1.0.0-preview.62" />
+    <PackageReference Include="Stride.CommunityToolkit.Linux" Version="1.0.0-preview.62" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PhysicsSandbox.Shared.Contracts\PhysicsSandbox.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\PhysicsSandbox.ServiceDefaults\PhysicsSandbox.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <Target Name="CopyGlslangValidator" AfterTargets="Build">
+    <ItemGroup>
+      <GlslangBin Include="$(NuGetPackageRoot)stride.shaders.compiler/**/contentFiles/any/any/linux-x64/glslangValidator.bin" />
+    </ItemGroup>
+    <Copy SourceFiles="@(GlslangBin)" DestinationFolder="$(ProjectDir)linux-x64/" SkipUnchangedFiles="true" Condition="'@(GlslangBin)' != ''" />
+    <Exec Command="chmod +x $(ProjectDir)linux-x64/glslangValidator.bin" Condition="Exists('$(ProjectDir)linux-x64/glslangValidator.bin')" IgnoreExitCode="true" />
+  </Target>
+
+</Project>

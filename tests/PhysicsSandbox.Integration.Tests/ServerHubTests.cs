@@ -86,4 +86,46 @@ public class ServerHubTests
 
         Assert.True(ack.Success);
     }
+
+    [Fact]
+    public async Task StreamViewCommands_ReceivesSentViewCommand()
+    {
+        var (app, channel) = await StartAppAndConnect();
+        await using var _ = app;
+
+        var client = new PhysicsHub.PhysicsHubClient(channel);
+
+        // Start streaming view commands
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var stream = client.StreamViewCommands(new StateRequest(), cancellationToken: cts.Token);
+
+        // Send a view command
+        var viewCommand = new ViewCommand
+        {
+            SetZoom = new SetZoom { Level = 3.5 }
+        };
+
+        await client.SendViewCommandAsync(viewCommand);
+
+        // Read the forwarded command from the stream
+        var hasNext = await stream.ResponseStream.MoveNext(cts.Token);
+
+        Assert.True(hasNext);
+        Assert.Equal(3.5, stream.ResponseStream.Current.SetZoom.Level);
+    }
+
+    [Fact]
+    public async Task StreamViewCommands_OpensWithoutError()
+    {
+        var (app, channel) = await StartAppAndConnect();
+        await using var _ = app;
+
+        var client = new PhysicsHub.PhysicsHubClient(channel);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var stream = client.StreamViewCommands(new StateRequest(), cancellationToken: cts.Token);
+
+        // Stream should open without throwing
+        Assert.NotNull(stream);
+    }
 }

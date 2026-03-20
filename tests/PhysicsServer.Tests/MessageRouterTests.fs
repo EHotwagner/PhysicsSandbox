@@ -1,5 +1,6 @@
 module PhysicsServer.Tests.MessageRouterTests
 
+open System
 open System.Threading
 open System.Threading.Tasks
 open Xunit
@@ -66,3 +67,39 @@ let ``SubmitViewCommand succeeds with no viewer connected`` () =
     cmd.SetZoom <- SetZoom(Level = 2.0)
     let ack = submitViewCommand router cmd
     Assert.True(ack.Success)
+
+[<Fact>]
+let ``readViewCommand returns submitted ViewCommand`` () =
+    task {
+        let router = create ()
+        use cts = new CancellationTokenSource()
+
+        let cmd = ViewCommand()
+        cmd.SetZoom <- SetZoom(Level = 3.0)
+        submitViewCommand router cmd |> ignore
+
+        let! result = readViewCommand router cts.Token
+        Assert.True(result.IsSome)
+        Assert.Equal(3.0, result.Value.SetZoom.Level)
+    }
+
+[<Fact>]
+let ``readViewCommand returns None on cancellation`` () =
+    task {
+        let router = create ()
+        use cts = new CancellationTokenSource()
+        cts.Cancel()
+
+        let! result = readViewCommand router cts.Token
+        Assert.True(result.IsNone)
+    }
+
+[<Fact>]
+let ``readViewCommand blocks when no commands available`` () =
+    task {
+        let router = create ()
+        use cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50.0))
+
+        let! result = readViewCommand router cts.Token
+        Assert.True(result.IsNone)
+    }

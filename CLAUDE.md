@@ -3,6 +3,8 @@
 Last updated: 2026-03-20
 
 ## Active Technologies
+- F# on .NET 10.0 (viewer service), C# on .NET 10.0 (proto contracts, server changes) + Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Grpc.Net.Client 2.x, Google.Protobuf 3.x (003-3d-viewer)
+- N/A (real-time streaming, no persistence) (003-3d-viewer)
 
 - F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
 - .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x
@@ -45,6 +47,7 @@ dotnet test PhysicsSandbox.slnx
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 003-3d-viewer: Added F# on .NET 10.0 (viewer service), C# on .NET 10.0 (proto contracts, server changes) + Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Grpc.Net.Client 2.x, Google.Protobuf 3.x
 
 - 002-physics-simulation: PhysicsSimulation service with BepuFSharp physics engine, lifecycle control (play/pause/step), body management, forces/impulses/torques, gravity, state streaming. Proto extended with 4 new commands + angular_velocity/orientation. 37 unit tests
 - 001-server-hub: Aspire AppHost, gRPC contracts (PhysicsHub + SimulationLink), PhysicsServer hub with state caching and single-simulation enforcement, ServiceDefaults, 13 tests

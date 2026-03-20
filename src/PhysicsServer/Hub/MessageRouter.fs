@@ -96,3 +96,13 @@ let readCommand (router: MessageRouter) (ct: CancellationToken) =
         | :? OperationCanceledException -> return None
         | :? ChannelClosedException -> return None
     }
+
+let readViewCommand (router: MessageRouter) (ct: CancellationToken) =
+    task {
+        try
+            let! cmd = router.ViewCommandChannel.Reader.ReadAsync(ct).AsTask()
+            return Some cmd
+        with
+        | :? OperationCanceledException -> return None
+        | :? ChannelClosedException -> return None
+    }

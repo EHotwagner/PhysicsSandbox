@@ -2,64 +2,38 @@
   "generated": "2026-03-20T00:00:00Z",
   "project": "BPSandbox",
   "summary": {
-    "specs_analyzed": 2,
-    "requirements_checked": 48,
-    "aligned": 43,
-    "drifted": 4,
+    "specs_analyzed": 1,
+    "requirements_checked": 22,
+    "aligned": 13,
+    "drifted": 3,
     "not_implemented": 0,
     "unspecced_features": 1
   },
   "specs": [
     {
-      "id": "001-server-hub",
-      "title": "Contracts and Server Hub",
-      "aligned": [
-        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005",
-        "FR-006", "FR-007", "FR-008", "FR-009", "FR-010",
-        "FR-011", "FR-012", "FR-013", "FR-014",
-        "SC-001", "SC-003", "SC-005", "SC-006", "SC-007"
-      ],
+      "id": "003-3d-viewer",
+      "title": "3D Viewer",
+      "aligned": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-007", "FR-008", "FR-009", "FR-010", "FR-011", "FR-012", "FR-014", "FR-016"],
       "drifted": [
         {
-          "requirement": "SC-002",
-          "spec_text": "dashboard displays server hub as healthy",
-          "actual": "Health endpoints only mapped in Development environment",
-          "location": "src/PhysicsSandbox.ServiceDefaults/Extensions.cs:113",
-          "severity": "minor"
+          "requirement": "FR-006",
+          "spec_text": "apply SetZoom by adjusting camera zoom to the specified level",
+          "actual": "Zoom level stored in CameraState but not applied to camera entity — no FOV or distance adjustment",
+          "location": "src/PhysicsViewer/Rendering/CameraController.fs:92-104",
+          "severity": "moderate"
         },
-        {
-          "requirement": "FR-002",
-          "spec_text": "define a PhysicsHub service",
-          "actual": "Code defines both PhysicsHub and SimulationLink services",
-          "location": "src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto:22-28",
-          "severity": "minor"
-        }
-      ],
-      "not_implemented": []
-    },
-    {
-      "id": "002-physics-simulation",
-      "title": "Physics Simulation Service",
-      "aligned": [
-        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005",
-        "FR-006", "FR-007", "FR-008", "FR-009", "FR-010",
-        "FR-011", "FR-012", "FR-014", "FR-015", "FR-016",
-        "FR-017", "FR-018", "FR-019", "FR-020",
-        "SC-001", "SC-002", "SC-004", "SC-006", "SC-007"
-      ],
-      "drifted": [
         {
           "requirement": "FR-013",
-          "spec_text": "streamed state MUST include each body's position, velocity, angular velocity, mass, shape, and identifier",
-          "actual": "Plane bodies are created as statics but not tracked in Bodies map — invisible in state stream. Dynamic bodies fully tracked.",
-          "location": "src/PhysicsSimulation/World/SimulationWorld.fs:142-149",
-          "severity": "minor"
+          "spec_text": "register with Aspire orchestrator for health checks and service discovery",
+          "actual": "AppHost registers viewer but Program.fs never calls AddServiceDefaults — no /health endpoint",
+          "location": "src/PhysicsViewer/Program.fs",
+          "severity": "moderate"
         },
         {
-          "requirement": "SC-003",
-          "spec_text": "state updates streamed after every step with zero missed steps",
-          "actual": "State sent after each step but may be delayed under gRPC backpressure. No steps skipped.",
-          "location": "src/PhysicsSimulation/Client/SimulationClient.fs:62-63",
+          "requirement": "FR-015",
+          "spec_text": "REPL commands override the current camera state when received",
+          "actual": "Interactive input applied after REPL commands, so interactive overwrites REPL in same frame",
+          "location": "src/PhysicsViewer/Program.fs:90-108",
           "severity": "minor"
         }
       ],
@@ -68,10 +42,10 @@
   ],
   "unspecced": [
     {
-      "feature": "Kestrel HTTP/2 protocol configuration",
-      "location": "src/PhysicsSandbox.AppHost/AppHost.cs",
-      "lines": 1,
-      "suggested_spec": "001-server-hub"
+      "feature": "Reconnection with exponential backoff",
+      "location": "src/PhysicsViewer/Streaming/ViewerClient.fs:20-37",
+      "lines": 18,
+      "suggested_spec": "003-3d-viewer (edge case coverage)"
     }
   ],
   "conflicts": []

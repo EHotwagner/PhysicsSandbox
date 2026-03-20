@@ -43,3 +43,6 @@ val disconnectSimulation: MessageRouter -> unit
 
 /// Read a pending simulation command. Blocks until one is available or cancellation.
 val readCommand: MessageRouter -> CancellationToken -> Task<SimulationCommand option>
+
+/// Read a pending view command. Blocks until one is available or cancellation.
+val readViewCommand: MessageRouter -> CancellationToken -> Task<ViewCommand option>
