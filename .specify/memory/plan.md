@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-20
-**Revision**: Updated with 005-mcp-server-testing archival
+**Revision**: Updated with 006-mcp-aspire-orchestration archival
 
 ## Technical Context
 
@@ -80,12 +80,13 @@ src/
     └── Program.fs                      # Host + stdio MCP transport
 
 tests/
-├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests (32 tests)
+├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests (35 tests)
 │   ├── ServerHubTests.cs               # 6 tests (SendCommand, StreamState, SendViewCommand, StreamViewCommands)
 │   ├── SimulationConnectionTests.cs    # 7 tests (connection lifecycle, physics verification, 30s stability)
 │   ├── CommandRoutingTests.cs          # 10 tests (all 9 command types + ClearForces end-to-end)
 │   ├── StateStreamingTests.cs          # 4 tests (concurrent subscribers, late-joiner, view command forwarding)
 │   ├── ErrorConditionTests.cs          # 5 tests (no simulation, empty command, rapid stress)
+│   ├── McpOrchestrationTests.cs       # 3 tests (MCP resource lifecycle in Aspire)
 │   └── xunit.runner.json              # Test runner configuration
 ├── PhysicsServer.Tests/                 # F# — unit tests (13 tests)
 │   ├── StateCacheTests.fs
@@ -119,7 +120,7 @@ tests/
 - Simulation connects to server via Aspire service discovery (`services__server__https__0` env var)
 - Viewer connects to server via same Aspire service discovery env vars
 - Client connects to server via same Aspire service discovery env vars (fallback: `http://localhost:5000`)
-- MCP server connects to PhysicsServer via command-line arg (default: `https://localhost:7180`); not Aspire-managed
+- MCP server connects to PhysicsServer via Aspire service discovery (`services__server__https__0` / `services__server__http__0` env vars); falls back to CLI arg or `https://localhost:7180` for standalone use
 - Stride3D uses OpenGL graphics API (`<StrideGraphicsApi>OpenGL</StrideGraphicsApi>`) for container/GPU-passthrough compatibility
 - Stride asset compiler disabled by default (`StrideCompilerSkipBuild`); builds without it for CI, enable for live runs with GPU
 
@@ -133,7 +134,7 @@ tests/
 
 ## Future Services (Planned)
 
-All four services (Server, Simulation, Viewer, Client) are now implemented. MCP server added as standalone debugging tool (not an Aspire-managed service).
+All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-managed project resources. No planned future services.
 
 ## Known Issues & Gotchas
 

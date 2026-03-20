@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-20
-**Revision**: Updated with 005-mcp-server-testing archival
+**Revision**: Updated with 006-mcp-aspire-orchestration archival
 
 ## Overview
 
@@ -74,6 +74,15 @@ A developer runs the integration test suite exercising all gRPC RPCs end-to-end 
 
 ### US-022: MCP Server Configuration and Discovery (P3)
 A developer adds the PhysicsSandbox MCP server to their AI assistant's configuration, launching it as a standalone stdio process connected to the PhysicsServer's gRPC endpoint. [Source: specs/005-mcp-server-testing]
+
+### US-023: MCP Server Starts with Aspire (P1)
+A developer runs the Aspire AppHost and the MCP server starts automatically alongside all other services, appearing in the Aspire dashboard with Running state. No manual launch required. [Source: specs/006-mcp-aspire-orchestration]
+
+### US-024: MCP Server Connects via Service Discovery (P1)
+A developer expects the MCP server to automatically discover and connect to the PhysicsServer through Aspire service references rather than a hardcoded address. Dynamic port assignment is handled transparently. [Source: specs/006-mcp-aspire-orchestration]
+
+### US-025: MCP Server Logs in Aspire Dashboard (P2)
+A developer debugging physics simulation issues through an AI assistant can view the MCP server's logs in the Aspire dashboard's structured logging view, correlated with other service activity. [Source: specs/006-mcp-aspire-orchestration]
 
 ## Functional Requirements
 
@@ -149,6 +158,13 @@ A developer adds the PhysicsSandbox MCP server to their AI assistant's configura
 - **FR-070**: Integration tests cover error conditions: commands without simulation, empty commands, rapid command stress (200 commands). [Source: specs/005-mcp-server-testing]
 - **FR-071**: Integration tests verify concurrent state stream subscribers receive consistent data and late joiners receive cached state. [Source: specs/005-mcp-server-testing]
 - **FR-072**: All integration tests run without GPU, display server, or manual setup (headless-compatible). [Source: specs/005-mcp-server-testing]
+- **FR-073**: AppHost registers MCP server as a project resource in the Aspire orchestration. [Source: specs/006-mcp-aspire-orchestration]
+- **FR-074**: MCP server resource has a service reference to the PhysicsServer for runtime address resolution. [Source: specs/006-mcp-aspire-orchestration]
+- **FR-075**: MCP server waits for the PhysicsServer to be ready before starting. [Source: specs/006-mcp-aspire-orchestration]
+- **FR-076**: MCP server uses Aspire service-discovered PhysicsServer address (env vars `services__server__https__0` / `services__server__http__0`) instead of hardcoded default. CLI arg override and standalone fallback preserved. [Source: specs/006-mcp-aspire-orchestration]
+- **FR-077**: MCP server appears in the Aspire dashboard with its resource name, state, and logs. [Source: specs/006-mcp-aspire-orchestration]
+- **FR-078**: MCP server shuts down gracefully when the AppHost is stopped. [Source: specs/006-mcp-aspire-orchestration]
+- **FR-079**: Existing MCP server functionality (15 tools, stdio transport, gRPC connection management) remains unchanged after orchestration integration. [Source: specs/006-mcp-aspire-orchestration]
 
 ## Key Entities
 
@@ -203,6 +219,8 @@ A developer adds the PhysicsSandbox MCP server to their AI assistant's configura
 - Server command channel full (100 capacity): MCP relays "dropped" response. [Source: specs/005-mcp-server-testing]
 - Integration tests without GPU/display: tests only exercise gRPC communication, not rendering. [Source: specs/005-mcp-server-testing]
 - Simulation gRPC stream dies but process alive: auto-reconnects with exponential backoff (1s → 10s max), preserving world state. [Source: specs/005-mcp-server-testing]
+- MCP server crashes under Aspire: reported as failed in dashboard, consistent with other project resources. [Source: specs/006-mcp-aspire-orchestration]
+- MCP server started but no AI assistant connects: idles gracefully without errors. [Source: specs/006-mcp-aspire-orchestration]
 
 ## Success Criteria
 
@@ -239,3 +257,7 @@ A developer adds the PhysicsSandbox MCP server to their AI assistant's configura
 - **SC-031**: MCP command → state change round-trip completes within 5 seconds end-to-end. [Source: specs/005-mcp-server-testing]
 - **SC-032**: Zero regressions — all existing 118 unit tests + 5 integration tests pass after changes. [Source: specs/005-mcp-server-testing]
 - **SC-033**: 150 total tests passing (52 client + 16 viewer + 13 server + 37 simulation + 32 integration). [Source: specs/005-mcp-server-testing]
+- **SC-034**: Starting the AppHost results in all 5 project resources (server, simulation, viewer, client, mcp) appearing in the Aspire dashboard. [Source: specs/006-mcp-aspire-orchestration]
+- **SC-035**: MCP server connects to PhysicsServer without any manually specified address when launched through Aspire. [Source: specs/006-mcp-aspire-orchestration]
+- **SC-036**: All existing tests continue to pass after orchestration change. [Source: specs/006-mcp-aspire-orchestration]
+- **SC-037**: 153 total tests passing (52 client + 16 viewer + 13 server + 37 simulation + 35 integration). [Source: specs/006-mcp-aspire-orchestration]

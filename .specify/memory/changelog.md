@@ -1,5 +1,27 @@
 # Merged Features Log
 
+## MCP Server Aspire Orchestration — 2026-03-20
+**Branch:** 006-mcp-aspire-orchestration
+**Spec:** specs/006-mcp-aspire-orchestration
+
+**What was added:**
+- MCP server registered as Aspire project resource — starts/stops with AppHost, visible in dashboard
+- Service discovery: MCP server resolves PhysicsServer address via Aspire environment variables (`services__server__https__0` / `services__server__http__0`)
+- Standalone mode preserved: CLI arg override and hardcoded fallback still work for manual launches
+- 3 new integration tests (McpOrchestrationTests: resource lifecycle, graceful shutdown, WaitFor dependency)
+
+**Modified Components:**
+- `src/PhysicsSandbox.AppHost/AppHost.cs` — Added MCP project resource with WithReference + WaitFor
+- `src/PhysicsSandbox.AppHost/PhysicsSandbox.AppHost.csproj` — Added project reference
+- `src/PhysicsSandbox.Mcp/Program.fs` — Env var service discovery
+
+**New Components:**
+- `tests/PhysicsSandbox.Integration.Tests/McpOrchestrationTests.cs` — 3 integration tests
+
+**Tasks Completed:** 9/9 tasks
+
+---
+
 ## MCP Server and Integration Testing — 2026-03-20
 **Branch:** 005-mcp-server-testing
 **Spec:** specs/005-mcp-server-testing

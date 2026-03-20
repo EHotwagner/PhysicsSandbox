@@ -2,7 +2,7 @@
 
 **Feature Branch**: `006-mcp-aspire-orchestration`
 **Created**: 2026-03-20
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "add the mcp server to the aspire apphost orchestration"
 
 ## User Scenarios & Testing *(mandatory)*
