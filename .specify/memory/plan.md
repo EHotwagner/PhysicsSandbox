@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-21
-**Revision**: Updated with 001-demo-script-modernization archival
+**Revision**: Updated with 003-stress-test-demos archival
 
 ## Technical Context
 
@@ -135,8 +135,8 @@ tests/
     ├── StateDisplayTests.fs             # Vec3 formatting, velocity magnitude, shapes
     └── SurfaceAreaTests.fs              # Public API baseline for all 9 modules
 
-demos/                                     # F# scripts — demo suite (10 demos + runners)
-├── Prelude.fsx                            # Shared helpers: resetSimulation, command builders, batchAdd, nextId, toVec3
+demos/                                     # F# scripts — demo suite (15 demos + runners)
+├── Prelude.fsx                            # Shared helpers: resetSimulation, command builders, batchAdd, nextId, toVec3, timed
 ├── Demo01_HelloDrop.fsx                   # Single bowling ball drop
 ├── Demo02_BouncingMarbles.fsx             # 5 marbles (batched)
 ├── Demo03_CrateStack.fsx                  # 8 crates via stack generator
@@ -147,8 +147,13 @@ demos/                                     # F# scripts — demo suite (10 demos
 ├── Demo08_GravityFlip.fsx                 # Grid + 5 beach balls (batched) + gravity changes
 ├── Demo09_Billiards.fsx                   # 16 spheres (batched) + cue ball break
 ├── Demo10_Chaos.fsx                       # Full showcase: generators + impulses (batched) + gravity + camera sweep
-├── AllDemos.fsx                           # All 10 demos as inline functions (loaded by RunAll)
-├── AutoRun.fsx                            # Self-contained non-interactive runner (duplicates Prelude helpers)
+├── Demo11_BodyScaling.fsx                 # Stress: progressive tiers 50/100/200/500 bodies
+├── Demo12_CollisionPit.fsx                # Stress: 120 spheres in walled pit
+├── Demo13_ForceFrenzy.fsx                 # Stress: 3 rounds bulk impulses/torques on 100 bodies
+├── Demo14_DominoCascade.fsx               # Stress: 120 dominoes semicircular chain reaction
+├── Demo15_Overload.fsx                    # Stress: 200+ bodies combined (formations + forces + gravity + camera)
+├── AllDemos.fsx                           # All 15 demos as inline functions (loaded by RunAll)
+├── AutoRun.fsx                            # Self-contained non-interactive runner (duplicates Prelude + timed helpers)
 └── RunAll.fsx                             # Interactive runner (space/enter to advance)
 ```
 

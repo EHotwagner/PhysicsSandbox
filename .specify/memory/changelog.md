@@ -1,5 +1,36 @@
 # Merged Features Log
 
+## Stress Test Demos — 2026-03-21
+**Branch:** 003-stress-test-demos
+**Spec:** specs/003-stress-test-demos
+
+**What was added:**
+- 5 new stress test demos (Demos 11–15) pushing body count, collision density, bulk forces, and combined load
+- Demo 11 (Body Scaling): progressive tiers of 50, 100, 200, 500 bodies with per-tier timing
+- Demo 12 (Collision Pit): 120 spheres dropped into a 4x4m walled enclosure
+- Demo 13 (Force Frenzy): 100 bodies hit with 3 rounds of escalating impulses, torques, and gravity shifts
+- Demo 14 (Domino Cascade): 120 dominoes in a semicircular chain reaction
+- Demo 15 (Overload): 200+ bodies with formations, impulse storms, gravity chaos, camera sweeps
+- New `timed` Prelude.fsx helper for consistent `[TIME] label: N ms` timing output
+- MCP stress testing procedure documented in quickstart.md
+
+**Modified Components:**
+- `demos/Prelude.fsx` — added `timed` helper
+- `demos/AllDemos.fsx` — 15 demos (5 new stress entries)
+- `demos/AutoRun.fsx` — 15 inline demos + `timed` helper in preamble
+- `demos/RunAll.fsx` — dynamic demo count (no change needed)
+
+**New Components:**
+- `demos/Demo11_BodyScaling.fsx`
+- `demos/Demo12_CollisionPit.fsx`
+- `demos/Demo13_ForceFrenzy.fsx`
+- `demos/Demo14_DominoCascade.fsx`
+- `demos/Demo15_Overload.fsx`
+
+**Tasks Completed:** 19/19 tasks
+
+---
+
 ## Demo Script Modernization — 2026-03-21
 **Branch:** 001-demo-script-modernization
 **Spec:** specs/001-demo-script-modernization

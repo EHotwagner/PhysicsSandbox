@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-21
-**Revision**: Updated with 001-demo-script-modernization archival
+**Revision**: Updated with 003-stress-test-demos archival
 
 ## Overview
 
@@ -133,6 +133,22 @@ A developer running the demo suite gets clean simulation state between demos via
 A developer writing demo scripts uses Prelude helpers (makeSphereCmd, makeBoxCmd, makeImpulseCmd, makeTorqueCmd, batchAdd, resetSimulation, nextId, toVec3) for batching and reset without additional boilerplate. [Source: specs/001-demo-script-modernization]
 
 ### US-042: AutoRun Script Consistency (P2)
+A developer runs the AutoRun script and gets consistent results — all demo code is duplicated inline (no external dependencies), helpers match Prelude, and banner shows correct demo count. [Source: specs/001-demo-script-modernization]
+
+### US-043: Progressive Body Scaling Stress Test (P1)
+A developer runs a demo that progressively creates 50, 100, 200, and 500 bodies in tiers to discover where simulation performance degrades, with timing markers at each tier. [Source: specs/003-stress-test-demos]
+
+### US-044: Collision Density Stress Test (P1)
+A developer runs a demo that drops 120 spheres into a walled pit to maximize simultaneous collisions and observe settling behavior under dense collision load. [Source: specs/003-stress-test-demos]
+
+### US-045: Bulk Force Application Stress Test (P2)
+A developer runs a demo that applies 3 rounds of escalating impulses, torques, and gravity changes to 100 bodies simultaneously to stress the force-application pipeline. [Source: specs/003-stress-test-demos]
+
+### US-046: Combined Stress Scenario (P2)
+A developer runs an "overload" demo combining 200+ bodies, formations, impulse storms, gravity chaos, and camera sweeps with per-stage timing to find the overall system ceiling. [Source: specs/003-stress-test-demos]
+
+### US-047: MCP Stress Test Invocation (P3)
+An AI assistant replicates stress demos through MCP tools (batch_commands, start_stress_test, get_diagnostics) to validate MCP handles high-volume operations comparably to direct scripting. [Source: specs/003-stress-test-demos]
 A developer or CI system running AutoRun.fsx gets the same modern batching and reset behavior as individual demo scripts and RunAll. All 10 demos pass in all execution modes. [Source: specs/001-demo-script-modernization]
 
 ## Functional Requirements
@@ -250,6 +266,16 @@ A developer or CI system running AutoRun.fsx gets the same modern batching and r
 - **FR-111**: All 10 demo scripts, AllDemos.fsx, AutoRun.fsx, and RunAll.fsx MUST use `resetSimulation` instead of manual multi-step `resetScene`. [Source: specs/001-demo-script-modernization]
 - **FR-112**: AutoRun.fsx MUST duplicate all Prelude helpers inline (self-contained) and mirror all demo changes. [Source: specs/001-demo-script-modernization]
 - **FR-113**: Batch and reset error handling MUST produce clear, actionable error messages (print failed command indices, reset fallback to manual clear). [Source: specs/001-demo-script-modernization]
+- **FR-114**: Demo suite MUST include at least 5 stress test demos beyond the original 10 demos. [Source: specs/003-stress-test-demos]
+- **FR-115**: Each stress demo MUST follow existing conventions: use Prelude.fsx helpers, resetSimulation at start, batchAdd for bulk operations. [Source: specs/003-stress-test-demos]
+- **FR-116**: At least one demo MUST progressively scale body count in tiers (50, 100, 200, 500) and report timing per tier. [Source: specs/003-stress-test-demos]
+- **FR-117**: At least one demo MUST focus on collision density by creating 100+ bodies in a confined walled space. [Source: specs/003-stress-test-demos]
+- **FR-118**: At least one demo MUST apply bulk forces (impulses, torques, gravity changes) to 100+ bodies simultaneously. [Source: specs/003-stress-test-demos]
+- **FR-119**: At least one demo MUST combine multiple stress axes (body count + collisions + forces + camera movement) in a single scenario. [Source: specs/003-stress-test-demos]
+- **FR-120**: Each stress demo MUST print `[TIME]` timing markers via the `timed` helper so operators can identify degradation. [Source: specs/003-stress-test-demos]
+- **FR-121**: All new demos MUST be integrated into AllDemos.fsx, RunAll.fsx, and AutoRun.fsx. [Source: specs/003-stress-test-demos]
+- **FR-122**: Demos MUST handle failures gracefully — batch failures reported via `[BATCH FAIL]`, reset failures fall back to manual clear. [Source: specs/003-stress-test-demos]
+- **FR-123**: Prelude.fsx MUST provide a `timed` helper that wraps actions with Stopwatch and prints `[TIME] label: N ms`. [Source: specs/003-stress-test-demos]
 
 ## Key Entities
 
@@ -329,6 +355,10 @@ A developer or CI system running AutoRun.fsx gets the same modern batching and r
 - Demo server-side reset fails: Prelude `resetSimulation` prints error and falls back to manual `clearAll`. [Source: specs/001-demo-script-modernization]
 - Demo batch exceeds 100-command limit: `batchAdd` auto-splits into chunks of 100. [Source: specs/001-demo-script-modernization]
 - Demo run standalone vs in suite: both modes work — `resetSimulation` called at start of each demo. [Source: specs/001-demo-script-modernization]
+- Body creation at 500-body tier may exceed available physics engine capacity: demo reports degradation via timing markers, does not crash. [Source: specs/003-stress-test-demos]
+- Collision pit with 120+ spheres: bodies may stack above pit walls; settling time varies with count. [Source: specs/003-stress-test-demos]
+- Domino cascade with 120 dominoes may not fully propagate: `timed` reports cascade duration regardless. [Source: specs/003-stress-test-demos]
+- Rapid gravity changes during force frenzy: bodies respond to each change without desynchronization. [Source: specs/003-stress-test-demos]
 
 ## Success Criteria
 
@@ -386,3 +416,10 @@ A developer or CI system running AutoRun.fsx gets the same modern batching and r
 - **SC-052**: All 10 demos run successfully in both RunAll and AutoRun modes with zero failures after modernization. [Source: specs/001-demo-script-modernization]
 - **SC-053**: Every demo starts from clean state — zero leftover bodies when running full suite. [Source: specs/001-demo-script-modernization]
 - **SC-054**: No demo script requires more than one import beyond Prelude for batching/reset capabilities. [Source: specs/001-demo-script-modernization]
+- **SC-055**: At least 5 new stress demos runnable end-to-end without unhandled crashes. [Source: specs/003-stress-test-demos]
+- **SC-056**: Body-scaling demo identifies a concrete degradation point (body count where step time > 100ms). [Source: specs/003-stress-test-demos]
+- **SC-057**: Collision-density demo creates at least 100 simultaneously interacting bodies in a confined space. [Source: specs/003-stress-test-demos]
+- **SC-058**: Combined scenario demo runs with 200+ bodies, forces, and camera movement, reporting per-stage timing. [Source: specs/003-stress-test-demos]
+- **SC-059**: All stress demos complete within 5 minutes each when run individually. [Source: specs/003-stress-test-demos]
+- **SC-060**: Full demo suite (15 demos) runs end-to-end via AutoRun without manual intervention. [Source: specs/003-stress-test-demos]
+- **SC-061**: At least one stress scenario executable via MCP batch tools with comparable results to scripting. [Source: specs/003-stress-test-demos]
