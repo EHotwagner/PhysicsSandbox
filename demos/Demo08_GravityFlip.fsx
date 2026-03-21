@@ -6,16 +6,20 @@ module Demo08 =
     let description = "Objects settle, then gravity flips upward — chaos!"
 
     let run (s: PhysicsClient.Session.Session) =
-        resetScene s
+        resetSimulation s
 
         // Camera: wide angle
         setCamera s (6.0, 4.0, 6.0) (0.0, 2.0, 0.0) |> ignore
 
-        // Build a 3x3 grid of crates and scatter some spheres
+        // Build a 3x3 grid of crates (generator handles its own calls)
         grid s 3 3 (Some (-2.0, 0.0, -2.0)) |> ok |> ignore
-        for i in 0..4 do
-            let x = float i * 0.8 - 1.6
-            beachBall s (Some (x, 5.0 + float i, 0.3)) None None |> ignore
+
+        // Batch-create 5 beach balls (r=0.2, m=0.1)
+        let ballCmds =
+            [ for i in 0..4 do
+                let x = float i * 0.8 - 1.6
+                makeSphereCmd (nextId "sphere") (x, 5.0 + float i, 0.3) 0.2 0.1 ]
+        batchAdd s ballCmds
         printfn "  Grid of crates + 5 beach balls dropping"
 
         // Normal gravity — let things settle

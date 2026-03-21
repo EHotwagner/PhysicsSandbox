@@ -6,16 +6,18 @@ module Demo02 =
     let description = "Five marbles dropped from different heights."
 
     let run (s: PhysicsClient.Session.Session) =
-        resetScene s
+        resetSimulation s
 
         // Camera: elevated overview
         setCamera s (4.0, 5.0, 4.0) (0.0, 0.5, 0.0) |> ignore
 
-        // Drop marbles at various heights and offsets
-        for i in 0..4 do
-            let x = float i * 0.3 - 0.6
-            let y = 3.0 + float i * 2.0
-            marble s (Some (x, y, 0.0)) None None |> ignore
+        // Batch-create 5 marbles at various heights (r=0.01, m=0.005)
+        let cmds =
+            [ for i in 0..4 do
+                let x = float i * 0.3 - 0.6
+                let y = 3.0 + float i * 2.0
+                makeSphereCmd (nextId "sphere") (x, y, 0.0) 0.01 0.005 ]
+        batchAdd s cmds
 
         printfn "  Dropping 5 marbles from 3m to 11m..."
         runFor s 4.0

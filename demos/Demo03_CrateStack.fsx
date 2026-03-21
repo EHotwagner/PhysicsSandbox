@@ -6,7 +6,7 @@ module Demo03 =
     let description = "A tower of 8 crates built with the stack generator."
 
     let run (s: PhysicsClient.Session.Session) =
-        resetScene s
+        resetSimulation s
 
         // Camera: front view, slightly elevated
         setCamera s (6.0, 5.0, 0.0) (0.0, 4.0, 0.0) |> ignore

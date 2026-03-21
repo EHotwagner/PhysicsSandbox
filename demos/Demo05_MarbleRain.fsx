@@ -6,7 +6,7 @@ module Demo05 =
     let description = "20 random spheres rain down from the sky."
 
     let run (s: PhysicsClient.Session.Session) =
-        resetScene s
+        resetSimulation s
 
         // Camera: overhead angle
         setCamera s (8.0, 12.0, 8.0) (0.0, 0.0, 0.0) |> ignore

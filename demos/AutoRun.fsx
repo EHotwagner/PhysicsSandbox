@@ -16,32 +16,69 @@ open PhysicsClient.Presets
 open PhysicsClient.Generators
 open PhysicsClient.Steering
 open PhysicsClient.StateDisplay
+open PhysicsSandbox.Shared.Contracts
 
 let ok r = r |> Result.defaultWith (fun e -> failwith e)
 let sleep (ms: int) = System.Threading.Thread.Sleep(ms)
 let runFor (s: Session) (sec: float) = play s |> ignore; sleep (int (sec * 1000.0)); pause s |> ignore
-let resetScene (s: Session) =
-    pause s |> ignore; clearAll s |> ignore; PhysicsClient.IdGenerator.reset ()
+
+let toVec3 (x: float, y: float, z: float) =
+    let v = Vec3(); v.X <- x; v.Y <- y; v.Z <- z; v
+
+let resetSimulation (s: Session) =
+    pause s |> ignore
+    try reset s |> ok
+    with ex -> printfn "  [RESET ERROR] %s — falling back to manual clear" ex.Message; clearAll s |> ignore
+    PhysicsClient.IdGenerator.reset ()
     addPlane s None None |> ignore; setGravity s (0.0, -9.81, 0.0) |> ignore; sleep 100
+
+let nextId prefix = PhysicsClient.IdGenerator.nextId prefix
+
+let makeSphereCmd (id: string) (pos: float * float * float) (radius: float) (mass: float) =
+    let sphere = Sphere(); sphere.Radius <- radius
+    let shape = Shape(); shape.Sphere <- sphere
+    let body = AddBody(); body.Id <- id; body.Position <- toVec3 pos; body.Mass <- mass; body.Shape <- shape
+    let cmd = SimulationCommand(); cmd.AddBody <- body; cmd
+
+let makeBoxCmd (id: string) (pos: float * float * float) (halfExtents: float * float * float) (mass: float) =
+    let box = Box(); box.HalfExtents <- toVec3 halfExtents
+    let shape = Shape(); shape.Box <- box
+    let body = AddBody(); body.Id <- id; body.Position <- toVec3 pos; body.Mass <- mass; body.Shape <- shape
+    let cmd = SimulationCommand(); cmd.AddBody <- body; cmd
+
+let makeImpulseCmd (bodyId: string) (impulse: float * float * float) =
+    let ai = ApplyImpulse(); ai.BodyId <- bodyId; ai.Impulse <- toVec3 impulse
+    let cmd = SimulationCommand(); cmd.ApplyImpulse <- ai; cmd
+
+let makeTorqueCmd (bodyId: string) (torque: float * float * float) =
+    let at = ApplyTorque(); at.BodyId <- bodyId; at.Torque <- toVec3 torque
+    let cmd = SimulationCommand(); cmd.ApplyTorque <- at; cmd
+
+let batchAdd (s: Session) (commands: SimulationCommand list) =
+    for chunk in commands |> List.chunkBySize 100 do
+        let response = batchCommands s chunk |> ok
+        for f in response.Results |> Seq.filter (fun r -> not r.Success) do
+            printfn "  [BATCH FAIL] command %d: %s" f.Index f.Message
 
 type Demo = { Name: string; Desc: string; Run: Session -> unit }
 
 let demos = [|
   { Name = "Hello Drop"; Desc = "A bowling ball falls from 10m."
     Run = fun s ->
-      resetScene s; setCamera s (5.0, 3.0, 5.0) (0.0, 1.0, 0.0) |> ignore
+      resetSimulation s; setCamera s (5.0, 3.0, 5.0) (0.0, 1.0, 0.0) |> ignore
       bowlingBall s (Some (0.0, 10.0, 0.0)) None None |> ignore
       printfn "  Dropping bowling ball..."; runFor s 3.0; listBodies s }
 
   { Name = "Bouncing Marbles"; Desc = "Five marbles from different heights."
     Run = fun s ->
-      resetScene s; setCamera s (4.0, 5.0, 4.0) (0.0, 0.5, 0.0) |> ignore
-      for i in 0..4 do marble s (Some (float i * 0.3 - 0.6, 3.0 + float i * 2.0, 0.0)) None None |> ignore
+      resetSimulation s; setCamera s (4.0, 5.0, 4.0) (0.0, 0.5, 0.0) |> ignore
+      let cmds = [ for i in 0..4 do makeSphereCmd (nextId "sphere") (float i * 0.3 - 0.6, 3.0 + float i * 2.0, 0.0) 0.01 0.005 ]
+      batchAdd s cmds
       printfn "  Dropping 5 marbles..."; runFor s 4.0; listBodies s }
 
   { Name = "Crate Stack"; Desc = "Tower of 8 crates — push the top one."
     Run = fun s ->
-      resetScene s; setCamera s (6.0, 5.0, 0.0) (0.0, 4.0, 0.0) |> ignore
+      resetSimulation s; setCamera s (6.0, 5.0, 0.0) (0.0, 4.0, 0.0) |> ignore
       let ids = stack s 8 (Some (0.0, 0.0, 0.0)) |> ok
       printfn "  Stack of %d" ids.Length; runFor s 2.0
       printfn "  Pushing top crate east..."; push s (List.last ids) East 15.0 |> ignore
@@ -49,7 +86,7 @@ let demos = [|
 
   { Name = "Bowling Alley"; Desc = "Bowling ball vs pyramid of bricks."
     Run = fun s ->
-      resetScene s; setCamera s (-5.0, 3.0, 3.0) (3.0, 1.0, 0.0) |> ignore
+      resetSimulation s; setCamera s (-5.0, 3.0, 3.0) (3.0, 1.0, 0.0) |> ignore
       pyramid s 4 (Some (5.0, 0.0, 0.0)) |> ok |> ignore
       let ball = bowlingBall s (Some (-3.0, 0.15, 0.0)) None None |> ok
       printfn "  Pyramid + ball ready"; runFor s 1.0
@@ -58,7 +95,7 @@ let demos = [|
 
   { Name = "Marble Rain"; Desc = "20 random spheres rain down."
     Run = fun s ->
-      resetScene s; setCamera s (8.0, 12.0, 8.0) (0.0, 0.0, 0.0) |> ignore
+      resetSimulation s; setCamera s (8.0, 12.0, 8.0) (0.0, 0.0, 0.0) |> ignore
       let ids = randomSpheres s 20 (Some 42) |> ok
       printfn "  %d spheres generated" ids.Length; runFor s 5.0
       setCamera s (3.0, 1.0, 3.0) (0.0, 0.5, 0.0) |> ignore
@@ -66,34 +103,38 @@ let demos = [|
 
   { Name = "Domino Row"; Desc = "12 dominoes toppled by a push."
     Run = fun s ->
-      resetScene s; setCamera s (-2.0, 3.0, 6.0) (3.0, 0.5, 0.0) |> ignore
-      let mutable firstId = ""
-      for i in 0..11 do
-        let id = addBox s (float i * 0.5, 0.3, 0.0) (0.05, 0.3, 0.15) 1.0 None |> ok
-        if i = 0 then firstId <- id
+      resetSimulation s; setCamera s (-2.0, 3.0, 6.0) (3.0, 0.5, 0.0) |> ignore
+      let ids = [ for _ in 0..11 -> nextId "box" ]
+      let cmds = [ for i in 0..11 do makeBoxCmd ids.[i] (float i * 0.5, 0.3, 0.0) (0.05, 0.3, 0.15) 1.0 ]
+      batchAdd s cmds
       printfn "  12 dominoes placed"; runFor s 1.0
-      printfn "  Toppling..."; push s firstId East 3.0 |> ignore; runFor s 5.0
+      printfn "  Toppling..."; push s ids.[0] East 3.0 |> ignore; runFor s 5.0
       setCamera s (8.0, 2.0, 4.0) (5.0, 0.0, 0.0) |> ignore; sleep 500; listBodies s }
 
   { Name = "Spinning Tops"; Desc = "Bodies spinning with torques + wireframe."
     Run = fun s ->
-      resetScene s; setCamera s (0.0, 8.0, 6.0) (0.0, 0.5, 0.0) |> ignore
-      let b1 = beachBall s (Some (-2.0, 0.25, 0.0)) None None |> ok
-      let b2 = beachBall s (Some (2.0, 0.25, 0.0)) None None |> ok
-      let b3 = crate s (Some (0.0, 0.55, -2.0)) None None |> ok
-      let b4 = crate s (Some (0.0, 0.55, 2.0)) None None |> ok
+      resetSimulation s; setCamera s (0.0, 8.0, 6.0) (0.0, 0.5, 0.0) |> ignore
+      let b1id = nextId "sphere"; let b2id = nextId "sphere"
+      let b3id = nextId "box"; let b4id = nextId "box"
+      let bodyCmds = [
+          makeSphereCmd b1id (-2.0, 0.25, 0.0) 0.2 0.1; makeSphereCmd b2id (2.0, 0.25, 0.0) 0.2 0.1
+          makeBoxCmd b3id (0.0, 0.55, -2.0) (0.5, 0.5, 0.5) 20.0; makeBoxCmd b4id (0.0, 0.55, 2.0) (0.5, 0.5, 0.5) 20.0 ]
+      batchAdd s bodyCmds
       runFor s 0.5
-      spin s b1 Up 50.0 |> ignore; spin s b2 North 30.0 |> ignore
-      spin s b3 Up 80.0 |> ignore; spin s b4 East 40.0 |> ignore
+      let torqueCmds = [
+          makeTorqueCmd b1id (0.0, 50.0, 0.0); makeTorqueCmd b2id (0.0, 0.0, -30.0)
+          makeTorqueCmd b3id (0.0, 80.0, 0.0); makeTorqueCmd b4id (40.0, 0.0, 0.0) ]
+      batchAdd s torqueCmds
       printfn "  Spinning..."; runFor s 4.0
       wireframe s true |> ignore; printfn "  Wireframe on"; sleep 2000
       wireframe s false |> ignore; listBodies s }
 
   { Name = "Gravity Flip"; Desc = "Normal gravity, then reversed, then sideways."
     Run = fun s ->
-      resetScene s; setCamera s (6.0, 4.0, 6.0) (0.0, 2.0, 0.0) |> ignore
+      resetSimulation s; setCamera s (6.0, 4.0, 6.0) (0.0, 2.0, 0.0) |> ignore
       grid s 3 3 (Some (-2.0, 0.0, -2.0)) |> ok |> ignore
-      for i in 0..4 do beachBall s (Some (float i * 0.8 - 1.6, 5.0 + float i, 0.3)) None None |> ignore
+      let ballCmds = [ for i in 0..4 do makeSphereCmd (nextId "sphere") (float i * 0.8 - 1.6, 5.0 + float i, 0.3) 0.2 0.1 ]
+      batchAdd s ballCmds
       printfn "  Grid + 5 balls"; runFor s 3.0
       printfn "  GRAVITY REVERSED!"
       setCamera s (5.0, 1.0, 5.0) (0.0, 5.0, 0.0) |> ignore
@@ -105,22 +146,24 @@ let demos = [|
 
   { Name = "Billiards"; Desc = "Cue ball breaks a triangle formation."
     Run = fun s ->
-      resetScene s; setCamera s (0.0, 10.0, 0.1) (0.0, 0.0, 0.0) |> ignore
-      let r = 0.1
-      for row in 0..4 do
-        for col in 0..row do
-          let x = float row * 0.22 * 0.866 + 1.0
-          let z = (float col - float row / 2.0) * 0.22
-          addSphere s (x, r, z) r 0.17 None |> ignore
-      printfn "  15 balls placed"
-      let cue = addSphere s (-2.0, r, 0.0) 0.11 0.17 (Some "cue") |> ok
+      resetSimulation s; setCamera s (0.0, 10.0, 0.1) (0.0, 0.0, 0.0) |> ignore
+      let r = 0.1; let spacing = 0.22; let cueId = "cue"
+      let cmds = [
+          for row in 0..4 do
+            for col in 0..row do
+              let x = float row * spacing * 0.866 + 1.0
+              let z = (float col - float row / 2.0) * spacing
+              makeSphereCmd (nextId "sphere") (x, r, z) r 0.17
+          makeSphereCmd cueId (-2.0, r, 0.0) (r * 1.1) 0.17 ]
+      batchAdd s cmds
+      printfn "  15 balls + cue placed"
       setCamera s (-3.0, 1.5, 2.0) (1.0, 0.0, 0.0) |> ignore; runFor s 0.5
-      printfn "  BREAK!"; launch s cue (1.5, 0.0, 0.0) 15.0 |> ignore; runFor s 4.0
+      printfn "  BREAK!"; launch s cueId (1.5, 0.0, 0.0) 15.0 |> ignore; runFor s 4.0
       setCamera s (0.0, 8.0, 0.1) (0.0, 0.0, 0.0) |> ignore; sleep 1000; listBodies s }
 
   { Name = "Chaos Scene"; Desc = "Everything: presets, generators, steering, gravity, camera sweeps."
     Run = fun s ->
-      resetScene s; setCamera s (12.0, 8.0, 12.0) (0.0, 2.0, 0.0) |> ignore
+      resetSimulation s; setCamera s (12.0, 8.0, 12.0) (0.0, 2.0, 0.0) |> ignore
       printfn "  Act 1: Building stage..."
       pyramid s 5 (Some (-4.0, 0.0, 0.0)) |> ok |> ignore
       stack s 6 (Some (4.0, 0.0, 0.0)) |> ok |> ignore
@@ -128,7 +171,8 @@ let demos = [|
       printfn "  Act 2: Bombardment!"
       setCamera s (0.0, 15.0, 10.0) (0.0, 2.0, 0.0) |> ignore
       let proj = randomSpheres s 10 (Some 99) |> ok
-      for id in proj do pushVec s id (0.0, -20.0, 0.0) |> ignore
+      let impulseCmds = [ for id in proj do makeImpulseCmd id (0.0, -20.0, 0.0) ]
+      batchAdd s impulseCmds
       runFor s 3.0
       printfn "  Act 3: Boulder attack!"
       setCamera s (-10.0, 3.0, 0.0) (0.0, 2.0, 0.0) |> ignore
@@ -173,4 +217,4 @@ for i in 0 .. demos.Length - 1 do
 printfn "============================================"
 printfn "  Results: %d passed, %d failed" passed failed
 printfn "============================================\n"
-resetScene s; disconnect s; printfn "Done!"
+resetSimulation s; disconnect s; printfn "Done!"

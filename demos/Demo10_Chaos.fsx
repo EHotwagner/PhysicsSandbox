@@ -7,7 +7,7 @@ module Demo10 =
     let description = "The full sandbox: presets, generators, steering, gravity, camera sweeps."
 
     let run (s: PhysicsClient.Session.Session) =
-        resetScene s
+        resetSimulation s
 
         // Act 1: Build the stage
         setCamera s (12.0, 8.0, 12.0) (0.0, 2.0, 0.0) |> ignore
@@ -28,8 +28,11 @@ module Demo10 =
         printfn "  Act 2: Bombardment!"
 
         let projectiles = randomSpheres s 10 (Some 99) |> ok
-        for id in projectiles do
-            pushVec s id (0.0, -20.0, 0.0) |> ignore
+        // Batch-apply downward impulses to all projectiles
+        let impulseCmds =
+            [ for id in projectiles do
+                makeImpulseCmd id (0.0, -20.0, 0.0) ]
+        batchAdd s impulseCmds
 
         runFor s 3.0
 

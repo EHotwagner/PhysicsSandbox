@@ -13,6 +13,7 @@ module DemoHelpers =
     open PhysicsClient.Session
     open PhysicsClient.SimulationCommands
     open PhysicsClient.ViewCommands
+    open PhysicsSandbox.Shared.Contracts
 
     let ok r = r |> Result.defaultWith (fun e -> failwith e)
     let sleep (ms: int) = System.Threading.Thread.Sleep(ms)
@@ -22,10 +23,74 @@ module DemoHelpers =
         sleep (int (seconds * 1000.0))
         pause s |> ignore
 
-    let resetScene (s: Session) =
+    let toVec3 (x: float, y: float, z: float) =
+        let v = Vec3()
+        v.X <- x; v.Y <- y; v.Z <- z
+        v
+
+    let resetSimulation (s: Session) =
         pause s |> ignore
-        clearAll s |> ignore
+        try
+            reset s |> ok
+        with ex ->
+            printfn "  [RESET ERROR] %s — falling back to manual clear" ex.Message
+            clearAll s |> ignore
         PhysicsClient.IdGenerator.reset ()
         addPlane s None None |> ignore
         setGravity s (0.0, -9.81, 0.0) |> ignore
         sleep 100
+
+    let nextId prefix = PhysicsClient.IdGenerator.nextId prefix
+
+    let makeSphereCmd (id: string) (pos: float * float * float) (radius: float) (mass: float) =
+        let sphere = Sphere()
+        sphere.Radius <- radius
+        let shape = Shape()
+        shape.Sphere <- sphere
+        let body = AddBody()
+        body.Id <- id
+        body.Position <- toVec3 pos
+        body.Mass <- mass
+        body.Shape <- shape
+        let cmd = SimulationCommand()
+        cmd.AddBody <- body
+        cmd
+
+    let makeBoxCmd (id: string) (pos: float * float * float) (halfExtents: float * float * float) (mass: float) =
+        let box = Box()
+        box.HalfExtents <- toVec3 halfExtents
+        let shape = Shape()
+        shape.Box <- box
+        let body = AddBody()
+        body.Id <- id
+        body.Position <- toVec3 pos
+        body.Mass <- mass
+        body.Shape <- shape
+        let cmd = SimulationCommand()
+        cmd.AddBody <- body
+        cmd
+
+    let makeImpulseCmd (bodyId: string) (impulse: float * float * float) =
+        let ai = ApplyImpulse()
+        ai.BodyId <- bodyId
+        ai.Impulse <- toVec3 impulse
+        let cmd = SimulationCommand()
+        cmd.ApplyImpulse <- ai
+        cmd
+
+    let makeTorqueCmd (bodyId: string) (torque: float * float * float) =
+        let at = ApplyTorque()
+        at.BodyId <- bodyId
+        at.Torque <- toVec3 torque
+        let cmd = SimulationCommand()
+        cmd.ApplyTorque <- at
+        cmd
+
+    let batchAdd (s: Session) (commands: SimulationCommand list) =
+        let chunks = commands |> List.chunkBySize 100
+        for chunk in chunks do
+            let response = batchCommands s chunk |> ok
+            let failures = response.Results |> Seq.filter (fun r -> not r.Success) |> Seq.toList
+            if failures.Length > 0 then
+                for f in failures do
+                    printfn "  [BATCH FAIL] command %d: %s" f.Index f.Message
