@@ -5,23 +5,23 @@
 Four services, all communication routed through the Server.
 
 ```
-                  ┌──────────────┐
-                  │    Server    │
-                  │   (Hub/API)  │
-                  └──┬──┬──┬────┘
-       commands ▲    │  │  │    ▼ sim data + UI
-          ┌──────────┘  │  └──────────┐
-          │             │             │
-  ┌───────┴──────┐      │      ┌──────┴───────┐
-  │  Simulation  │      │      │   3D Viewer  │
-  │  (Physics)   │      │      │   (Render)   │
-  └──────────────┘      │      └──────────────┘
-                        │
-                 ▲ cmds │ state ▼
-                  ┌─────┴────────┐
-                  │  REPL Client │
-                  │  (Commands)  │
-                  └──────────────┘
+                    ┌──────────────┐
+                    │    Server    │
+                    │   (Hub/API)  │
+                    └──┬──┬──┬────┘
+     commands ▼  ▲ state │  │    ▼ sim data + UI
+          ┌──────────────┘  └──────────┐
+          │                            │
+  ┌───────┴──────┐              ┌──────┴───────┐
+  │  Simulation  │              │   3D Viewer  │
+  │  (Physics)   │              │   (Render)   │
+  └──────────────┘              └──────────────┘
+
+                   ▲ cmds │ state ▼
+                    ┌─────┴────────┐
+                    │  REPL Client │
+                    │  (Commands)  │
+                    └──────────────┘
 ```
 
 ## Services

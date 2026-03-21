@@ -15,18 +15,18 @@ A real-time 3D physics simulation built as an F# microservices architecture, orc
 Four services communicate through a central gRPC hub:
 
 ```
-                ┌──────────────┐
-                │    Server    │
-                │   (Hub/API)  │
-                └──┬──┬──┬────┘
-     commands ▲    │  │  │    ▼ state + view cmds
-        ┌──────────┘  │  └──────────┐
-        │             │             │
-┌───────┴──────┐      │      ┌──────┴───────┐
-│  Simulation  │      │      │   3D Viewer  │
-│  (Physics)   │      │      │   (Render)   │
-└──────────────┘      │      └──────────────┘
-                      │
+                  ┌──────────────┐
+                  │    Server    │
+                  │   (Hub/API)  │
+                  └──┬──┬──┬────┘
+   commands ▼  ▲ state │  │    ▼ state + view cmds
+        ┌──────────────┘  └──────────┐
+        │                            │
+┌───────┴──────┐              ┌──────┴───────┐
+│  Simulation  │              │   3D Viewer  │
+│  (Physics)   │              │   (Render)   │
+└──────────────┘              └──────────────┘
+
                ▲ cmds │ state ▼
                 ┌─────┴────────┐
                 │  REPL Client │

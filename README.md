@@ -11,18 +11,18 @@ A real-time 3D physics simulation built as an F# microservices architecture on .
 Four F# services communicate through a central gRPC hub:
 
 ```
-                ┌──────────────┐
-                │    Server    │
-                │   (Hub/API)  │
-                └──┬──┬──┬────┘
-     commands ▲    │  │  │    ▼ state + view cmds
-        ┌──────────┘  │  └──────────┐
-        │             │             │
-┌───────┴──────┐      │      ┌──────┴───────┐
-│  Simulation  │      │      │   3D Viewer  │
-│ (BepuPhysics)│      │      │  (Stride3D)  │
-└──────────────┘      │      └──────────────┘
-                      │
+                  ┌──────────────┐
+                  │    Server    │
+                  │   (Hub/API)  │
+                  └──┬──┬──┬────┘
+   commands ▼  ▲ state │  │    ▼ state + view cmds
+        ┌──────────────┘  └──────────┐
+        │                            │
+┌───────┴──────┐              ┌──────┴───────┐
+│  Simulation  │              │   3D Viewer  │
+│ (BepuPhysics)│              │  (Stride3D)  │
+└──────────────┘              └──────────────┘
+
                ▲ cmds │ state ▼
                 ┌─────┴────────┐
                 │  REPL Client │

@@ -18,23 +18,23 @@ with a central hub routing messages between producers and consumers.
 ## Service Topology
 
 ```
-                  ┌──────────────┐
-                  │    Server    │
-                  │   (Hub/API)  │
-                  └──┬──┬──┬────┘
-       commands ▲    │  │  │    ▼ state + view cmds
-          ┌──────────┘  │  └──────────┐
-          │             │             │
-  ┌───────┴──────┐      │      ┌──────┴───────┐
-  │  Simulation  │      │      │   3D Viewer  │
-  │ (BepuPhysics)│      │      │  (Stride3D)  │
-  └──────────────┘      │      └──────────────┘
-                        │
-                 ▲ cmds │ state ▼
-                  ┌─────┴────────┐
-                  │  REPL Client │
-                  │  (Spectre)   │
-                  └──────────────┘
+                    ┌──────────────┐
+                    │    Server    │
+                    │   (Hub/API)  │
+                    └──┬──┬──┬────┘
+     commands ▼  ▲ state │  │    ▼ state + view cmds
+          ┌──────────────┘  └──────────┐
+          │                            │
+  ┌───────┴──────┐              ┌──────┴───────┐
+  │  Simulation  │              │   3D Viewer  │
+  │ (BepuPhysics)│              │  (Stride3D)  │
+  └──────────────┘              └──────────────┘
+
+                   ▲ cmds │ state ▼
+                    ┌─────┴────────┐
+                    │  REPL Client │
+                    │  (Spectre)   │
+                    └──────────────┘
 ```
 
 ## Services
