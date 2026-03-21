@@ -14,6 +14,8 @@ Last updated: 2026-03-21
 - F# scripts (.fsx) on .NET 10.0 + PhysicsClient.dll, PhysicsSandbox.Shared.Contracts.dll (proto-generated types) (001-demo-script-modernization)
 - F# scripts (.fsx) on .NET 10.0 + PhysicsClient.dll (existing), PhysicsSandbox.Shared.Contracts.dll (existing), Grpc.Net.Client, Google.Protobuf (003-stress-test-demos)
 - N/A (in-memory physics simulation) (003-stress-test-demos)
+- Python 3.10+ + grpcio, grpcio-tools, protobuf (for gRPC stub generation and communication) (004-python-demo-scripts)
+- N/A (stateless scripts communicating with running server) (004-python-demo-scripts)
 
 ## Project Structure
 
@@ -68,10 +70,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 004-python-demo-scripts: Added Python 3.10+ + grpcio, grpcio-tools, protobuf (for gRPC stub generation and communication)
 - 003-stress-test-demos: Added F# scripts (.fsx) on .NET 10.0 + PhysicsClient.dll (existing), PhysicsSandbox.Shared.Contracts.dll (existing), Grpc.Net.Client, Google.Protobuf
 - 001-demo-script-modernization: Demo scripts modernized with batch commands (6 demos use batchAdd) and server-side resetSimulation. Prelude.fsx adds 8 helpers: resetSimulation, makeSphereCmd, makeBoxCmd, makeImpulseCmd, makeTorqueCmd, batchAdd (auto-split at 100), nextId, toVec3. AllDemos/AutoRun/RunAll synced. 37 tasks completed.
-- 002-performance-diagnostics: FPS overlay + logging in viewer, per-service metrics (message counts, bytes), batch commands (gRPC + MCP, max 100), simulation restart, static body collision tracking, pipeline diagnostics (tick/serialize/transfer timing), stress testing framework (body-scaling, command-throughput), MCP-vs-scripting comparison. 38 MCP tools total. 97 tasks completed.
-- 003-stress-test-demos: 5 new stress demos (11–15): Body Scaling (50/100/200/500 tiers), Collision Pit (120 spheres in walled enclosure), Force Frenzy (3 rounds bulk impulses/torques on 100 bodies), Domino Cascade (120 semicircular dominoes), Overload (200+ bodies combined stress). New `timed` Prelude helper for `[TIME]` markers. 15 demos total. 19 tasks completed.
 
 ## Environment
 
