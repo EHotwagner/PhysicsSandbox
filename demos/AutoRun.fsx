@@ -23,7 +23,9 @@ let sleep (ms: int) = System.Threading.Thread.Sleep(ms)
 let runFor (s: Session) (sec: float) = play s |> ignore; sleep (int (sec * 1000.0)); pause s |> ignore
 
 let toVec3 (x: float, y: float, z: float) =
-    let v = Vec3(); v.X <- x; v.Y <- y; v.Z <- z; v
+    let v = Vec3()
+    v.X <- x; v.Y <- y; v.Z <- z
+    v
 
 let resetSimulation (s: Session) =
     pause s |> ignore
@@ -35,24 +37,40 @@ let resetSimulation (s: Session) =
 let nextId prefix = PhysicsClient.IdGenerator.nextId prefix
 
 let makeSphereCmd (id: string) (pos: float * float * float) (radius: float) (mass: float) =
-    let sphere = Sphere(); sphere.Radius <- radius
-    let shape = Shape(); shape.Sphere <- sphere
-    let body = AddBody(); body.Id <- id; body.Position <- toVec3 pos; body.Mass <- mass; body.Shape <- shape
-    let cmd = SimulationCommand(); cmd.AddBody <- body; cmd
+    let sphere = Sphere()
+    sphere.Radius <- radius
+    let shape = Shape()
+    shape.Sphere <- sphere
+    let body = AddBody()
+    body.Id <- id; body.Position <- toVec3 pos; body.Mass <- mass; body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
 
 let makeBoxCmd (id: string) (pos: float * float * float) (halfExtents: float * float * float) (mass: float) =
-    let box = Box(); box.HalfExtents <- toVec3 halfExtents
-    let shape = Shape(); shape.Box <- box
-    let body = AddBody(); body.Id <- id; body.Position <- toVec3 pos; body.Mass <- mass; body.Shape <- shape
-    let cmd = SimulationCommand(); cmd.AddBody <- body; cmd
+    let box = Box()
+    box.HalfExtents <- toVec3 halfExtents
+    let shape = Shape()
+    shape.Box <- box
+    let body = AddBody()
+    body.Id <- id; body.Position <- toVec3 pos; body.Mass <- mass; body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
 
 let makeImpulseCmd (bodyId: string) (impulse: float * float * float) =
-    let ai = ApplyImpulse(); ai.BodyId <- bodyId; ai.Impulse <- toVec3 impulse
-    let cmd = SimulationCommand(); cmd.ApplyImpulse <- ai; cmd
+    let ai = ApplyImpulse()
+    ai.BodyId <- bodyId; ai.Impulse <- toVec3 impulse
+    let cmd = SimulationCommand()
+    cmd.ApplyImpulse <- ai
+    cmd
 
 let makeTorqueCmd (bodyId: string) (torque: float * float * float) =
-    let at = ApplyTorque(); at.BodyId <- bodyId; at.Torque <- toVec3 torque
-    let cmd = SimulationCommand(); cmd.ApplyTorque <- at; cmd
+    let at = ApplyTorque()
+    at.BodyId <- bodyId; at.Torque <- toVec3 torque
+    let cmd = SimulationCommand()
+    cmd.ApplyTorque <- at
+    cmd
 
 let batchAdd (s: Session) (commands: SimulationCommand list) =
     for chunk in commands |> List.chunkBySize 100 do
@@ -121,8 +139,10 @@ let demos = [|
   { Name = "Spinning Tops"; Desc = "Bodies spinning with torques + wireframe."
     Run = fun s ->
       resetSimulation s; setCamera s (0.0, 8.0, 6.0) (0.0, 0.5, 0.0) |> ignore
-      let b1id = nextId "sphere"; let b2id = nextId "sphere"
-      let b3id = nextId "box"; let b4id = nextId "box"
+      let b1id = nextId "sphere"
+      let b2id = nextId "sphere"
+      let b3id = nextId "box"
+      let b4id = nextId "box"
       let bodyCmds = [
           makeSphereCmd b1id (-2.0, 0.25, 0.0) 0.2 0.1; makeSphereCmd b2id (2.0, 0.25, 0.0) 0.2 0.1
           makeBoxCmd b3id (0.0, 0.55, -2.0) (0.5, 0.5, 0.5) 20.0; makeBoxCmd b4id (0.0, 0.55, 2.0) (0.5, 0.5, 0.5) 20.0 ]
@@ -154,7 +174,9 @@ let demos = [|
   { Name = "Billiards"; Desc = "Cue ball breaks a triangle formation."
     Run = fun s ->
       resetSimulation s; setCamera s (0.0, 10.0, 0.1) (0.0, 0.0, 0.0) |> ignore
-      let r = 0.1; let spacing = 0.22; let cueId = "cue"
+      let r = 0.1
+      let spacing = 0.22
+      let cueId = "cue"
       let cmds = [
           for row in 0..4 do
             for col in 0..row do
@@ -268,7 +290,8 @@ let demos = [|
   { Name = "Domino Cascade"; Desc = "120 dominoes in a semicircular path — chain reaction at scale."
     Run = fun s ->
       resetSimulation s; setCamera s (0.0, 12.0, 0.1) (0.0, 0.0, 0.0) |> ignore
-      let count = 120; let radius = 8.0
+      let count = 120
+      let radius = 8.0
       let ids = timed (sprintf "Place %d dominoes" count) (fun () ->
           let dominoIds = [ for _ in 0 .. count - 1 -> nextId "box" ]
           let cmds = [ for i in 0 .. count - 1 do
@@ -282,7 +305,8 @@ let demos = [|
       timed "Cascade propagation" (fun () -> runFor s 10.0)
       for i in 0..5 do
         let angle = float i / 5.0 * System.Math.PI
-        let cx = (radius + 4.0) * cos angle; let cz = (radius + 4.0) * sin angle
+        let cx = (radius + 4.0) * cos angle
+        let cz = (radius + 4.0) * sin angle
         setCamera s (cx, 3.0, cz) (0.0, 0.5, 0.0) |> ignore; sleep 500
       printfn "  Cascade complete"; status s }
 
