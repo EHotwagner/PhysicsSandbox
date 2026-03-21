@@ -19,14 +19,15 @@ Four services communicate through a central gRPC hub:
                 │    Server    │
                 │   (Hub/API)  │
                 └──┬──┬──┬────┘
-        commands   │  │  │  sim data + UI
+     commands ▲    │  │  │    ▼ state + view cmds
         ┌──────────┘  │  └──────────┐
-        ▼             │             ▼
-┌──────────────┐      │      ┌──────────────┐
+        │             │             │
+┌───────┴──────┐      │      ┌──────┴───────┐
 │  Simulation  │      │      │   3D Viewer  │
 │  (Physics)   │      │      │   (Render)   │
 └──────────────┘      │      └──────────────┘
                       │
+               ▲ cmds │ state ▼
                 ┌─────┴────────┐
                 │  REPL Client │
                 │  (Commands)  │

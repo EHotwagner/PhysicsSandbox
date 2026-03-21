@@ -22,14 +22,15 @@ with a central hub routing messages between producers and consumers.
                   │    Server    │
                   │   (Hub/API)  │
                   └──┬──┬──┬────┘
-          commands   │  │  │  state + view cmds
+       commands ▲    │  │  │    ▼ state + view cmds
           ┌──────────┘  │  └──────────┐
-          ▼             │             ▼
-  ┌──────────────┐      │      ┌──────────────┐
+          │             │             │
+  ┌───────┴──────┐      │      ┌──────┴───────┐
   │  Simulation  │      │      │   3D Viewer  │
   │ (BepuPhysics)│      │      │  (Stride3D)  │
   └──────────────┘      │      └──────────────┘
                         │
+                 ▲ cmds │ state ▼
                   ┌─────┴────────┐
                   │  REPL Client │
                   │  (Spectre)   │

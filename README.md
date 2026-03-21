@@ -15,14 +15,15 @@ Four F# services communicate through a central gRPC hub:
                 │    Server    │
                 │   (Hub/API)  │
                 └──┬──┬──┬────┘
-        commands   │  │  │  state + view cmds
+     commands ▲    │  │  │    ▼ state + view cmds
         ┌──────────┘  │  └──────────┐
-        ▼             │             ▼
-┌──────────────┐      │      ┌──────────────┐
+        │             │             │
+┌───────┴──────┐      │      ┌──────┴───────┐
 │  Simulation  │      │      │   3D Viewer  │
 │ (BepuPhysics)│      │      │  (Stride3D)  │
 └──────────────┘      │      └──────────────┘
                       │
+               ▲ cmds │ state ▼
                 ┌─────┴────────┐
                 │  REPL Client │
                 │  (Spectre)   │
