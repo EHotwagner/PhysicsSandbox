@@ -24,8 +24,7 @@ jobs:
           dotnet-version: '10.0.x'
       - run: dotnet tool restore
       - run: mkdir -p ~/.local/share/nuget-local
-      - run: dotnet build PhysicsSandbox.slnx -c Release -p:StrideCompilerSkipBuild=true
-      - run: dotnet fsdocs build --clean --properties Configuration=Release
+      - run: dotnet fsdocs build --clean --noapidocs --properties Configuration=Release
       - uses: actions/upload-pages-artifact@v3
         with:
           path: output
