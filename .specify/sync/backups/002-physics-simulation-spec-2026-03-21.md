@@ -96,7 +96,7 @@ Every time the simulation advances one step (whether from play mode or manual st
 
 ### Edge Cases
 
-- What happens when the server disconnects while the simulation is running? The simulation detects the broken connection, logs the event, and automatically reconnects with exponential backoff (1s → 10s max). World state is preserved across reconnections. The simulation only shuts down when its cancellation token is triggered.
+- What happens when the server disconnects while the simulation is running? The simulation detects the broken connection, logs the event, and shuts down cleanly. No reconnect attempts — the operator restarts the service explicitly.
 - What happens when commands arrive faster than the simulation can process them? Commands should be queued up to a reasonable limit; excess commands are dropped rather than causing unbounded memory growth.
 - What happens when a body with mass zero is added? The system should reject or handle zero/negative mass gracefully (treat as invalid input).
 - What happens when extremely large forces are applied? The simulation should continue running without crashing, though results may be physically unrealistic.
@@ -122,7 +122,7 @@ Every time the simulation advances one step (whether from play mode or manual st
 - **FR-013**: The streamed state MUST include each dynamic body's position, velocity, angular velocity, mass, shape, and identifier. Static bodies (planes) are not included in the state stream as they have no dynamics.
 - **FR-014**: The streamed state MUST include the current simulation time and running/paused flag.
 - **FR-015**: Commands targeting non-existent body identifiers MUST be handled gracefully without errors.
-- **FR-016**: The simulation MUST handle server disconnection by logging the event and automatically reconnecting with exponential backoff (initial delay 1s, max delay 10s). The simulation MUST preserve its current world state across reconnections. If the cancellation token is triggered during reconnection, the simulation MUST shut down cleanly.
+- **FR-016**: The simulation MUST handle server disconnection by logging the event and shutting down cleanly (no reconnect attempts).
 - **FR-017**: The simulation MUST reject bodies with zero or negative mass.
 - **FR-018**: The simulation MUST be registered with the Aspire orchestrator and discoverable by the server.
 - **FR-019**: The simulation MUST extend the existing communication contracts where new command types (remove body, impulse, torque) are needed, preserving backward compatibility with existing message structures.
@@ -153,7 +153,7 @@ Every time the simulation advances one step (whether from play mode or manual st
 ### Session 2026-03-20
 
 - Q: How are persistent forces removed from a body? → A: A clear-forces command removes all persistent forces on a specific body (FR-020).
-- Q: What happens on server disconnection — reconnect or shutdown? → A: Auto-reconnect with exponential backoff (1s → 10s max). World state preserved across reconnections. Only shuts down on cancellation token (FR-016). Originally clean shutdown; updated per spec 005 FR-006.
+- Q: What happens on server disconnection — reconnect or shutdown? → A: Clean shutdown. Log the event and exit; operator restarts explicitly (FR-016).
 
 ## Assumptions
 

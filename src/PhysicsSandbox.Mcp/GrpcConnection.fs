@@ -59,15 +59,16 @@ type GrpcConnection(serverAddress: string) =
                     with
                     | :? OperationCanceledException -> ()
                     | :? RpcException when cts.Token.IsCancellationRequested -> ()
-                    | :? RpcException ->
+                    | :? RpcException as ex ->
                         streamConnected <- false
                         if not cts.Token.IsCancellationRequested then
-                            logger.LogWarning("State stream disconnected, retrying in {Delay}ms", delay)
+                            logger.LogWarning(ex, "State stream disconnected (RpcException), retrying in {Delay}ms", delay)
                             do! Task.Delay(delay, cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
                             delay <- min (delay * 2) 10000
-                    | _ ->
+                    | ex ->
                         streamConnected <- false
                         if not cts.Token.IsCancellationRequested then
+                            logger.LogWarning(ex, "State stream disconnected (unexpected), retrying in {Delay}ms", delay)
                             do! Task.Delay(delay, cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
                             delay <- min (delay * 2) 10000
             } :> Task) |> ignore

@@ -26,6 +26,7 @@ builder.Services.AddSingleton<GrpcConnection>(fun _ ->
 
 builder.Services
     .AddMcpServer()
+    .WithHttpTransport()
     .WithToolsFromAssembly() |> ignore
 
 let app = builder.Build()

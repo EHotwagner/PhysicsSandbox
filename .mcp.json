@@ -3,6 +3,10 @@
     "physics-sandbox": {
       "type": "sse",
       "url": "http://localhost:5000/sse"
+    },
+    "aspire-dashboard": {
+      "type": "http",
+      "url": "http://localhost:18093/mcp"
     }
   }
 }

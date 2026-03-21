@@ -72,6 +72,9 @@ let private updateEntity (entity: Entity) (body: Body) =
     entity.Transform.Rotation <- protoQuatToStride body.Orientation
 
 let applyState (game: Game) (scene: Scene) (state: SceneState) (simState: SimulationState) =
+    if isNull simState || isNull simState.Bodies then state
+    else
+
     let incomingIds = simState.Bodies |> Seq.map (fun b -> b.Id) |> Set.ofSeq
 
     // Remove entities no longer in state

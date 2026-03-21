@@ -1,10 +1,17 @@
 module PhysicsSandbox.Mcp.SimulationTools
 
 open System.ComponentModel
+open System.Threading
 open System.Threading.Tasks
 open ModelContextProtocol.Server
 open PhysicsSandbox.Shared.Contracts
 open PhysicsSandbox.Mcp.GrpcConnection
+
+let private counters = System.Collections.Concurrent.ConcurrentDictionary<string, int>()
+
+let private nextId (shape: string) =
+    let value = counters.AddOrUpdate(shape, 1, fun _ current -> current + 1)
+    $"{shape}-{value}"
 
 let private sendCmd (conn: GrpcConnection) (cmd: SimulationCommand) =
     task {
@@ -36,11 +43,14 @@ type SimulationTools() =
         let py = defaultArg y 5.0
         let pz = defaultArg z 0.0
         let m = defaultArg mass 1.0
+        let shapeLower = shape.ToLowerInvariant()
+        let id = nextId shapeLower
         let body = AddBody(
+            Id = id,
             Position = Vec3(X = px, Y = py, Z = pz),
             Mass = m
         )
-        match shape.ToLowerInvariant() with
+        match shapeLower with
         | "sphere" ->
             let r = defaultArg radius 0.5
             body.Shape <- Shape(Sphere = Sphere(Radius = r))
