@@ -27,5 +27,7 @@ let handle (world: World) (command: SimulationCommand) =
     | SimulationCommand.CommandOneofCase.SetGravity ->
         setGravity world command.SetGravity.Gravity
         CommandAck(Success = true, Message = "Gravity updated")
+    | SimulationCommand.CommandOneofCase.Reset ->
+        resetSimulation world
     | _ ->
         CommandAck(Success = true, Message = "Unknown command (forward-compatible no-op)")

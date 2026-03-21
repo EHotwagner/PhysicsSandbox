@@ -1,26 +1,26 @@
 {
-  "generated": "2026-03-21T08:00:00Z",
-  "based_on": "drift-report from 2026-03-21T08:00:00Z",
+  "generated": "2026-03-21T12:00:00Z",
+  "based_on": "drift-report from 2026-03-21T12:00:00Z",
   "summary": {
-    "backfill": 1,
-    "align": 0,
+    "backfill": 0,
+    "align": 1,
     "human_decision": 0,
     "new_specs": 0,
-    "remove": 0
+    "remove_from_spec": 0
   },
   "proposals": [
     {
-      "id": "P1",
-      "spec_id": "001-mcp-persistent-service",
-      "requirement": "US2-Scenario-2",
-      "direction": "BACKFILL",
-      "spec_text": "it sees the raw command that was sent (command type, parameters, sender)",
-      "actual": "CommandEvent proto contains command type and parameters but no sender field",
-      "proposed_text": "it sees the raw command that was sent (command type and parameters)",
-      "rationale": "PhysicsServer routes commands without tracking sender identity. Adding sender tracking would require protocol-level changes beyond feature scope. FR-004 does not mention sender.",
+      "id": 1,
+      "spec_id": "002-performance-diagnostics",
+      "requirement": "FR-011",
+      "direction": "ALIGN",
+      "spec_text": "System MUST provide pipeline diagnostics showing time breakdown across simulation, serialization, transfer, and rendering stages, accessible both via structured logs and on-demand MCP tools.",
+      "actual": "Simulation tick, serialization, and gRPC transfer times are measured correctly. viewer_render_ms field exists in PipelineTimings proto but is never populated (remains 0.0). The viewer has frame timing data but no mechanism to report it back to the server.",
+      "proposed_resolution": "Implement viewer render time reporting: add a ReportRenderTime RPC or piggyback on existing messages. Viewer already has frame timing via GameTime.Elapsed; needs to send smoothed average back to server periodically. Server caches and includes in PipelineTimings response.",
+      "rationale": "Spec explicitly requires all four pipeline stages. Proto field already exists, MCP tools already display it, and diagnostics bottleneck detection depends on it. This was a known gap deferred during implementation (T065 noted 'or 0 if not available'), not a deliberate design change.",
       "confidence": "HIGH",
-      "severity": "minor",
-      "status": "applied"
+      "estimated_tasks": 4,
+      "status": "approved"
     }
   ]
 }

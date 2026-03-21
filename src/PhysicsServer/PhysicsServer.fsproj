@@ -8,12 +8,14 @@
   <ItemGroup>
     <Compile Include="Hub/StateCache.fsi" />
     <Compile Include="Hub/StateCache.fs" />
+    <Compile Include="Hub/MetricsCounter.fsi" />
+    <Compile Include="Hub/MetricsCounter.fs" />
     <Compile Include="Hub/MessageRouter.fsi" />
     <Compile Include="Hub/MessageRouter.fs" />
-    <Compile Include="Services/PhysicsHubService.fsi" />
-    <Compile Include="Services/PhysicsHubService.fs" />
     <Compile Include="Services/SimulationLinkService.fsi" />
     <Compile Include="Services/SimulationLinkService.fs" />
+    <Compile Include="Services/PhysicsHubService.fsi" />
+    <Compile Include="Services/PhysicsHubService.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

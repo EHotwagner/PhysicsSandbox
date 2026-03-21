@@ -155,3 +155,28 @@ let step (session: Session) : Result<unit, string> =
     let cmd = SimulationCommand()
     cmd.Step <- s
     sendCommand session cmd
+
+let reset (session: Session) : Result<unit, string> =
+    let cmd = SimulationCommand()
+    cmd.Reset <- ResetSimulation()
+    sendCommand session cmd
+
+let batchCommands (session: Session) (commands: SimulationCommand list) : Result<BatchResponse, string> =
+    try
+        let batch = BatchSimulationRequest()
+        for cmd in commands do
+            batch.Commands.Add(cmd)
+        let response = (client session).SendBatchCommand(batch)
+        Ok response
+    with ex ->
+        Error $"Batch command failed: {ex.Message}"
+
+let batchViewCommands (session: Session) (commands: ViewCommand list) : Result<BatchResponse, string> =
+    try
+        let batch = BatchViewRequest()
+        for cmd in commands do
+            batch.Commands.Add(cmd)
+        let response = (client session).SendBatchViewCommand(batch)
+        Ok response
+    with ex ->
+        Error $"Batch view command failed: {ex.Message}"

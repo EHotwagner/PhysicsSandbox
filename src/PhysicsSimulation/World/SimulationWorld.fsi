@@ -46,3 +46,12 @@ val clearForces : World -> string -> CommandAck
 
 /// Set the global gravity vector
 val setGravity : World -> Vec3 -> unit
+
+/// Reset the simulation: remove all bodies, clear forces, reset time to 0
+val resetSimulation : World -> CommandAck
+
+/// Latest physics tick time in milliseconds (updated each step)
+val latestTickMs : unit -> double
+
+/// Latest state serialization time in milliseconds (updated each step)
+val latestSerializeMs : unit -> double

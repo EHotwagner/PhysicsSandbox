@@ -33,6 +33,10 @@ type GrpcConnection(serverAddress: string) =
     let commandLog = LinkedList<CommandEvent>()
     let commandLogLock = obj ()
     let commandLogMax = 100
+    let mutable mcpMsgSent = 0L
+    let mutable mcpMsgRecv = 0L
+    let mutable mcpBytesSent = 0L
+    let mutable mcpBytesRecv = 0L
 
     let addToCommandLog (evt: CommandEvent) =
         lock commandLogLock (fun () ->
@@ -56,6 +60,8 @@ type GrpcConnection(serverAddress: string) =
                             if hasNext then
                                 latestState <- Some stream.Current
                                 lastUpdateTime <- DateTimeOffset.UtcNow
+                                Threading.Interlocked.Increment(&mcpMsgRecv) |> ignore
+                                Threading.Interlocked.Add(&mcpBytesRecv, int64 (stream.Current.CalculateSize())) |> ignore
                     with
                     | :? OperationCanceledException -> ()
                     | :? RpcException when cts.Token.IsCancellationRequested -> ()
@@ -119,6 +125,8 @@ type GrpcConnection(serverAddress: string) =
                             let! hasNext = stream.MoveNext(cts.Token)
                             if hasNext then
                                 addToCommandLog stream.Current
+                                Threading.Interlocked.Increment(&mcpMsgRecv) |> ignore
+                                Threading.Interlocked.Add(&mcpBytesRecv, int64 (stream.Current.CalculateSize())) |> ignore
                     with
                     | :? OperationCanceledException -> ()
                     | :? RpcException when cts.Token.IsCancellationRequested -> ()
@@ -147,6 +155,35 @@ type GrpcConnection(serverAddress: string) =
     member _.CommandLog =
         lock commandLogLock (fun () ->
             commandLog |> Seq.toList)
+
+    member _.SendBatchCommand(batch: BatchSimulationRequest) =
+        task {
+            let! response = client.SendBatchCommandAsync(batch)
+            Threading.Interlocked.Increment(&mcpMsgSent) |> ignore
+            Threading.Interlocked.Add(&mcpBytesSent, int64 (batch.CalculateSize())) |> ignore
+            return response
+        }
+
+    member _.SendBatchViewCommand(batch: BatchViewRequest) =
+        task {
+            let! response = client.SendBatchViewCommandAsync(batch)
+            Threading.Interlocked.Increment(&mcpMsgSent) |> ignore
+            Threading.Interlocked.Add(&mcpBytesSent, int64 (batch.CalculateSize())) |> ignore
+            return response
+        }
+
+    member _.IncrementSent(bytes: int64) =
+        Threading.Interlocked.Increment(&mcpMsgSent) |> ignore
+        Threading.Interlocked.Add(&mcpBytesSent, bytes) |> ignore
+
+    member _.LocalMetrics =
+        let report = ServiceMetricsReport()
+        report.ServiceName <- "McpServer"
+        report.MessagesSent <- Threading.Interlocked.Read(&mcpMsgSent)
+        report.MessagesReceived <- Threading.Interlocked.Read(&mcpMsgRecv)
+        report.BytesSent <- Threading.Interlocked.Read(&mcpBytesSent)
+        report.BytesReceived <- Threading.Interlocked.Read(&mcpBytesRecv)
+        report
 
     member this.Start() =
         let loggerFactory = LoggerFactory.Create(fun b -> b.AddConsole(fun opts -> opts.LogToStandardErrorThreshold <- LogLevel.Trace) |> ignore)

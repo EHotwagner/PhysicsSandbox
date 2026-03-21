@@ -27,3 +27,15 @@ type PhysicsHubService =
         responseStream: IServerStreamWriter<ViewCommand> *
         context: ServerCallContext ->
             System.Threading.Tasks.Task
+
+    override SendBatchCommand:
+        request: BatchSimulationRequest * context: ServerCallContext ->
+            System.Threading.Tasks.Task<BatchResponse>
+
+    override SendBatchViewCommand:
+        request: BatchViewRequest * context: ServerCallContext ->
+            System.Threading.Tasks.Task<BatchResponse>
+
+    override GetMetrics:
+        request: MetricsRequest * context: ServerCallContext ->
+            System.Threading.Tasks.Task<MetricsResponse>

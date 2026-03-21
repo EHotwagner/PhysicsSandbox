@@ -1,5 +1,6 @@
 module PhysicsSimulation.SimulationWorld
 
+open System.Diagnostics
 open System.Numerics
 open PhysicsSandbox.Shared.Contracts
 open BepuFSharp
@@ -13,7 +14,10 @@ type BodyRecord =
       BepuBodyId: BodyId
       ShapeId: ShapeId
       Mass: float32
-      ShapeProto: Shape }
+      ShapeProto: Shape
+      IsStatic: bool
+      StaticPosition: Vector3
+      StaticOrientation: Quaternion }
 
 type World =
     { Physics: PhysicsWorld
@@ -43,16 +47,23 @@ let private fromQuaternion (q: Quaternion) =
     r
 
 let private buildBodyProto (world: World) (record: BodyRecord) =
-    let pose = PhysicsWorld.getBodyPose record.BepuBodyId world.Physics
-    let vel = PhysicsWorld.getBodyVelocity record.BepuBodyId world.Physics
     let b = Body()
     b.Id <- record.Id
-    b.Position <- fromVector3 pose.Position
-    b.Velocity <- fromVector3 vel.Linear
-    b.AngularVelocity <- fromVector3 vel.Angular
     b.Mass <- double record.Mass
     b.Shape <- record.ShapeProto
-    b.Orientation <- fromQuaternion pose.Orientation
+    b.IsStatic <- record.IsStatic
+    if record.IsStatic then
+        b.Position <- fromVector3 record.StaticPosition
+        b.Orientation <- fromQuaternion record.StaticOrientation
+        b.Velocity <- Vec3()
+        b.AngularVelocity <- Vec3()
+    else
+        let pose = PhysicsWorld.getBodyPose record.BepuBodyId world.Physics
+        let vel = PhysicsWorld.getBodyVelocity record.BepuBodyId world.Physics
+        b.Position <- fromVector3 pose.Position
+        b.Velocity <- fromVector3 vel.Linear
+        b.AngularVelocity <- fromVector3 vel.Angular
+        b.Orientation <- fromQuaternion pose.Orientation
     b
 
 let private buildState (world: World) =
@@ -68,8 +79,9 @@ let private applyAllForces (world: World) =
     // Apply gravity as force (mass * gravity) to each dynamic body
     if world.Gravity <> Vector3.Zero then
         for kvp in world.Bodies do
-            let gravityForce = world.Gravity * kvp.Value.Mass
-            PhysicsWorld.applyForce kvp.Value.BepuBodyId gravityForce dt world.Physics
+            if not kvp.Value.IsStatic then
+                let gravityForce = world.Gravity * kvp.Value.Mass
+                PhysicsWorld.applyForce kvp.Value.BepuBodyId gravityForce dt world.Physics
     // Apply persistent per-body forces
     for kvp in world.ActiveForces do
         match Map.tryFind kvp.Key world.Bodies with
@@ -88,6 +100,13 @@ let create () =
       Running = false
       TimeStep = 1.0f / 60.0f }
 
+// Pipeline timing (module-level, updated each step)
+let mutable private lastTickMs = 0.0
+let mutable private lastSerializeMs = 0.0
+
+let latestTickMs () = lastTickMs
+let latestSerializeMs () = lastSerializeMs
+
 let destroy (world: World) =
     PhysicsWorld.destroy world.Physics
 
@@ -96,21 +115,36 @@ let isRunning (world: World) = world.Running
 let time (world: World) = world.SimulationTime
 
 let step (world: World) =
+    let sw = Stopwatch.StartNew()
     applyAllForces world
     PhysicsWorld.step world.TimeStep world.Physics
     world.SimulationTime <- world.SimulationTime + double world.TimeStep
-    buildState world
+    sw.Stop()
+    lastTickMs <- sw.Elapsed.TotalMilliseconds
+
+    let sw2 = Stopwatch.StartNew()
+    let state = buildState world
+    sw2.Stop()
+    lastSerializeMs <- sw2.Elapsed.TotalMilliseconds
+
+    state.TickMs <- lastTickMs
+    state.SerializeMs <- lastSerializeMs
+    state
 
 let currentState (world: World) =
-    buildState world
+    let state = buildState world
+    state.TickMs <- lastTickMs
+    state.SerializeMs <- lastSerializeMs
+    state
 
 let setRunning (world: World) (running: bool) =
     world.Running <- running
 
 let addBody (world: World) (cmd: AddBody) =
+    let isPlaneShape = cmd.Shape <> null && cmd.Shape.ShapeCase = Shape.ShapeOneofCase.Plane
     if world.Bodies |> Map.containsKey cmd.Id then
         CommandAck(Success = false, Message = $"Body '{cmd.Id}' already exists")
-    elif cmd.Mass <= 0.0 then
+    elif cmd.Mass <= 0.0 && not isPlaneShape then
         CommandAck(Success = false, Message = $"Mass must be positive, got {cmd.Mass}")
     else
         let mass = float32 cmd.Mass
@@ -140,12 +174,19 @@ let addBody (world: World) (cmd: AddBody) =
 
         let isPlane = cmd.Shape <> null && cmd.Shape.ShapeCase = Shape.ShapeOneofCase.Plane
         if isPlane then
-            // Planes are static bodies
+            // Planes are static bodies — add to Bepu and track in Bodies map
             let desc = StaticBodyDesc.create shapeId pose
             let _staticId = PhysicsWorld.addStatic desc world.Physics
-            // We still track it but with a dummy BodyId — static bodies can't have forces
-            // For simplicity, skip tracking static bodies in the Bodies map for now
-            // since they can't receive forces/impulses
+            let record =
+                { Id = cmd.Id
+                  BepuBodyId = Unchecked.defaultof<BodyId> // not used for statics
+                  ShapeId = shapeId
+                  Mass = 0.0f
+                  ShapeProto = shapeProto
+                  IsStatic = true
+                  StaticPosition = pos
+                  StaticOrientation = Quaternion.Identity }
+            world.Bodies <- Map.add cmd.Id record world.Bodies
             CommandAck(Success = true, Message = $"Static plane '{cmd.Id}' added")
         else
             let desc =
@@ -157,14 +198,19 @@ let addBody (world: World) (cmd: AddBody) =
                   BepuBodyId = bodyId
                   ShapeId = shapeId
                   Mass = mass
-                  ShapeProto = shapeProto }
+                  ShapeProto = shapeProto
+                  IsStatic = false
+                  StaticPosition = Vector3.Zero
+                  StaticOrientation = Quaternion.Identity }
             world.Bodies <- Map.add cmd.Id record world.Bodies
             CommandAck(Success = true, Message = $"Body '{cmd.Id}' added")
 
 let removeBody (world: World) (id: string) =
     match Map.tryFind id world.Bodies with
     | Some record ->
-        PhysicsWorld.removeBody record.BepuBodyId world.Physics
+        if not record.IsStatic then
+            PhysicsWorld.removeBody record.BepuBodyId world.Physics
+        // Static bodies remain in Bepu (no removeStatic API) but are untracked
         world.Bodies <- Map.remove id world.Bodies
         world.ActiveForces <- Map.remove id world.ActiveForces
         CommandAck(Success = true, Message = $"Body '{id}' removed")
@@ -202,3 +248,14 @@ let clearForces (world: World) (id: string) =
 
 let setGravity (world: World) (gravity: Vec3) =
     world.Gravity <- toVector3 gravity
+
+let resetSimulation (world: World) =
+    // Remove all dynamic bodies from the physics engine (static bodies have no remove API)
+    for kvp in world.Bodies do
+        if not kvp.Value.IsStatic then
+            PhysicsWorld.removeBody kvp.Value.BepuBodyId world.Physics
+    world.Bodies <- Map.empty
+    world.ActiveForces <- Map.empty
+    world.SimulationTime <- 0.0
+    world.Running <- false
+    CommandAck(Success = true, Message = "Simulation reset")

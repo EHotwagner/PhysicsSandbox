@@ -9,7 +9,7 @@ open PhysicsSandbox.Mcp.GrpcConnection
 
 let private counters = System.Collections.Concurrent.ConcurrentDictionary<string, int>()
 
-let private nextId (shape: string) =
+let nextId (shape: string) =
     let value = counters.AddOrUpdate(shape, 1, fun _ current -> current + 1)
     $"{shape}-{value}"
 
@@ -130,3 +130,7 @@ type SimulationTools() =
         [<Description("Body ID")>] body_id: string
     ) : Task<string> =
         sendCmd conn (SimulationCommand(ClearForces = ClearForces(BodyId = body_id)))
+
+    [<McpServerTool; Description("Reset the simulation: remove all bodies, clear forces, reset time to 0. Performance metrics persist across restarts.")>]
+    static member restart_simulation(conn: GrpcConnection) : Task<string> =
+        sendCmd conn (SimulationCommand(Reset = ResetSimulation()))

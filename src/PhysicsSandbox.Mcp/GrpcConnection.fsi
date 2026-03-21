@@ -15,5 +15,9 @@ type GrpcConnection =
     member ServerAddress : string
     member LatestViewCommand : ViewCommand option
     member CommandLog : CommandEvent list
+    member SendBatchCommand : batch: BatchSimulationRequest -> System.Threading.Tasks.Task<BatchResponse>
+    member SendBatchViewCommand : batch: BatchViewRequest -> System.Threading.Tasks.Task<BatchResponse>
+    member IncrementSent : bytes: int64 -> unit
+    member LocalMetrics : ServiceMetricsReport
     member Start : unit -> unit
     interface IDisposable

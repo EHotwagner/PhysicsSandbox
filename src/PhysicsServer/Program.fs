@@ -1,6 +1,7 @@
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
+open Microsoft.Extensions.Logging
 open PhysicsServer.Hub
 open PhysicsServer.Services
 
@@ -15,6 +16,10 @@ builder.Services.AddSingleton<MessageRouter.MessageRouter>(router) |> ignore
 builder.Services.AddGrpc() |> ignore
 
 let app = builder.Build()
+
+// Start periodic metrics logging
+let metricsLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("PhysicsServer.Metrics")
+let _metricsDisposable = MetricsCounter.startPeriodicLogging 10 metricsLogger (MessageRouter.metricsState router)
 
 app.MapGrpcService<PhysicsHubService>() |> ignore
 app.MapGrpcService<SimulationLinkService>() |> ignore

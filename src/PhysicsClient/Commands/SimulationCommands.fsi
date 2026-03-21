@@ -18,3 +18,6 @@ val setGravity : session: Session -> gravity: (float * float * float) -> Result<
 val play : session: Session -> Result<unit, string>
 val pause : session: Session -> Result<unit, string>
 val step : session: Session -> Result<unit, string>
+val reset : session: Session -> Result<unit, string>
+val batchCommands : session: Session -> commands: SimulationCommand list -> Result<BatchResponse, string>
+val batchViewCommands : session: Session -> commands: ViewCommand list -> Result<BatchResponse, string>

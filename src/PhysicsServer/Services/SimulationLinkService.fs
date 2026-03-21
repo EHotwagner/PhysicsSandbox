@@ -1,9 +1,16 @@
 namespace PhysicsServer.Services
 
+open System.Diagnostics
+open System.Threading
 open System.Threading.Tasks
 open Grpc.Core
 open PhysicsSandbox.Shared.Contracts
 open PhysicsServer.Hub.MessageRouter
+
+[<RequireQualifiedAccess>]
+module SimulationLinkDiagnostics =
+    let mutable internal transferMs = 0.0
+    let getLastTransferMs () = transferMs
 
 type SimulationLinkService(router: MessageRouter) =
     inherit SimulationLink.SimulationLinkBase()
@@ -22,10 +29,14 @@ type SimulationLinkService(router: MessageRouter) =
                 let readTask =
                     task {
                         try
+                            let sw = Stopwatch()
                             let mutable keepReading = true
                             while not context.CancellationToken.IsCancellationRequested && keepReading do
+                                sw.Restart()
                                 let! hasNext = requestStream.MoveNext(context.CancellationToken)
                                 if hasNext then
+                                    sw.Stop()
+                                    SimulationLinkDiagnostics.transferMs <- sw.Elapsed.TotalMilliseconds
                                     do! publishState router requestStream.Current
                                 else
                                     keepReading <- false

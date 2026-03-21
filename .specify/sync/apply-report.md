@@ -1,32 +1,34 @@
 # Sync Apply Report
 
-Applied: 2026-03-21T08:00:00Z
+Applied: 2026-03-21T12:00:00Z
 
 ## Changes Made
 
 ### Specs Updated
 
-| Spec | Requirement | Change Type | Detail |
-|------|-------------|-------------|--------|
-| 001-mcp-persistent-service | US2-Scenario-2 | Modified | Removed "sender" from acceptance scenario — CommandEvent proto has no sender field |
+None — this was an ALIGN proposal (code needs to change, not spec).
 
 ### New Specs Created
 
-(none)
+None.
 
 ### Implementation Tasks Generated
 
-(none — backfill only, no code changes needed)
+4 tasks in `.specify/sync/align-tasks.md`:
+
+| # | Task | Files | Effort |
+|---|------|-------|--------|
+| 1 | Add `ReportRenderTime` RPC to proto | `physics_hub.proto` | small |
+| 2 | Server caches and serves viewer render time | `MessageRouter.fs/fsi`, `PhysicsHubService.fs/fsi` | small |
+| 3 | Viewer reports smoothed frame time periodically | `Program.fs` (viewer) | small |
+| 4 | Unit + integration tests for render time pipeline | `PhysicsServer.Tests/`, `DiagnosticsIntegrationTests.cs` | small |
 
 ### Not Applied
 
-(none — all proposals applied)
-
-## Backup
-
-- `001-mcp-persistent-service-spec-2026-03-21.md` saved to `.specify/sync/backups/`
+None — the single proposal was approved.
 
 ## Next Steps
 
-1. Review updated spec: `specs/001-mcp-persistent-service/spec.md`
-2. Commit changes
+1. Implement the 4 tasks in `.specify/sync/align-tasks.md`
+2. Run `dotnet test PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true` to verify
+3. Re-run `/speckit.sync.analyze` to confirm FR-011 is now aligned

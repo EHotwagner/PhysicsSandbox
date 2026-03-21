@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-21
-**Revision**: Updated with 001-mcp-persistent-service archival
+**Revision**: Updated with 002-performance-diagnostics archival
 
 ## Overview
 
@@ -99,6 +99,30 @@ The AI assistant has access to high-level convenience tools — 7 body presets, 
 ### US-030: Full Command Coverage for State Testing (P2)
 The AI assistant can send all 12 command types available through the server's client-facing interface (PhysicsHub only, no SimulationLink), enabling it to create any reachable application state by issuing the right sequence of commands. [Source: specs/001-mcp-persistent-service]
 
+### US-031: Viewer FPS Display & Logging (P1)
+A developer sees real-time FPS as an overlay in the viewer window (updated every frame) and FPS samples logged every 10 seconds. A warning is emitted when FPS drops below a configurable threshold (default 30). [Source: specs/002-performance-diagnostics]
+
+### US-032: Service Message & Traffic Metrics (P1)
+Each service (PhysicsServer, PhysicsSimulation, PhysicsViewer, MCP) tracks and periodically logs message counts and data volumes (bytes sent/received). Current counters are queryable on-demand via a dedicated MCP tool. [Source: specs/002-performance-diagnostics]
+
+### US-033: Batch Commands for Simulation & UI (P1)
+A developer or AI assistant submits multiple simulation or view commands in a single batch request at both the gRPC and MCP levels. Batch responses include per-command results. A batch of 50 commands completes at least 2x faster than sending them individually. [Source: specs/002-performance-diagnostics]
+
+### US-034: Restart Simulation Command (P2)
+A developer or AI assistant resets the simulation to an empty state (all bodies removed, physics time reset, running set to false) via a single command — without restarting any services. Performance metrics persist across restarts. [Source: specs/002-performance-diagnostics]
+
+### US-035: Static Body Collision (P2)
+All static bodies (planes, static boxes) participate in collision detection with dynamic bodies, acting as solid surfaces that block dynamic body movement. [Source: specs/002-performance-diagnostics]
+
+### US-036: Performance Diagnostics & Bottleneck Detection (P2)
+A developer requests a pipeline diagnostics report showing time breakdown across simulation tick, serialization, gRPC transfer, and rendering stages. The slowest stage is highlighted. Accessible via structured logs and on-demand MCP tools. [Source: specs/002-performance-diagnostics]
+
+### US-037: Stress Testing (P2)
+A developer initiates predefined stress test scenarios (body count scaling, command throughput) via MCP tools. Tests run as background jobs, returning immediately with a test ID. A separate MCP tool polls progress and retrieves summary reports with peak metrics, degradation points, and failures. [Source: specs/002-performance-diagnostics]
+
+### US-038: MCP vs Scripting Performance Comparison (P3)
+A developer runs identical test scenarios via both MCP and direct gRPC scripting, comparing timing results to quantify MCP overhead in time and message count. Includes batched vs unbatched comparison. [Source: specs/002-performance-diagnostics]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -125,7 +149,7 @@ The AI assistant can send all 12 command types available through the server's cl
 - **FR-022**: Simulation supports torques (rotational force on specific body). [Source: specs/002-physics-simulation]
 - **FR-023**: Simulation supports clear-forces command (removes all persistent forces on a body). [Source: specs/002-physics-simulation]
 - **FR-024**: Simulation supports global gravity vector, changeable at runtime, applied as mass*gravity force each step. [Source: specs/002-physics-simulation]
-- **FR-025**: Streamed state includes each dynamic body's position, velocity, angular velocity, mass, shape, identifier, and orientation. Static bodies excluded. [Source: specs/002-physics-simulation]
+- **FR-025**: Streamed state includes each body's position, velocity, angular velocity, mass, shape, identifier, orientation, and is_static flag. Static bodies now included with `is_static = true`. [Source: specs/002-physics-simulation, specs/002-performance-diagnostics]
 - **FR-026**: Streamed state includes simulation time and running/paused flag. [Source: specs/002-physics-simulation]
 - **FR-027**: Commands targeting non-existent body IDs handled gracefully (success ack, no-op). [Source: specs/002-physics-simulation]
 - **FR-028**: Simulation handles server disconnection by logging and shutting down cleanly (no reconnect). [Source: specs/002-physics-simulation]
@@ -192,13 +216,29 @@ The AI assistant can send all 12 command types available through the server's cl
 - **FR-089**: MCP server can send all 12 command types via PhysicsHub only (no SimulationLink access). [Source: specs/001-mcp-persistent-service]
 - **FR-090**: MCP server reports connection status for all three streams (state, view, audit) via get_status tool. [Source: specs/001-mcp-persistent-service]
 - **FR-091**: MCP server uses ServiceDefaults for health checks and structured logging. [Source: specs/001-mcp-persistent-service]
+- **FR-092**: Viewer MUST display current FPS as an on-screen overlay, updated at least once per second (exponential moving average, α=0.1). [Source: specs/002-performance-diagnostics]
+- **FR-093**: Viewer MUST log FPS samples every 10 seconds with timestamps to the structured logging system. [Source: specs/002-performance-diagnostics]
+- **FR-094**: Viewer MUST emit a warning log when smoothed FPS falls below a configurable threshold (default 30 FPS). [Source: specs/002-performance-diagnostics]
+- **FR-095**: Each service MUST track and log message counts (sent/received) per reporting interval using thread-safe Interlocked counters. Counters exposed via on-demand `get_metrics` MCP tool. [Source: specs/002-performance-diagnostics]
+- **FR-096**: Each service MUST track and log data volume (bytes sent/received) per reporting interval. Byte counts estimated from proto message `CalculateSize()`. [Source: specs/002-performance-diagnostics]
+- **FR-097**: System MUST support batch submission of multiple simulation commands in a single request via `SendBatchCommand` gRPC RPC and `batch_commands` MCP tool. Commands execute in order with per-command results. [Source: specs/002-performance-diagnostics]
+- **FR-098**: System MUST support batch submission of multiple view commands in a single request via `SendBatchViewCommand` gRPC RPC and `batch_view_commands` MCP tool. [Source: specs/002-performance-diagnostics]
+- **FR-099**: Batch responses MUST include per-command `CommandResult` (success, message, index). Invalid commands return errors without blocking valid commands. Max 100 commands per batch. [Source: specs/002-performance-diagnostics]
+- **FR-100**: System MUST provide a `ResetSimulation` command (variant in SimulationCommand oneof) that clears all bodies, resets simulation time to 0, and sets running to false. No service restarts or reconnections required. [Source: specs/002-performance-diagnostics]
+- **FR-101**: Performance metrics and diagnostics counters MUST persist across simulation restarts. [Source: specs/002-performance-diagnostics]
+- **FR-102**: All static bodies MUST participate in collision detection with dynamic bodies. Static bodies tracked in `world.Bodies` with `IsStatic = true` and included in `SimulationState` with `is_static` proto field. [Source: specs/002-performance-diagnostics]
+- **FR-103**: System MUST provide pipeline diagnostics showing time breakdown across simulation tick (`Stopwatch`), serialization (`Stopwatch`), gRPC transfer (send-to-receive delta), and rendering stages. Accessible via `get_diagnostics` MCP tool and periodic structured logs. [Source: specs/002-performance-diagnostics]
+- **FR-104**: System MUST provide predefined stress test scenarios (body-scaling, command-throughput) invocable via `start_stress_test` MCP tool. Tests run as background tasks returning immediately with test ID. Progress/results queryable via `get_stress_test_status` MCP tool. Only one stress test may run at a time. [Source: specs/002-performance-diagnostics]
+- **FR-105**: Stress test summary reports MUST include: peak body count, degradation body count, peak command rate, average/min FPS, total/failed commands, and error messages. Logged to structured logs and returned via MCP tool. [Source: specs/002-performance-diagnostics]
+- **FR-106**: System MUST support running identical scenarios via MCP and direct gRPC scripting (PhysicsClient library) for performance comparison (`start_comparison_test` MCP tool). [Source: specs/002-performance-diagnostics]
+- **FR-107**: Comparison results MUST quantify MCP overhead in time (ms), message count, and overhead percentage. Includes batched MCP path comparison. [Source: specs/002-performance-diagnostics]
 
 ## Key Entities
 
 - **SimulationCommand**: User command to control physics (add body, apply force, set gravity, step, play/pause). [Source: specs/001-server-hub]
 - **ViewCommand**: User command to control 3D viewer (camera, wireframe, zoom). [Source: specs/001-server-hub]
-- **SimulationState**: Snapshot of physics world — bodies, time, running flag. [Source: specs/001-server-hub]
-- **Body**: Physical object — id, Vec3 position, Vec3 velocity, Vec3 angular_velocity, mass, Shape, Vec4 orientation. [Source: specs/001-server-hub, specs/002-physics-simulation]
+- **SimulationState**: Snapshot of physics world — bodies, time, running flag, tick_ms (physics step duration), serialize_ms (state serialization duration). [Source: specs/001-server-hub, specs/002-performance-diagnostics]
+- **Body**: Physical object — id, Vec3 position, Vec3 velocity, Vec3 angular_velocity, mass, Shape, Vec4 orientation, is_static (bool). [Source: specs/001-server-hub, specs/002-physics-simulation, specs/002-performance-diagnostics]
 - **Vec3**: 3D vector (x, y, z doubles). [Source: specs/001-server-hub]
 - **Vec4**: 4D vector / quaternion (x, y, z, w doubles). [Source: specs/002-physics-simulation]
 - **Shape**: Geometric descriptor — Sphere (radius), Box (half_extents), Plane (normal). [Source: specs/001-server-hub]
@@ -216,10 +256,17 @@ The AI assistant can send all 12 command types available through the server's cl
 - **BodyPreset**: Named pre-configured body parameters (shape, mass, size) instantiated with optional overrides. 7 presets: marble, bowlingBall, beachBall, crate, brick, boulder, die. [Source: specs/004-client-repl]
 - **Direction**: Discriminated union for steering — Up (+Y), Down (-Y), North (-Z), South (+Z), East (+X), West (-X). [Source: specs/004-client-repl]
 - **IdGenerator**: Thread-safe per-shape-type counter producing human-readable IDs ("sphere-1", "box-3"). CAS-based ConcurrentDictionary. [Source: specs/004-client-repl]
-- **MCP Tool**: A named operation exposed by the MCP server. 32 tools across 7 categories: simulation (10), view (3), query (2), audit (1), presets (7), generators (5), steering (4). [Source: specs/005-mcp-server-testing, specs/001-mcp-persistent-service]
+- **MCP Tool**: A named operation exposed by the MCP server. 38 tools across 11 categories: simulation (10), view (3), query (2), audit (1), presets (7), generators (5), steering (4), batch (2), metrics (2), stress test (2), comparison (1). [Source: specs/005-mcp-server-testing, specs/001-mcp-persistent-service, specs/002-performance-diagnostics]
 - **GrpcConnection**: MCP server's gRPC bridge — holds PhysicsHubClient, 3 background stream subscriptions (state, view commands, command audit) with independent exponential backoff, cached SimulationState, LatestViewCommand, CommandLog (bounded 100-entry buffer). Registered as DI singleton. [Source: specs/005-mcp-server-testing, specs/001-mcp-persistent-service]
 - **CommandEvent**: Proto message wrapping SimulationCommand or ViewCommand in a oneof for the audit stream. Used by StreamCommands RPC. [Source: specs/001-mcp-persistent-service]
 - **ClientAdapter**: MCP-side adapter bridging GrpcConnection with convenience tool functions (addSphere, addBox, applyImpulse, applyTorque, clearForces). [Source: specs/001-mcp-persistent-service]
+- **ServiceMetrics (MetricsCounter)**: Per-service performance counters — messages sent/received, bytes sent/received. Thread-safe via Interlocked. Monotonically increasing, persist across simulation restarts. Logged periodically (default 10s). [Source: specs/002-performance-diagnostics]
+- **PipelineTimings**: Timing breakdown per pipeline stage — SimulationTickMs, StateSerializationMs, GrpcTransferMs, ViewerRenderMs, TotalPipelineMs. Point-in-time snapshots. [Source: specs/002-performance-diagnostics]
+- **BatchRequest/BatchResponse**: Ordered list of commands submitted as a unit. BatchResponse contains per-command CommandResult (success, message, index) and TotalTimeMs. Max 100 commands. [Source: specs/002-performance-diagnostics]
+- **StressTestRun**: Tracks a running/completed stress test — TestId, ScenarioName (body-scaling, command-throughput), Status (Pending→Running→Complete/Failed), Progress (0.0–1.0), Results. Single-test guard. [Source: specs/002-performance-diagnostics]
+- **StressTestResults**: Summary of completed stress test — PeakBodyCount, DegradationBodyCount, PeakCommandRate, AverageFps, MinFps, TotalCommands, FailedCommands, ErrorMessages. [Source: specs/002-performance-diagnostics]
+- **ComparisonResult**: MCP-vs-scripting comparison data — ScriptTimeMs, McpTimeMs, BatchedMcpTimeMs, message counts, OverheadPercent. [Source: specs/002-performance-diagnostics]
+- **FpsState**: Viewer FPS tracking — SmoothedFps (EMA α=0.1), ElapsedSinceLog, WarningThreshold. [Source: specs/002-performance-diagnostics]
 
 ## Edge Cases
 
@@ -254,6 +301,13 @@ The AI assistant can send all 12 command types available through the server's cl
 - MCP client disconnects via HTTP/SSE: MCP server continues running and accepts new connections. [Source: specs/001-mcp-persistent-service]
 - PhysicsServer goes down while MCP running: MCP remains running, reports disconnection, attempts reconnection with backoff. [Source: specs/001-mcp-persistent-service]
 - Invalid MCP command (bad body ID, malformed params): clear error message returned without crash. [Source: specs/001-mcp-persistent-service]
+- FPS drops to zero or viewer minimized: metrics still logged (smoothed FPS approaches 0). [Source: specs/002-performance-diagnostics]
+- Batch command exceeds 100 max: rejected with error. [Source: specs/002-performance-diagnostics]
+- Restart issued while stress test running: stress test observes cleared state. [Source: specs/002-performance-diagnostics]
+- Service disconnects and reconnects: metric counters persist (module-level, never cleared). [Source: specs/002-performance-diagnostics]
+- Stress test causes high resource usage: test records degradation point and stops gracefully. [Source: specs/002-performance-diagnostics]
+- Metrics queried with partial system (not all services running): returns data from available services only. [Source: specs/002-performance-diagnostics]
+- Batch contains invalid command among valid ones: valid commands execute, invalid returns error in per-command results. [Source: specs/002-performance-diagnostics]
 
 ## Success Criteria
 
@@ -300,3 +354,11 @@ The AI assistant can send all 12 command types available through the server's cl
 - **SC-041**: Convenience tools (presets, generators, steering) available and functional. [Source: specs/001-mcp-persistent-service]
 - **SC-042**: State queries return data with staleness under 2 seconds during normal operation. [Source: specs/001-mcp-persistent-service]
 - **SC-043**: 16 PhysicsServer.Tests pass (3 new audit subscriber tests). [Source: specs/001-mcp-persistent-service]
+- **SC-044**: Live FPS visible in viewer at all times during a running simulation. [Source: specs/002-performance-diagnostics]
+- **SC-045**: Per-service message count and traffic metrics available in logs within 30 seconds of startup. [Source: specs/002-performance-diagnostics]
+- **SC-046**: A batch of 50 commands completes at least 2x faster than 50 individual sequential commands. [Source: specs/002-performance-diagnostics]
+- **SC-047**: Simulation restarts to clean state in under 2 seconds via single command. [Source: specs/002-performance-diagnostics]
+- **SC-048**: All static bodies block dynamic bodies — zero pass-through incidents. [Source: specs/002-performance-diagnostics]
+- **SC-049**: Diagnostics correctly identify the slowest pipeline stage within 10% accuracy. [Source: specs/002-performance-diagnostics]
+- **SC-050**: Stress tests scale to at least 500 simultaneous bodies while measuring degradation. [Source: specs/002-performance-diagnostics]
+- **SC-051**: MCP-vs-scripting comparison quantifies overhead with reproducible results (<15% variance). [Source: specs/002-performance-diagnostics]

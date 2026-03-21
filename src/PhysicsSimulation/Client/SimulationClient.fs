@@ -12,6 +12,12 @@ open Microsoft.Extensions.Logging
 
 let private stepIntervalMs = int (1000.0f / 60.0f)
 
+// Metrics counters (thread-safe)
+let mutable private msgSent = 0L
+let mutable private msgRecv = 0L
+let mutable private bytesSent = 0L
+let mutable private bytesRecv = 0L
+
 let private createChannel (address: string) =
     let handler = new SocketsHttpHandler(EnableMultipleHttp2Connections = true)
     handler.SslOptions.RemoteCertificateValidationCallback <-
@@ -33,7 +39,10 @@ let private runSession (logger: ILogger) (world: World) (client: SimulationLink.
         logger.LogInformation("Connected to server")
 
         // Send initial state
-        do! requestStream.WriteAsync(currentState world, ct) |> Async.AwaitTask
+        let initState = currentState world
+        do! requestStream.WriteAsync(initState, ct) |> Async.AwaitTask
+        Interlocked.Increment(&msgSent) |> ignore
+        Interlocked.Add(&bytesSent, int64 (initState.CalculateSize())) |> ignore
 
         let mutable running = true
         let mutable pendingCommand: Task<bool> option = None
@@ -63,6 +72,8 @@ let private runSession (logger: ILogger) (world: World) (client: SimulationLink.
 
                 if hasCommandResult then
                     let command = responseStream.Current
+                    Interlocked.Increment(&msgRecv) |> ignore
+                    Interlocked.Add(&bytesRecv, int64 (command.CalculateSize())) |> ignore
                     let _ack = CommandHandler.handle world command
                     logger.LogDebug("Command received: {Command}", command.CommandCase)
 
@@ -70,11 +81,15 @@ let private runSession (logger: ILogger) (world: World) (client: SimulationLink.
                     if not (isRunning world) then
                         let state = currentState world
                         do! requestStream.WriteAsync(state, ct) |> Async.AwaitTask
+                        Interlocked.Increment(&msgSent) |> ignore
+                        Interlocked.Add(&bytesSent, int64 (state.CalculateSize())) |> ignore
 
                 // If playing, run simulation loop
                 if isRunning world then
                     let state = step world
                     do! requestStream.WriteAsync(state, ct) |> Async.AwaitTask
+                    Interlocked.Increment(&msgSent) |> ignore
+                    Interlocked.Add(&bytesSent, int64 (state.CalculateSize())) |> ignore
                     logger.LogTrace("Step completed, {BodyCount} bodies", state.Bodies.Count)
                     do! Async.Sleep stepIntervalMs
                 elif not hasCommandResult then
@@ -101,6 +116,20 @@ let run (serverAddress: string) (ct: CancellationToken) =
         let logger = loggerFactory.CreateLogger("SimulationClient")
 
         let world = create ()
+        let metricsTimer =
+            new System.Threading.Timer(
+                (fun _ ->
+                    logger.LogInformation(
+                        "Metrics [PhysicsSimulation] sent={MsgSent} recv={MsgRecv} bytesSent={BytesSent} bytesRecv={BytesRecv} tickMs={TickMs:F2} serializeMs={SerializeMs:F2}",
+                        Interlocked.Read(&msgSent),
+                        Interlocked.Read(&msgRecv),
+                        Interlocked.Read(&bytesSent),
+                        Interlocked.Read(&bytesRecv),
+                        SimulationWorld.latestTickMs(),
+                        SimulationWorld.latestSerializeMs())),
+                null,
+                TimeSpan.FromSeconds(10.0),
+                TimeSpan.FromSeconds(10.0))
         try
             let channel = createChannel serverAddress
             let client = SimulationLink.SimulationLinkClient(channel)
@@ -136,6 +165,7 @@ let run (serverAddress: string) (ct: CancellationToken) =
 
             logger.LogInformation("Simulation client shutting down")
         finally
+            metricsTimer.Dispose()
             destroy world
             loggerFactory.Dispose()
     }

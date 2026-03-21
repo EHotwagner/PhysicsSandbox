@@ -53,6 +53,29 @@ type PhysicsHubService(router: MessageRouter) =
                 | None -> ()
         }
 
+    override _.SendBatchCommand(request: BatchSimulationRequest, context: ServerCallContext) =
+        let response = sendBatchCommand router request
+        Task.FromResult(response)
+
+    override _.SendBatchViewCommand(request: BatchViewRequest, context: ServerCallContext) =
+        let response = sendBatchViewCommand router request
+        Task.FromResult(response)
+
+    override _.GetMetrics(request: MetricsRequest, context: ServerCallContext) =
+        let response = MetricsResponse()
+        response.Services.Add(getMetrics router)
+        // Pipeline timings from cached state + transfer measurement
+        let timings = PipelineTimings()
+        match getLatestState router with
+        | Some state ->
+            timings.SimulationTickMs <- state.TickMs
+            timings.StateSerializationMs <- state.SerializeMs
+        | None -> ()
+        timings.GrpcTransferMs <- SimulationLinkDiagnostics.getLastTransferMs ()
+        timings.TotalPipelineMs <- timings.SimulationTickMs + timings.StateSerializationMs + timings.GrpcTransferMs + timings.ViewerRenderMs
+        response.Pipeline <- timings
+        Task.FromResult(response)
+
     override _.StreamCommands
         (request: StateRequest, responseStream: IServerStreamWriter<CommandEvent>, context: ServerCallContext)
         =

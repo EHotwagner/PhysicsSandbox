@@ -1,16 +1,41 @@
 {
-  "applied_at": "2026-03-21T08:00:00Z",
-  "proposals_applied": ["P1"],
-  "changes": [
-    {
-      "spec": "001-mcp-persistent-service",
-      "requirement": "US2-Scenario-2",
-      "type": "BACKFILL",
-      "before": "it sees the raw command that was sent (command type, parameters, sender)",
-      "after": "it sees the raw command that was sent (command type and parameters)",
-      "applied_at": "2026-03-21T08:00:00Z"
-    }
-  ],
-  "not_applied": [],
-  "backup": ".specify/sync/backups/001-mcp-persistent-service-spec-2026-03-21.md"
+  "applied_at": "2026-03-21T12:00:00Z",
+  "proposals_applied": 1,
+  "proposals_skipped": 0,
+  "specs_updated": [],
+  "new_specs_created": [],
+  "align_tasks_generated": {
+    "file": ".specify/sync/align-tasks.md",
+    "count": 4,
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Add ReportRenderTime RPC to proto",
+        "spec": "002-performance-diagnostics",
+        "requirement": "FR-011",
+        "effort": "small"
+      },
+      {
+        "id": 2,
+        "title": "Server caches and serves viewer render time",
+        "spec": "002-performance-diagnostics",
+        "requirement": "FR-011",
+        "effort": "small"
+      },
+      {
+        "id": 3,
+        "title": "Viewer reports smoothed frame time periodically",
+        "spec": "002-performance-diagnostics",
+        "requirement": "FR-011",
+        "effort": "small"
+      },
+      {
+        "id": 4,
+        "title": "Unit + integration tests for render time pipeline",
+        "spec": "002-performance-diagnostics",
+        "requirement": "FR-011",
+        "effort": "small"
+      }
+    ]
+  }
 }

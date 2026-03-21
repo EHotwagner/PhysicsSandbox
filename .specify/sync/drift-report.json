@@ -1,10 +1,10 @@
 {
-  "generated": "2026-03-21T08:00:00Z",
+  "generated": "2026-03-21T12:00:00Z",
   "project": "PhysicsSandbox",
   "summary": {
-    "specs_analyzed": 1,
-    "requirements_checked": 18,
-    "aligned": 17,
+    "specs_analyzed": 2,
+    "requirements_checked": 28,
+    "aligned": 27,
     "drifted": 1,
     "not_implemented": 0,
     "unspecced_features": 0
@@ -14,17 +14,49 @@
       "id": "001-mcp-persistent-service",
       "title": "MCP Persistent Service",
       "aligned": [
-        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006",
-        "FR-007", "FR-008", "FR-009", "FR-010", "FR-011", "FR-012",
-        "SC-001", "SC-002", "SC-003", "SC-005", "SC-006"
+        "FR-001",
+        "FR-002",
+        "FR-003",
+        "FR-004",
+        "FR-005",
+        "FR-006",
+        "FR-007",
+        "FR-008",
+        "FR-009",
+        "FR-010",
+        "FR-011",
+        "FR-012"
+      ],
+      "drifted": [],
+      "not_implemented": []
+    },
+    {
+      "id": "002-performance-diagnostics",
+      "title": "Performance Diagnostics & Stress Testing",
+      "aligned": [
+        "FR-001",
+        "FR-002",
+        "FR-003",
+        "FR-004",
+        "FR-005",
+        "FR-006",
+        "FR-007",
+        "FR-008",
+        "FR-009",
+        "FR-010",
+        "FR-012",
+        "FR-013",
+        "FR-014",
+        "FR-015",
+        "FR-016"
       ],
       "drifted": [
         {
-          "requirement": "US2-Scenario-2",
-          "spec_text": "it sees the raw command that was sent (command type, parameters, sender)",
-          "actual": "CommandEvent proto contains command type and parameters but no sender field",
-          "location": "src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto:179-184",
-          "severity": "minor"
+          "requirement": "FR-011",
+          "spec_text": "System MUST provide pipeline diagnostics showing time breakdown across simulation, serialization, transfer, and rendering stages",
+          "actual": "Simulation tick, serialization, and transfer times are measured correctly, but viewer render time (ViewerRenderMs) is hardcoded to 0.0 — the viewer does not report frame render time back to the server",
+          "location": "src/PhysicsServer/Services/PhysicsHubService.fs:74-75",
+          "severity": "moderate"
         }
       ],
       "not_implemented": []

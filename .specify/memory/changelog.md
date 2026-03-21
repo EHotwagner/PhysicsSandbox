@@ -1,5 +1,57 @@
 # Merged Features Log
 
+## Performance Diagnostics & Stress Testing — 2026-03-21
+**Branch:** 002-performance-diagnostics
+**Spec:** specs/002-performance-diagnostics
+
+**What was added:**
+- FPS overlay display in viewer (exponential moving average, 10s logging, configurable warning threshold)
+- Per-service message count and data volume metrics (thread-safe Interlocked counters, 10s periodic logging)
+- Batch command support at gRPC and MCP levels (simulation + view, max 100, per-command results)
+- Simulation restart command (clears all bodies, resets time, metrics persist)
+- Static body collision tracking (bodies tracked with `is_static` flag, included in state stream)
+- Pipeline diagnostics (simulation tick, serialization, transfer timing via Stopwatch/delta measurement)
+- Stress testing framework (body-scaling, command-throughput scenarios as background MCP jobs)
+- MCP-vs-scripting performance comparison tool
+- 6 new MCP tools: batch_commands, batch_view_commands, get_metrics, get_diagnostics, start_stress_test, get_stress_test_status, start_comparison_test
+
+**Modified Components:**
+- `src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto` — BatchSimulationRequest, BatchViewRequest, CommandResult, BatchResponse, MetricsRequest, ServiceMetricsReport, PipelineTimings, MetricsResponse, ResetSimulation, is_static, tick_ms, serialize_ms
+- `src/PhysicsServer/Hub/MessageRouter.fsi/.fs` — Batch routing, metrics counters
+- `src/PhysicsServer/Services/PhysicsHubService.fs` — Batch + metrics RPC handlers
+- `src/PhysicsServer/Services/SimulationLinkService.fs` — Transfer time measurement
+- `src/PhysicsSimulation/World/SimulationWorld.fs` — Static body tracking, reset, timing instrumentation
+- `src/PhysicsSimulation/Client/SimulationClient.fs` — Metrics counters
+- `src/PhysicsViewer/Program.fs` — FPS calculation, display, metrics logging
+- `src/PhysicsSandbox.Mcp/GrpcConnection.fs` — Batch + metrics RPC calls
+- `src/PhysicsSandbox.Mcp/SimulationTools.fs` — restart_simulation tool
+- `src/PhysicsClient/Commands/SimulationCommands.fs` — reset, batch, metrics functions
+
+**New Components:**
+- `src/PhysicsServer/Hub/MetricsCounter.fsi/.fs` — Thread-safe service metrics
+- `src/PhysicsViewer/Rendering/FpsCounter.fsi/.fs` — Smoothed FPS calculation
+- `src/PhysicsSandbox.Mcp/BatchTools.fsi/.fs` — Batch MCP tools
+- `src/PhysicsSandbox.Mcp/MetricsTools.fsi/.fs` — Metrics + diagnostics MCP tools
+- `src/PhysicsSandbox.Mcp/StressTestTools.fsi/.fs` — Stress test MCP tools
+- `src/PhysicsSandbox.Mcp/StressTestRunner.fsi/.fs` — Background stress test engine
+- `src/PhysicsSandbox.Mcp/ComparisonTools.fsi/.fs` — Comparison MCP tool
+- `tests/PhysicsServer.Tests/BatchRoutingTests.fs`
+- `tests/PhysicsServer.Tests/MetricsCounterTests.fs`
+- `tests/PhysicsSimulation.Tests/ResetSimulationTests.fs`
+- `tests/PhysicsSimulation.Tests/StaticBodyTrackingTests.fs`
+- `tests/PhysicsViewer.Tests/FpsCounterTests.fs`
+- `tests/PhysicsSandbox.Integration.Tests/BatchIntegrationTests.cs`
+- `tests/PhysicsSandbox.Integration.Tests/RestartIntegrationTests.cs`
+- `tests/PhysicsSandbox.Integration.Tests/MetricsIntegrationTests.cs`
+- `tests/PhysicsSandbox.Integration.Tests/DiagnosticsIntegrationTests.cs`
+- `tests/PhysicsSandbox.Integration.Tests/StaticBodyTests.cs`
+- `tests/PhysicsSandbox.Integration.Tests/StressTestIntegrationTests.cs`
+- `tests/PhysicsSandbox.Integration.Tests/ComparisonIntegrationTests.cs`
+
+**Tasks Completed:** 97/97 tasks
+
+---
+
 ## MCP Persistent Service — 2026-03-21
 **Branch:** 001-mcp-persistent-service
 **Spec:** specs/001-mcp-persistent-service

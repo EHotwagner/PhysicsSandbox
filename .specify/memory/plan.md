@@ -1,13 +1,13 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-21
-**Revision**: Updated with 001-mcp-persistent-service archival
+**Revision**: Updated with 002-performance-diagnostics archival
 
 ## Technical Context
 
 **Language/Version**: F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
 **Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0 (local NuGet), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 + ModelContextProtocol.AspNetCore 1.1.* (MCP server — HTTP/SSE transport)
-**Storage**: N/A (in-memory physics world, stateless message routing)
+**Storage**: N/A (in-memory physics world, stateless message routing, in-memory metrics counters/stress test state/command logs)
 **Testing**: xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x
 **Target Platform**: Linux (rootless Podman for containers)
 **Solution Format**: `.slnx` (XML-based, .NET 10 default)
@@ -31,7 +31,8 @@ src/
 ├── PhysicsServer/                       # F# — server hub (central message router)
 │   ├── Hub/
 │   │   ├── StateCache.fsi/.fs           # Latest-state caching for late joiners
-│   │   └── MessageRouter.fsi/.fs        # Command/state routing, subscriber mgmt
+│   │   ├── MessageRouter.fsi/.fs        # Command/state routing, subscriber mgmt, batch routing
+│   │   └── MetricsCounter.fsi/.fs       # Thread-safe per-service metrics tracking (Interlocked)
 │   ├── Services/
 │   │   ├── PhysicsHubService.fsi/.fs    # Client/viewer-facing gRPC
 │   │   └── SimulationLinkService.fsi/.fs # Simulation-facing gRPC
@@ -49,7 +50,8 @@ src/
 ├── PhysicsViewer/                       # F# — 3D viewer (Stride3D + gRPC client)
 │   ├── Rendering/
 │   │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, wireframe
-│   │   └── CameraController.fsi/.fs     # Camera state, input, REPL commands
+│   │   ├── CameraController.fsi/.fs     # Camera state, input, REPL commands
+│   │   └── FpsCounter.fsi/.fs           # Smoothed FPS calculation, logging, threshold warnings
 │   ├── Streaming/
 │   │   └── ViewerClient.fsi/.fs         # gRPC streaming client with auto-reconnect
 │   └── Program.fs                       # Host + Stride game loop
@@ -72,9 +74,9 @@ src/
     ├── Program.fs                       # Aspire entry point
     └── PhysicsClient.fsx                # FSI convenience script
 │
-└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 32 tools)
-    ├── GrpcConnection.fsi/.fs          # gRPC channel + 3 background streams (state, view, audit)
-    ├── SimulationTools.fsi/.fs         # 10 simulation command MCP tools
+└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 38 tools)
+    ├── GrpcConnection.fsi/.fs          # gRPC channel + 3 background streams (state, view, audit) + batch/metrics RPCs
+    ├── SimulationTools.fsi/.fs         # 11 simulation command MCP tools (incl. restart_simulation)
     ├── ViewTools.fsi/.fs               # 3 view command MCP tools
     ├── QueryTools.fsi/.fs              # get_state, get_status MCP tools
     ├── AuditTools.fsi/.fs              # Command audit log query tool
@@ -82,28 +84,45 @@ src/
     ├── PresetTools.fsi/.fs             # 7 body preset MCP tools
     ├── GeneratorTools.fsi/.fs          # 5 scene generator MCP tools
     ├── SteeringTools.fsi/.fs           # 4 steering MCP tools
+    ├── BatchTools.fsi/.fs              # batch_commands, batch_view_commands MCP tools
+    ├── MetricsTools.fsi/.fs            # get_metrics, get_diagnostics MCP tools
+    ├── StressTestTools.fsi/.fs         # start_stress_test, get_stress_test_status MCP tools
+    ├── StressTestRunner.fsi/.fs        # Background stress test execution engine
+    ├── ComparisonTools.fsi/.fs         # start_comparison_test MCP tool
     └── Program.fs                      # WebApplication + HTTP/SSE MCP transport
 
 tests/
-├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests (35 tests)
+├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests (42 tests)
 │   ├── ServerHubTests.cs               # 6 tests (SendCommand, StreamState, SendViewCommand, StreamViewCommands)
 │   ├── SimulationConnectionTests.cs    # 7 tests (connection lifecycle, physics verification, 30s stability)
 │   ├── CommandRoutingTests.cs          # 10 tests (all 9 command types + ClearForces end-to-end)
 │   ├── StateStreamingTests.cs          # 4 tests (concurrent subscribers, late-joiner, view command forwarding)
 │   ├── ErrorConditionTests.cs          # 5 tests (no simulation, empty command, rapid stress)
 │   ├── McpOrchestrationTests.cs       # 3 tests (MCP resource lifecycle in Aspire)
+│   ├── BatchIntegrationTests.cs       # Batch RPC end-to-end tests
+│   ├── RestartIntegrationTests.cs     # Restart command end-to-end tests
+│   ├── MetricsIntegrationTests.cs     # Metrics collection end-to-end tests
+│   ├── DiagnosticsIntegrationTests.cs # Pipeline diagnostics end-to-end tests
+│   ├── StaticBodyTests.cs             # Static body collision verification
+│   ├── StressTestIntegrationTests.cs  # Stress test MCP tool end-to-end tests
+│   ├── ComparisonIntegrationTests.cs  # MCP-vs-scripting comparison tests
 │   └── xunit.runner.json              # Test runner configuration
-├── PhysicsServer.Tests/                 # F# — unit tests (16 tests)
+├── PhysicsServer.Tests/                 # F# — unit tests (18 tests)
 │   ├── StateCacheTests.fs
 │   ├── MessageRouterTests.fs            # Includes readViewCommand tests
+│   ├── BatchRoutingTests.fs             # Batch command routing tests
+│   ├── MetricsCounterTests.fs           # MetricsCounter unit tests
 │   └── PublicApiBaseline.txt            # Surface-area baseline
-├── PhysicsSimulation.Tests/             # F# — unit tests (37 tests)
+├── PhysicsSimulation.Tests/             # F# — unit tests (39 tests)
 │   ├── SimulationWorldTests.fs          # Lifecycle, bodies, forces, gravity, stress
 │   ├── CommandHandlerTests.fs           # Command dispatch, edge cases
+│   ├── ResetSimulationTests.fs          # Reset/restart command tests
+│   ├── StaticBodyTrackingTests.fs       # Static body state tracking tests
 │   └── SurfaceAreaTests.fs              # Public API baseline verification
-├── PhysicsViewer.Tests/                 # F# — unit tests (16 tests)
+├── PhysicsViewer.Tests/                 # F# — unit tests (19 tests)
 │   ├── SceneManagerTests.fs             # Shape classification, state accessors
 │   ├── CameraControllerTests.fs         # Camera math, command application
+│   ├── FpsCounterTests.fs               # FPS calculation, logging interval, threshold tests
 │   ├── SurfaceAreaTests.fs              # Public API baseline verification
 │   └── PublicApiBaseline.txt            # Surface-area baseline
 └── PhysicsClient.Tests/                 # F# — unit tests (52 tests)
@@ -166,3 +185,7 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - Simulation reconnection: exponential backoff (1s → 10s max) preserves BepuPhysics world across stream reconnections. Only exits on CancellationToken cancellation. [Source: specs/005-mcp-server-testing]
 - Viewer DISPLAY env: Aspire doesn't propagate DISPLAY automatically; must add `.WithEnvironment("DISPLAY", ...)` in AppHost. Fallback to `:0`. [Source: specs/005-mcp-server-testing]
 - Integration tests need `xunit.runner.json` with `"diagnosticMessages": true` for timeout debugging. Tests use 30s+ timeouts for simulation stability verification. [Source: specs/005-mcp-server-testing]
+- Plane bodies are now tracked in `world.Bodies` with `IsStatic = true`; previously they were added to BepuPhysics2 but invisible in state. [Source: specs/002-performance-diagnostics]
+- Batch commands limited to 100 per request. Server enforces this in `sendBatchCommand`/`sendBatchViewCommand`. [Source: specs/002-performance-diagnostics]
+- Stress tests run in MCP server process as background tasks; only one test at a time (guarded by lock). Results stored in-memory, lost on MCP restart. [Source: specs/002-performance-diagnostics]
+- Pipeline diagnostics: viewer render time (`ViewerRenderMs`) not yet populated — remains 0.0. Simulation tick, serialization, and transfer times are measured correctly. [Source: specs/002-performance-diagnostics]

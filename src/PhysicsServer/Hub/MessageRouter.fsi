@@ -52,6 +52,18 @@ val tryConnectSimulation: MessageRouter -> bool
 /// Unregister the active simulation.
 val disconnectSimulation: MessageRouter -> unit
 
+/// Get a snapshot of the server's performance metrics.
+val getMetrics: MessageRouter -> ServiceMetricsReport
+
+/// Get the metrics state for periodic logging setup.
+val metricsState: MessageRouter -> MetricsCounter.MetricsState
+
+/// Submit a batch of simulation commands. Returns per-command results.
+val sendBatchCommand: MessageRouter -> BatchSimulationRequest -> BatchResponse
+
+/// Submit a batch of view commands. Returns per-command results.
+val sendBatchViewCommand: MessageRouter -> BatchViewRequest -> BatchResponse
+
 /// Read a pending simulation command. Blocks until one is available or cancellation.
 val readCommand: MessageRouter -> CancellationToken -> Task<SimulationCommand option>
 

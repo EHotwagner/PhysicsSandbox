@@ -17,16 +17,18 @@ type MessageRouter =
       CommandChannel: Channel<SimulationCommand>
       ViewCommandChannel: Channel<ViewCommand>
       mutable SimulationConnected: bool
-      SimulationLock: obj }
+      SimulationLock: obj
+      Metrics: MetricsCounter.MetricsState }
 
 let create () =
     { StateCache = StateCache.create ()
       Subscribers = ConcurrentDictionary<Guid, SimulationState -> Task>()
       CommandSubscribers = ConcurrentDictionary<Guid, CommandEvent -> Task>()
-      CommandChannel = Channel.CreateBounded<SimulationCommand>(100)
-      ViewCommandChannel = Channel.CreateBounded<ViewCommand>(100)
+      CommandChannel = Channel.CreateBounded<SimulationCommand>(1024)
+      ViewCommandChannel = Channel.CreateBounded<ViewCommand>(1024)
       SimulationConnected = false
-      SimulationLock = obj () }
+      SimulationLock = obj ()
+      Metrics = MetricsCounter.create "PhysicsServer" }
 
 let subscribeCommands (router: MessageRouter) (callback: CommandEvent -> Task) =
     let id = Guid.NewGuid()
@@ -46,6 +48,9 @@ let publishCommandEvent (router: MessageRouter) (evt: CommandEvent) =
     }
 
 let submitCommand (router: MessageRouter) (cmd: SimulationCommand) =
+    // Track incoming command
+    MetricsCounter.incrementReceived 1 (int64 (cmd.CalculateSize())) router.Metrics
+
     // Try to write to the command channel; drop if full or no simulation connected
     let written =
         lock router.SimulationLock (fun () ->
@@ -53,6 +58,9 @@ let submitCommand (router: MessageRouter) (cmd: SimulationCommand) =
                 router.CommandChannel.Writer.TryWrite(cmd)
             else
                 false)
+
+    if written then
+        MetricsCounter.incrementSent 1 (int64 (cmd.CalculateSize())) router.Metrics
 
     // Publish to command audit subscribers
     let evt = CommandEvent()
@@ -69,6 +77,7 @@ let submitCommand (router: MessageRouter) (cmd: SimulationCommand) =
     )
 
 let submitViewCommand (router: MessageRouter) (cmd: ViewCommand) =
+    MetricsCounter.incrementReceived 1 (int64 (cmd.CalculateSize())) router.Metrics
     // Try to write to the view command channel; drop if full or no viewer connected
     let _written = router.ViewCommandChannel.Writer.TryWrite(cmd)
 
@@ -92,6 +101,7 @@ let unsubscribe (router: MessageRouter) (SubscriptionId id) =
 
 let publishState (router: MessageRouter) (state: SimulationState) =
     task {
+        MetricsCounter.incrementReceived 1 (int64 (state.CalculateSize())) router.Metrics
         StateCache.update router.StateCache state
 
         for kvp in router.Subscribers do
@@ -115,6 +125,48 @@ let tryConnectSimulation (router: MessageRouter) =
 let disconnectSimulation (router: MessageRouter) =
     lock router.SimulationLock (fun () ->
         router.SimulationConnected <- false)
+
+let getMetrics (router: MessageRouter) =
+    MetricsCounter.snapshot router.Metrics
+
+let metricsState (router: MessageRouter) =
+    router.Metrics
+
+let sendBatchCommand (router: MessageRouter) (batch: BatchSimulationRequest) =
+    let sw = System.Diagnostics.Stopwatch.StartNew()
+    let response = BatchResponse()
+
+    if batch.Commands.Count > 100 then
+        let result = CommandResult(Success = false, Message = "Batch exceeds maximum of 100 commands", Index = 0)
+        response.Results.Add(result)
+    else
+        for i in 0 .. batch.Commands.Count - 1 do
+            let cmd = batch.Commands.[i]
+            let ack = submitCommand router cmd
+            let result = CommandResult(Success = ack.Success, Message = ack.Message, Index = i)
+            response.Results.Add(result)
+
+    sw.Stop()
+    response.TotalTimeMs <- sw.Elapsed.TotalMilliseconds
+    response
+
+let sendBatchViewCommand (router: MessageRouter) (batch: BatchViewRequest) =
+    let sw = System.Diagnostics.Stopwatch.StartNew()
+    let response = BatchResponse()
+
+    if batch.Commands.Count > 100 then
+        let result = CommandResult(Success = false, Message = "Batch exceeds maximum of 100 commands", Index = 0)
+        response.Results.Add(result)
+    else
+        for i in 0 .. batch.Commands.Count - 1 do
+            let cmd = batch.Commands.[i]
+            let ack = submitViewCommand router cmd
+            let result = CommandResult(Success = ack.Success, Message = ack.Message, Index = i)
+            response.Results.Add(result)
+
+    sw.Stop()
+    response.TotalTimeMs <- sw.Elapsed.TotalMilliseconds
+    response
 
 let readCommand (router: MessageRouter) (ct: CancellationToken) =
     task {

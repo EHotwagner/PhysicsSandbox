@@ -16,9 +16,11 @@ open Microsoft.Extensions.Logging
 open PhysicsSandbox.Shared.Contracts
 open PhysicsViewer.SceneManager
 open PhysicsViewer.CameraController
+open PhysicsViewer.Rendering
 
 let game = new Game()
 
+let fpsState = FpsCounter.create 30.0f
 let mutable sceneState = SceneManager.create ()
 let mutable cameraState = CameraController.defaultCamera ()
 let mutable cameraEntity: Entity option = None
@@ -28,6 +30,10 @@ let mutable latestSimState: SimulationState = null
 let mutable latestViewCmd: ViewCommand = null
 let mutable stateVersion = 0
 let mutable lastAppliedVersion = 0
+
+// Viewer metrics counters
+let mutable viewerMsgRecv = 0L
+let mutable viewerBytesRecv = 0L
 
 let cts = new CancellationTokenSource()
 
@@ -70,6 +76,8 @@ let startStateStream (serverAddress: string) =
                         if hasNext then
                             Volatile.Write(&latestSimState, stream.Current)
                             Interlocked.Increment(&stateVersion) |> ignore
+                            Interlocked.Increment(&viewerMsgRecv) |> ignore
+                            Interlocked.Add(&viewerBytesRecv, int64 (stream.Current.CalculateSize())) |> ignore
                 with
                 | :? OperationCanceledException -> ()
                 | ex when not cts.Token.IsCancellationRequested ->
@@ -93,6 +101,8 @@ let startViewCommandStream (serverAddress: string) =
                         let! hasNext = stream.MoveNext(cts.Token)
                         if hasNext then
                             Volatile.Write(&latestViewCmd, stream.Current)
+                            Interlocked.Increment(&viewerMsgRecv) |> ignore
+                            Interlocked.Add(&viewerBytesRecv, int64 (stream.Current.CalculateSize())) |> ignore
                 with
                 | :? OperationCanceledException -> ()
                 | ex when not cts.Token.IsCancellationRequested ->
@@ -119,6 +129,18 @@ let start (scene: Scene) =
     logger.LogInformation("Viewer starting, server address: {Address}", addr)
     startStateStream addr
     startViewCommandStream addr
+
+    // Start periodic viewer metrics logging
+    new Timer(
+        (fun _ ->
+            logger.LogInformation(
+                "Metrics [PhysicsViewer] recv={MsgRecv} bytesRecv={BytesRecv}",
+                Interlocked.Read(&viewerMsgRecv),
+                Interlocked.Read(&viewerBytesRecv))),
+        null,
+        TimeSpan.FromSeconds(10.0),
+        TimeSpan.FromSeconds(10.0))
+    |> ignore
 
 let update (scene: Scene) (time: GameTime) =
     let dt = float32 time.Elapsed.TotalSeconds
@@ -149,12 +171,20 @@ let update (scene: Scene) (time: GameTime) =
     | Some entity -> CameraController.applyToCamera cameraState entity
     | None -> ()
 
+    // FPS tracking
+    let fps = FpsCounter.update dt fpsState
+    if FpsCounter.shouldLog 10.0f fpsState then
+        if FpsCounter.isBelowThreshold fpsState then
+            logger.LogWarning("FPS below threshold: {Fps:F1}", fps)
+        else
+            logger.LogInformation("FPS: {Fps:F1}", fps)
+
     // Status overlay
     let simTime = SceneManager.simulationTime sceneState
     let running = SceneManager.isRunning sceneState
     let statusText =
         let runLabel = if running then "RUNNING" else "PAUSED"
-        $"Time: {simTime:F2}s | {runLabel}"
+        $"FPS: {fps:F0} | Time: {simTime:F2}s | {runLabel}"
     game.DebugTextSystem.Print(statusText, Int2(10, 10))
 
 [<EntryPoint>]

@@ -11,6 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Rendering/FpsCounter.fsi" />
+    <Compile Include="Rendering/FpsCounter.fs" />
     <Compile Include="Rendering/SceneManager.fsi" />
     <Compile Include="Rendering/SceneManager.fs" />
     <Compile Include="Rendering/CameraController.fsi" />

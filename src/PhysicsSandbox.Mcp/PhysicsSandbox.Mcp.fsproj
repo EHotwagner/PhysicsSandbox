@@ -18,6 +18,10 @@
     <Compile Include="ViewTools.fs" />
     <Compile Include="QueryTools.fsi" />
     <Compile Include="QueryTools.fs" />
+    <Compile Include="MetricsTools.fsi" />
+    <Compile Include="MetricsTools.fs" />
+    <Compile Include="BatchTools.fsi" />
+    <Compile Include="BatchTools.fs" />
     <Compile Include="AuditTools.fsi" />
     <Compile Include="AuditTools.fs" />
     <Compile Include="ClientAdapter.fsi" />
@@ -28,6 +32,12 @@
     <Compile Include="GeneratorTools.fs" />
     <Compile Include="SteeringTools.fsi" />
     <Compile Include="SteeringTools.fs" />
+    <Compile Include="StressTestRunner.fsi" />
+    <Compile Include="StressTestRunner.fs" />
+    <Compile Include="StressTestTools.fsi" />
+    <Compile Include="StressTestTools.fs" />
+    <Compile Include="ComparisonTools.fsi" />
+    <Compile Include="ComparisonTools.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
