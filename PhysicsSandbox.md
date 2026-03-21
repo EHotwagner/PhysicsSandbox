@@ -2,26 +2,22 @@
 
 ## Architecture
 
-Four services, all communication routed through the Server.
+Five services, all communication routed through the Server.
 
-```
-                    ┌──────────────┐
-                    │    Server    │
-                    │   (Hub/API)  │
-                    └──┬──┬──┬────┘
-     commands ▼  ▲ state │  │    ▼ sim data + UI
-          ┌──────────────┘  └──────────┐
-          │                            │
-  ┌───────┴──────┐              ┌──────┴───────┐
-  │  Simulation  │              │   3D Viewer  │
-  │  (Physics)   │              │   (Render)   │
-  └──────────────┘              └──────────────┘
+```mermaid
+graph TD
+    Server["Server\n(gRPC Hub)"]
+    Sim["Simulation\n(BepuPhysics2)"]
+    Viewer["3D Viewer\n(Stride3D)"]
+    Client["REPL Client\n(Spectre.Console)"]
+    MCP["MCP Server\n(38 AI Tools)"]
 
-                   ▲ cmds │ state ▼
-                    ┌─────┴────────┐
-                    │  REPL Client │
-                    │  (Commands)  │
-                    └──────────────┘
+    Server <-->|"commands / state\nbidirectional stream"| Sim
+    Client -->|"commands\nview commands"| Server
+    Server -->|"state stream"| Client
+    Server -->|"state stream\nview commands"| Viewer
+    MCP -->|"commands"| Server
+    Server -->|"state stream"| MCP
 ```
 
 ## Services
@@ -29,40 +25,49 @@ Four services, all communication routed through the Server.
 | Service | Role | Tech |
 |---------|------|------|
 | **Server** | Central hub. Routes all messages between services. | ASP.NET gRPC server |
-| **Simulation** | Runs physics simulation. Receives commands, emits state. | F# compute service, gRPC client/server |
-| **Client** | REPL for user input. Sends commands and camera/UI settings. | F# console app, gRPC client |
-| **Viewer** | 3D rendering of simulation state. Receives data + camera. | F# + rendering lib, gRPC client |
+| **Simulation** | Runs physics simulation. Receives commands, emits state. | F# + BepuPhysics2, gRPC bidirectional stream |
+| **Client** | REPL for user input. Sends commands and camera/UI settings. | F# + Spectre.Console, gRPC client |
+| **Viewer** | 3D rendering of simulation state. Receives state + camera. | F# + Stride3D, gRPC client |
+| **MCP** | AI assistant integration. 38 tools for simulation control. | F# + ModelContextProtocol, gRPC client |
 
 ## Communication Flows
 
 ### 1. Commands: Client → Server → Simulation
 
-```
-Client  ──[SimulationCommand]──▶  Server  ──[SimulationCommand]──▶  Simulation
+```mermaid
+graph LR
+    Client["Client / MCP"] -->|SimulationCommand| Server
+    Server -->|SimulationCommand| Sim["Simulation"]
 ```
 
 User types commands in the REPL (add body, apply force, set gravity, step,
-play, pause). Client sends them to Server via gRPC. Server forwards to
-Simulation.
+play, pause). Client sends them to Server via `SendCommand` / `SendBatchCommand`.
+Server forwards to Simulation via the `ConnectSimulation` bidirectional stream.
 
 ### 2. Simulation Data: Simulation → Server → Client + Viewer
 
-```
-Simulation  ──[SimulationState]──▶  Server  ──[SimulationState]──▶  Client
-                                           ──[SimulationState]──▶  Viewer
-```
-
-Simulation streams world state (body positions, velocities, collisions) to
-Server. Server fans out to both Client (text display) and Viewer (3D render).
-
-### 3. UI Control: Client → Server → Viewer
-
-```
-Client  ──[ViewCommand]──▶  Server  ──[ViewCommand]──▶  Viewer
+```mermaid
+graph LR
+    Sim["Simulation"] -->|SimulationState| Server
+    Server -->|StreamState| Client
+    Server -->|StreamState| Viewer
+    Server -->|StreamState| MCP
 ```
 
-User sets camera position, zoom, toggle wireframe, etc. Client sends to
-Server, Server forwards to Viewer.
+Simulation streams world state (body positions, velocities, timing) to
+Server via the `ConnectSimulation` upstream. Server caches the latest state
+(for late joiners) and fans out to all `StreamState` subscribers.
+
+### 3. View Commands: Client → Server → Viewer
+
+```mermaid
+graph LR
+    Client -->|SendViewCommand| Server
+    Server -->|StreamViewCommands| Viewer
+```
+
+User sets camera position, zoom, toggle wireframe. Client sends to
+Server via `SendViewCommand`, Server forwards to Viewer via `StreamViewCommands`.
 
 ## Contracts (Platform.Shared.Contracts)
 

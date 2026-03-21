@@ -17,25 +17,20 @@ with a central hub routing messages between producers and consumers.
 
 ## Service Topology
 
-```
-                    ┌──────────────┐
-                    │    Server    │
-                    │   (Hub/API)  │
-                    └──┬──┬──┬────┘
-     commands ▼  ▲ state │  │    ▼ state + view cmds
-          ┌──────────────┘  └──────────┐
-          │                            │
-  ┌───────┴──────┐              ┌──────┴───────┐
-  │  Simulation  │              │   3D Viewer  │
-  │ (BepuPhysics)│              │  (Stride3D)  │
-  └──────────────┘              └──────────────┘
-
-                   ▲ cmds │ state ▼
-                    ┌─────┴────────┐
-                    │  REPL Client │
-                    │  (Spectre)   │
-                    └──────────────┘
-```
+<pre class="mermaid">
+graph TD
+    Server["Server\n(gRPC Hub)"]
+    Sim["Simulation\n(BepuPhysics2)"]
+    Viewer["3D Viewer\n(Stride3D)"]
+    Client["REPL Client\n(Spectre.Console)"]
+    MCP["MCP Server\n(38 AI Tools)"]
+    Server <-->|"SimulationCommand ↓ · SimulationState ↑\nbidirectional stream (ConnectSimulation)"| Sim
+    Client -->|"SendCommand / SendBatchCommand\nSendViewCommand"| Server
+    Server -->|"StreamState"| Client
+    Server -->|"StreamState\nStreamViewCommands"| Viewer
+    MCP -->|"SendCommand"| Server
+    Server -->|"StreamState"| MCP
+</pre>
 
 ## Services
 

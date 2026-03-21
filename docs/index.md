@@ -12,27 +12,22 @@ A real-time 3D physics simulation built as an F# microservices architecture, orc
 
 ## Architecture
 
-Four services communicate through a central gRPC hub:
+Five services communicate through a central gRPC hub:
 
-```
-                  ┌──────────────┐
-                  │    Server    │
-                  │   (Hub/API)  │
-                  └──┬──┬──┬────┘
-   commands ▼  ▲ state │  │    ▼ state + view cmds
-        ┌──────────────┘  └──────────┐
-        │                            │
-┌───────┴──────┐              ┌──────┴───────┐
-│  Simulation  │              │   3D Viewer  │
-│  (Physics)   │              │   (Render)   │
-└──────────────┘              └──────────────┘
-
-               ▲ cmds │ state ▼
-                ┌─────┴────────┐
-                │  REPL Client │
-                │  (Commands)  │
-                └──────────────┘
-```
+<pre class="mermaid">
+graph TD
+    Server["Server\n(gRPC Hub)"]
+    Sim["Simulation\n(BepuPhysics2)"]
+    Viewer["3D Viewer\n(Stride3D)"]
+    Client["REPL Client\n(Spectre.Console)"]
+    MCP["MCP Server\n(38 AI Tools)"]
+    Server <-->|"commands / state\nbidirectional stream"| Sim
+    Client -->|"commands\nview commands"| Server
+    Server -->|"state stream"| Client
+    Server -->|"state stream\nview commands"| Viewer
+    MCP -->|"commands"| Server
+    Server -->|"state stream"| MCP
+</pre>
 
 ## Documentation
 
