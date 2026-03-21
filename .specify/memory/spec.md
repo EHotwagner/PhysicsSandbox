@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-21
-**Revision**: Updated with 002-performance-diagnostics archival
+**Revision**: Updated with 001-demo-script-modernization archival
 
 ## Overview
 
@@ -123,6 +123,18 @@ A developer initiates predefined stress test scenarios (body count scaling, comm
 ### US-038: MCP vs Scripting Performance Comparison (P3)
 A developer runs identical test scenarios via both MCP and direct gRPC scripting, comparing timing results to quantify MCP overhead in time and message count. Includes batched vs unbatched comparison. [Source: specs/002-performance-diagnostics]
 
+### US-039: Batch Command Support in Demo Scripts (P1)
+A developer running demo scripts gets faster scene setup because body-creation commands are grouped into batches instead of sent individually. Demos placing 3+ bodies use batch commands via Prelude helpers. [Source: specs/001-demo-script-modernization]
+
+### US-040: Server-Side Simulation Reset in Demos (P1)
+A developer running the demo suite gets clean simulation state between demos via server-side reset (clears bodies, forces, resets time) instead of manual multi-step teardown. [Source: specs/001-demo-script-modernization]
+
+### US-041: Updated Scripting Helpers in Shared Prelude (P2)
+A developer writing demo scripts uses Prelude helpers (makeSphereCmd, makeBoxCmd, makeImpulseCmd, makeTorqueCmd, batchAdd, resetSimulation, nextId, toVec3) for batching and reset without additional boilerplate. [Source: specs/001-demo-script-modernization]
+
+### US-042: AutoRun Script Consistency (P2)
+A developer or CI system running AutoRun.fsx gets the same modern batching and reset behavior as individual demo scripts and RunAll. All 10 demos pass in all execution modes. [Source: specs/001-demo-script-modernization]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -232,6 +244,12 @@ A developer runs identical test scenarios via both MCP and direct gRPC scripting
 - **FR-105**: Stress test summary reports MUST include: peak body count, degradation body count, peak command rate, average/min FPS, total/failed commands, and error messages. Logged to structured logs and returned via MCP tool. [Source: specs/002-performance-diagnostics]
 - **FR-106**: System MUST support running identical scenarios via MCP and direct gRPC scripting (PhysicsClient library) for performance comparison (`start_comparison_test` MCP tool). [Source: specs/002-performance-diagnostics]
 - **FR-107**: Comparison results MUST quantify MCP overhead in time (ms), message count, and overhead percentage. Includes batched MCP path comparison. [Source: specs/002-performance-diagnostics]
+- **FR-108**: Demo scripts placing 3+ bodies MUST use batch commands (via Prelude `batchAdd` helper) to group body-creation into fewer round-trips. [Source: specs/001-demo-script-modernization]
+- **FR-109**: Shared Prelude module MUST provide `resetSimulation` helper using server-side `reset` command followed by ground plane re-establishment and gravity restore. [Source: specs/001-demo-script-modernization]
+- **FR-110**: Shared Prelude module MUST provide command builder functions (`makeSphereCmd`, `makeBoxCmd`, `makeImpulseCmd`, `makeTorqueCmd`) and `batchAdd` helper with auto-split at 100 commands. [Source: specs/001-demo-script-modernization]
+- **FR-111**: All 10 demo scripts, AllDemos.fsx, AutoRun.fsx, and RunAll.fsx MUST use `resetSimulation` instead of manual multi-step `resetScene`. [Source: specs/001-demo-script-modernization]
+- **FR-112**: AutoRun.fsx MUST duplicate all Prelude helpers inline (self-contained) and mirror all demo changes. [Source: specs/001-demo-script-modernization]
+- **FR-113**: Batch and reset error handling MUST produce clear, actionable error messages (print failed command indices, reset fallback to manual clear). [Source: specs/001-demo-script-modernization]
 
 ## Key Entities
 
@@ -308,6 +326,9 @@ A developer runs identical test scenarios via both MCP and direct gRPC scripting
 - Stress test causes high resource usage: test records degradation point and stops gracefully. [Source: specs/002-performance-diagnostics]
 - Metrics queried with partial system (not all services running): returns data from available services only. [Source: specs/002-performance-diagnostics]
 - Batch contains invalid command among valid ones: valid commands execute, invalid returns error in per-command results. [Source: specs/002-performance-diagnostics]
+- Demo server-side reset fails: Prelude `resetSimulation` prints error and falls back to manual `clearAll`. [Source: specs/001-demo-script-modernization]
+- Demo batch exceeds 100-command limit: `batchAdd` auto-splits into chunks of 100. [Source: specs/001-demo-script-modernization]
+- Demo run standalone vs in suite: both modes work — `resetSimulation` called at start of each demo. [Source: specs/001-demo-script-modernization]
 
 ## Success Criteria
 
@@ -362,3 +383,6 @@ A developer runs identical test scenarios via both MCP and direct gRPC scripting
 - **SC-049**: Diagnostics correctly identify the slowest pipeline stage within 10% accuracy. [Source: specs/002-performance-diagnostics]
 - **SC-050**: Stress tests scale to at least 500 simultaneous bodies while measuring degradation. [Source: specs/002-performance-diagnostics]
 - **SC-051**: MCP-vs-scripting comparison quantifies overhead with reproducible results (<15% variance). [Source: specs/002-performance-diagnostics]
+- **SC-052**: All 10 demos run successfully in both RunAll and AutoRun modes with zero failures after modernization. [Source: specs/001-demo-script-modernization]
+- **SC-053**: Every demo starts from clean state — zero leftover bodies when running full suite. [Source: specs/001-demo-script-modernization]
+- **SC-054**: No demo script requires more than one import beyond Prelude for batching/reset capabilities. [Source: specs/001-demo-script-modernization]

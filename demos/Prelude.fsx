@@ -86,6 +86,13 @@ module DemoHelpers =
         cmd.ApplyTorque <- at
         cmd
 
+    let timed (label: string) (f: unit -> 'a) : 'a =
+        let sw = System.Diagnostics.Stopwatch.StartNew()
+        let result = f ()
+        sw.Stop()
+        printfn "  [TIME] %s: %d ms" label sw.ElapsedMilliseconds
+        result
+
     let batchAdd (s: Session) (commands: SimulationCommand list) =
         let chunks = commands |> List.chunkBySize 100
         for chunk in chunks do

@@ -60,6 +60,13 @@ let batchAdd (s: Session) (commands: SimulationCommand list) =
         for f in response.Results |> Seq.filter (fun r -> not r.Success) do
             printfn "  [BATCH FAIL] command %d: %s" f.Index f.Message
 
+let timed (label: string) (f: unit -> 'a) : 'a =
+    let sw = System.Diagnostics.Stopwatch.StartNew()
+    let result = f ()
+    sw.Stop()
+    printfn "  [TIME] %s: %d ms" label sw.ElapsedMilliseconds
+    result
+
 type Demo = { Name: string; Desc: string; Run: Session -> unit }
 
 let demos = [|
@@ -190,6 +197,129 @@ let demos = [|
         let r = float a * 0.7
         setCamera s (10.0 * cos r, 5.0, 10.0 * sin r) (0.0, 1.0, 0.0) |> ignore; sleep 400
       printfn "  Chaos complete!"; status s }
+
+  { Name = "Body Scaling"; Desc = "Progressive body count: 50 → 100 → 200 → 500. Finds degradation point."
+    Run = fun s ->
+      resetSimulation s
+      let tiers = [50; 100; 200; 500]
+      for tier in tiers do
+        printfn "  === Tier: %d bodies ===" tier
+        resetSimulation s
+        let dist = if tier <= 100 then 15.0 elif tier <= 200 then 25.0 else 40.0
+        setCamera s (dist, dist * 0.6, dist) (0.0, 2.0, 0.0) |> ignore
+        timed (sprintf "Tier %d setup" tier) (fun () ->
+            let cmds = [ for i in 0 .. tier - 1 do
+                           let x = float (i % 10) * 1.2 - 6.0
+                           let y = 2.0 + float (i / 100) * 3.0
+                           let z = float ((i / 10) % 10) * 1.2 - 6.0
+                           makeSphereCmd (nextId "sphere") (x, y, z) 0.3 1.0 ]
+            batchAdd s cmds)
+        timed (sprintf "Tier %d simulation (3s)" tier) (fun () -> runFor s 3.0)
+        printfn "  Tier %d complete" tier
+      printfn "  All tiers complete — check [TIME] markers for degradation"; status s }
+
+  { Name = "Collision Pit"; Desc = "120 spheres dropped into a walled pit — maximum collision density."
+    Run = fun s ->
+      resetSimulation s; setCamera s (8.0, 10.0, 8.0) (0.0, 2.0, 0.0) |> ignore
+      timed "Pit walls setup" (fun () ->
+          let wallCmds = [
+              makeBoxCmd (nextId "box") (0.0, 2.0, -2.1) (2.0, 2.0, 0.1) 0.0
+              makeBoxCmd (nextId "box") (0.0, 2.0, 2.1)  (2.0, 2.0, 0.1) 0.0
+              makeBoxCmd (nextId "box") (-2.1, 2.0, 0.0) (0.1, 2.0, 2.0) 0.0
+              makeBoxCmd (nextId "box") (2.1, 2.0, 0.0)  (0.1, 2.0, 2.0) 0.0 ]
+          batchAdd s wallCmds)
+      printfn "  Pit built (4x4m walled enclosure)"
+      timed "Drop 120 spheres" (fun () ->
+          let sphereCmds = [ for i in 0 .. 119 do
+                               let x = float (i % 10) * 0.35 - 1.6
+                               let z = float ((i / 10) % 12) * 0.35 - 1.9
+                               let y = 6.0 + float (i / 10) * 0.5
+                               makeSphereCmd (nextId "sphere") (x, y, z) 0.15 0.5 ]
+          batchAdd s sphereCmds)
+      printfn "  120 spheres dropping into pit..."
+      timed "Settling simulation (8s)" (fun () -> runFor s 8.0)
+      setCamera s (4.0, 3.0, 4.0) (0.0, 1.5, 0.0) |> ignore
+      printfn "  Close-up view of settled pit"; sleep 1000; status s }
+
+  { Name = "Force Frenzy"; Desc = "100 bodies hit with 3 rounds of escalating impulses, torques, and gravity shifts."
+    Run = fun s ->
+      resetSimulation s; setCamera s (15.0, 10.0, 15.0) (0.0, 1.0, 0.0) |> ignore
+      let ids = timed "Create 100 bodies" (fun () ->
+          let bodyIds = [ for i in 0 .. 99 -> nextId "sphere" ]
+          let cmds = [ for idx in 0 .. 99 do
+                         let x = float (idx % 10) * 1.5 - 7.0
+                         let z = float (idx / 10) * 1.5 - 7.0
+                         makeSphereCmd bodyIds.[idx] (x, 0.5, z) 0.3 1.0 ]
+          batchAdd s cmds; bodyIds)
+      printfn "  100 spheres in 10x10 grid"
+      timed "Settle (2s)" (fun () -> runFor s 2.0)
+      timed "Round 1 — impulses (3s)" (fun () ->
+          batchAdd s [ for id in ids do makeImpulseCmd id (0.0, 8.0, 0.0) ]; runFor s 3.0)
+      timed "Round 2 — torques + sideways gravity (3s)" (fun () ->
+          batchAdd s [ for id in ids do makeTorqueCmd id (0.0, 20.0, 10.0) ]
+          setGravity s (8.0, -2.0, 0.0) |> ignore
+          setCamera s (-15.0, 5.0, 10.0) (0.0, 2.0, 0.0) |> ignore; runFor s 3.0)
+      timed "Round 3 — strong impulses + reversed gravity (3s)" (fun () ->
+          batchAdd s [ for id in ids do makeImpulseCmd id (5.0, 15.0, -5.0) ]
+          setGravity s (0.0, 12.0, 0.0) |> ignore
+          setCamera s (10.0, 2.0, 15.0) (0.0, 5.0, 0.0) |> ignore; runFor s 3.0)
+      setGravity s (0.0, -9.81, 0.0) |> ignore; printfn "  Gravity restored"; runFor s 2.0; status s }
+
+  { Name = "Domino Cascade"; Desc = "120 dominoes in a semicircular path — chain reaction at scale."
+    Run = fun s ->
+      resetSimulation s; setCamera s (0.0, 12.0, 0.1) (0.0, 0.0, 0.0) |> ignore
+      let count = 120; let radius = 8.0
+      let ids = timed (sprintf "Place %d dominoes" count) (fun () ->
+          let dominoIds = [ for _ in 0 .. count - 1 -> nextId "box" ]
+          let cmds = [ for i in 0 .. count - 1 do
+                         let angle = float i / float count * System.Math.PI
+                         let x = radius * cos angle
+                         let z = radius * sin angle
+                         makeBoxCmd dominoIds.[i] (x, 0.3, z) (0.05, 0.3, 0.15) 1.0 ]
+          batchAdd s cmds; dominoIds)
+      printfn "  %d dominoes in semicircle (radius %.0fm)" count radius; runFor s 1.0
+      printfn "  Pushing first domino..."; push s ids.[0] East 4.0 |> ignore
+      timed "Cascade propagation" (fun () -> runFor s 10.0)
+      for i in 0..5 do
+        let angle = float i / 5.0 * System.Math.PI
+        let cx = (radius + 4.0) * cos angle; let cz = (radius + 4.0) * sin angle
+        setCamera s (cx, 3.0, cz) (0.0, 0.5, 0.0) |> ignore; sleep 500
+      printfn "  Cascade complete"; status s }
+
+  { Name = "Overload"; Desc = "Everything at once: 200+ bodies, forces, gravity shifts, camera sweep — stress ceiling test."
+    Run = fun s ->
+      resetSimulation s
+      let totalSw = System.Diagnostics.Stopwatch.StartNew()
+      setCamera s (20.0, 12.0, 20.0) (0.0, 2.0, 0.0) |> ignore
+      let pyramidIds = timed "Act 1 — pyramid + stack + row" (fun () ->
+          let pIds = pyramid s 7 (Some (-5.0, 0.0, 0.0)) |> ok
+          stack s 10 (Some (5.0, 0.0, 0.0)) |> ok |> ignore
+          row s 12 (Some (-5.0, 0.0, 5.0)) |> ok |> ignore; runFor s 2.0; pIds)
+      timed "Act 2 — 100 random spheres" (fun () ->
+          let cmds = [ for i in 0 .. 99 do
+                         let x = float (i % 10) * 1.5 - 7.0
+                         let z = float (i / 10) * 1.5 - 7.0
+                         let y = 8.0 + float (i / 20) * 2.0
+                         makeSphereCmd (nextId "sphere") (x, y, z) 0.25 0.8 ]
+          batchAdd s cmds; runFor s 3.0)
+      printfn "  200+ bodies active"
+      timed "Act 3 — impulse storm" (fun () ->
+          setCamera s (0.0, 20.0, 15.0) (0.0, 2.0, 0.0) |> ignore
+          batchAdd s [ for id in pyramidIds do makeImpulseCmd id (0.0, 10.0, 3.0) ]; runFor s 3.0)
+      timed "Act 4 — gravity chaos" (fun () ->
+          setCamera s (12.0, 3.0, 12.0) (0.0, 4.0, 0.0) |> ignore
+          setGravity s (0.0, 10.0, 0.0) |> ignore; runFor s 2.0
+          setGravity s (6.0, 0.0, 6.0) |> ignore
+          setCamera s (-12.0, 5.0, -12.0) (0.0, 3.0, 0.0) |> ignore; runFor s 2.0
+          setGravity s (0.0, -9.81, 0.0) |> ignore)
+      timed "Act 5 — camera sweep" (fun () ->
+          wireframe s true |> ignore; runFor s 1.0; wireframe s false |> ignore
+          for a in 0..7 do
+            let angle = float a * 0.785
+            setCamera s (18.0 * cos angle, 8.0, 18.0 * sin angle) (0.0, 2.0, 0.0) |> ignore; sleep 400)
+      totalSw.Stop()
+      printfn "  [TIME] Total overload: %d ms" totalSw.ElapsedMilliseconds
+      printfn "  Overload complete!"; status s }
 |]
 
 // --- Runner ---

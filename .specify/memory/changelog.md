@@ -1,5 +1,27 @@
 # Merged Features Log
 
+## Demo Script Modernization — 2026-03-21
+**Branch:** 001-demo-script-modernization
+**Spec:** specs/001-demo-script-modernization
+
+**What was added:**
+- Prelude helpers: `resetSimulation` (server-side reset), command builders (`makeSphereCmd`, `makeBoxCmd`, `makeImpulseCmd`, `makeTorqueCmd`), `batchAdd` (auto-split at 100), `nextId`, `toVec3`
+- All 10 demos updated: `resetScene` → `resetSimulation` for server-side reset
+- 6 demos converted to batch commands: Demo02 (5 marbles), Demo06 (12 boxes), Demo07 (4 bodies + 4 torques), Demo08 (5 beach balls), Demo09 (16 spheres), Demo10 (10 impulses)
+- AllDemos.fsx, AutoRun.fsx, RunAll.fsx synced with all changes
+- Error handling: reset fallback to manual clear, batch failure reporting with command indices
+
+**Modified Components:**
+- `demos/Prelude.fsx` — added 8 new helpers, replaced `resetScene`
+- `demos/Demo01-10_*.fsx` — resetSimulation + batching where applicable
+- `demos/AllDemos.fsx` — mirrored all demo changes + added Contracts import
+- `demos/AutoRun.fsx` — self-contained with duplicated helpers + all demo changes
+- `demos/RunAll.fsx` — cleanup line updated
+
+**Tasks Completed:** 37/37 tasks
+
+---
+
 ## Performance Diagnostics & Stress Testing — 2026-03-21
 **Branch:** 002-performance-diagnostics
 **Spec:** specs/002-performance-diagnostics

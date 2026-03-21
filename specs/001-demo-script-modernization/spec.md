@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-demo-script-modernization`
 **Created**: 2026-03-21
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "Bring demo scripts and scripting capabilities up to date with batching and restart simulation"
 
 ## User Scenarios & Testing *(mandatory)*
