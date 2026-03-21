@@ -6,18 +6,19 @@ module Demo06 =
     let description = "A row of 12 brick dominoes toppled by a push."
 
     let run (s: PhysicsClient.Session.Session) =
-        resetScene s
+        resetSimulation s
 
         // Camera: side view along the row
         setCamera s (-2.0, 3.0, 6.0) (3.0, 0.5, 0.0) |> ignore
 
-        // Create a row of tall thin bricks (dominoes) — standing upright
-        // Using addBox directly for tall thin shape: halfExtents (0.05, 0.3, 0.15)
-        let mutable firstId = ""
-        for i in 0..11 do
-            let x = float i * 0.5
-            let id = addBox s (x, 0.3, 0.0) (0.05, 0.3, 0.15) 1.0 None |> ok
-            if i = 0 then firstId <- id
+        // Batch-create 12 dominoes — pre-generate IDs for push reference
+        let ids = [ for _ in 0..11 -> nextId "box" ]
+        let cmds =
+            [ for i in 0..11 do
+                let x = float i * 0.5
+                makeBoxCmd ids.[i] (x, 0.3, 0.0) (0.05, 0.3, 0.15) 1.0 ]
+        batchAdd s cmds
+        let firstId = ids.[0]
 
         printfn "  Placed 12 dominoes in a row"
 

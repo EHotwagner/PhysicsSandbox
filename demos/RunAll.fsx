@@ -53,6 +53,6 @@ for i in 0 .. demos.Length - 1 do
 
 printfn ""
 printfn "Cleaning up..."
-resetScene s
+resetSimulation s
 disconnect s
 printfn "Disconnected. Goodbye!"

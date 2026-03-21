@@ -6,7 +6,7 @@ module Demo04 =
     let description = "Launch a bowling ball at a pyramid of bricks."
 
     let run (s: PhysicsClient.Session.Session) =
-        resetScene s
+        resetSimulation s
 
         // Camera: behind the ball looking at pins
         setCamera s (-5.0, 3.0, 3.0) (3.0, 1.0, 0.0) |> ignore

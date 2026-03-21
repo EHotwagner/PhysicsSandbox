@@ -11,6 +11,7 @@ Last updated: 2026-03-21
 - ModelContextProtocol.AspNetCore 1.1.* (MCP server, persistent HTTP/SSE transport)
 - xUnit 2.x, Aspire.Hosting.Testing 10.x
 - In-memory storage (physics world, metrics counters, stress test state, command logs)
+- F# scripts (.fsx) on .NET 10.0 + PhysicsClient.dll, PhysicsSandbox.Shared.Contracts.dll (proto-generated types) (001-demo-script-modernization)
 
 ## Project Structure
 
@@ -65,9 +66,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 001-demo-script-modernization: Added F# scripts (.fsx) on .NET 10.0 + PhysicsClient.dll, PhysicsSandbox.Shared.Contracts.dll (proto-generated types)
 - 002-performance-diagnostics: FPS overlay + logging in viewer, per-service metrics (message counts, bytes), batch commands (gRPC + MCP, max 100), simulation restart, static body collision tracking, pipeline diagnostics (tick/serialize/transfer timing), stress testing framework (body-scaling, command-throughput), MCP-vs-scripting comparison. 38 MCP tools total. 97 tasks completed.
 - 001-mcp-persistent-service: MCP server switched from stdio to persistent HTTP/SSE transport (ModelContextProtocol.AspNetCore). New CommandEvent proto message + StreamCommands audit RPC on PhysicsServer. GrpcConnection subscribes to 3 streams (state, view commands, command audit). 32 MCP tools total: 10 simulation + 3 view + 2 query + 1 audit + 7 presets + 5 generators + 4 steering. PhysicsClient referenced as library for convenience tool logic.
-- 006-mcp-aspire-orchestration: MCP server added to Aspire AppHost orchestration. Service discovery via env vars (services__server__https/http__0), auto-starts with AppHost, visible in dashboard. 3 new integration tests.
 
 ## Environment
 
