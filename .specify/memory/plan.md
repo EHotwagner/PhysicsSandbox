@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-21
-**Revision**: Updated with 003-stress-test-demos archival
+**Revision**: Updated with 004-python-demo-scripts archival
 
 ## Technical Context
 
@@ -155,6 +155,18 @@ demos/                                     # F# scripts — demo suite (15 demos
 ├── AllDemos.fsx                           # All 15 demos as inline functions (loaded by RunAll)
 ├── AutoRun.fsx                            # Self-contained non-interactive runner (duplicates Prelude + timed helpers)
 └── RunAll.fsx                             # Interactive runner (space/enter to advance)
+
+demos_py/                                    # Python scripts — demo suite (15 demos + runners)
+├── prelude.py                               # Shared helpers: session, commands, presets, generators, steering, display, batch, ID gen
+├── demo01_hello_drop.py – demo15_overload.py # 15 demos mirroring F# suite
+├── all_demos.py                             # Demo registry (name, description, run) tuples
+├── auto_run.py                              # Automated runner with pass/fail summary
+├── run_all.py                               # Interactive runner with keypress advancement
+├── generate_stubs.sh                        # Proto stub generation from physics_hub.proto
+├── requirements.txt                         # Python dependencies (grpcio, grpcio-tools, protobuf)
+└── generated/                               # Python proto stubs (committed for convenience)
+    ├── physics_hub_pb2.py                   # Generated message classes
+    └── physics_hub_pb2_grpc.py              # Generated service stubs
 ```
 
 ## Configuration

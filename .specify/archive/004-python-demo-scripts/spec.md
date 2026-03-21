@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-python-demo-scripts`
 **Created**: 2026-03-21
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "create an equivalent python scripting feature. same as the fsharp one."
 
 ## User Scenarios & Testing *(mandatory)*

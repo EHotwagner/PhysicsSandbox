@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-21
-**Revision**: Updated with 003-stress-test-demos archival
+**Revision**: Updated with 004-python-demo-scripts archival
 
 ## Overview
 
@@ -151,6 +151,15 @@ A developer runs an "overload" demo combining 200+ bodies, formations, impulse s
 An AI assistant replicates stress demos through MCP tools (batch_commands, start_stress_test, get_diagnostics) to validate MCP handles high-volume operations comparably to direct scripting. [Source: specs/003-stress-test-demos]
 A developer or CI system running AutoRun.fsx gets the same modern batching and reset behavior as individual demo scripts and RunAll. All 10 demos pass in all execution modes. [Source: specs/001-demo-script-modernization]
 
+### US-048: Run Full Python Demo Suite Automatically (P1)
+A developer runs `python -m demos_py.auto_run` against a running Aspire stack and sees all 15 Python demos execute sequentially with a pass/fail summary. Equivalent to the F# AutoRun.fsx but using Python with direct gRPC communication. [Source: specs/004-python-demo-scripts]
+
+### US-049: Run Individual Python Demo Script (P2)
+A developer runs a single Python demo script (e.g., `python -m demos_py.demo01_hello_drop`) to explore or test a specific physics scenario independently, with optional server address argument. [Source: specs/004-python-demo-scripts]
+
+### US-050: Interactive Python Demo Runner (P3)
+A developer uses `python -m demos_py.run_all` to step through demos one at a time with keypress advancement, observing each scenario in the 3D viewer before advancing. [Source: specs/004-python-demo-scripts]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -276,6 +285,16 @@ A developer or CI system running AutoRun.fsx gets the same modern batching and r
 - **FR-121**: All new demos MUST be integrated into AllDemos.fsx, RunAll.fsx, and AutoRun.fsx. [Source: specs/003-stress-test-demos]
 - **FR-122**: Demos MUST handle failures gracefully — batch failures reported via `[BATCH FAIL]`, reset failures fall back to manual clear. [Source: specs/003-stress-test-demos]
 - **FR-123**: Prelude.fsx MUST provide a `timed` helper that wraps actions with Stopwatch and prints `[TIME] label: N ms`. [Source: specs/003-stress-test-demos]
+- **FR-124**: System MUST provide 15 Python demo scripts covering the same scenarios as the F# demos (Hello Drop through Overload). [Source: specs/004-python-demo-scripts]
+- **FR-125**: Python demos MUST communicate with the PhysicsServer via gRPC using Python-generated protobuf stubs from the existing `physics_hub.proto` contract. [Source: specs/004-python-demo-scripts]
+- **FR-126**: System MUST provide a shared Python prelude module (`prelude.py`) with helpers equivalent to the F# Prelude: session management, simulation/view commands, message builders, batch helpers, presets, generators, steering, display, ID generation. [Source: specs/004-python-demo-scripts]
+- **FR-127**: System MUST provide an automated Python runner (`auto_run.py`) that executes all 15 demos sequentially with pass/fail reporting. [Source: specs/004-python-demo-scripts]
+- **FR-128**: System MUST provide an interactive Python runner (`run_all.py`) with keypress advancement. [Source: specs/004-python-demo-scripts]
+- **FR-129**: Each Python demo MUST be self-contained: reset the scene, configure camera, create bodies, run simulation, display results. [Source: specs/004-python-demo-scripts]
+- **FR-130**: Each Python demo MUST accept an optional server address argument, defaulting to `http://localhost:5000`. [Source: specs/004-python-demo-scripts]
+- **FR-131**: Python demos MUST be runnable via `python` without requiring .NET tooling — only Python and pip dependencies. [Source: specs/004-python-demo-scripts]
+- **FR-132**: Python `batch_add` helper MUST automatically split command lists exceeding 100 items into multiple batches. [Source: specs/004-python-demo-scripts]
+- **FR-133**: System MUST provide a proto stub generation script (`generate_stubs.sh`) that generates Python stubs from the existing `physics_hub.proto`. [Source: specs/004-python-demo-scripts]
 
 ## Key Entities
 
@@ -311,6 +330,8 @@ A developer or CI system running AutoRun.fsx gets the same modern batching and r
 - **StressTestResults**: Summary of completed stress test — PeakBodyCount, DegradationBodyCount, PeakCommandRate, AverageFps, MinFps, TotalCommands, FailedCommands, ErrorMessages. [Source: specs/002-performance-diagnostics]
 - **ComparisonResult**: MCP-vs-scripting comparison data — ScriptTimeMs, McpTimeMs, BatchedMcpTimeMs, message counts, OverheadPercent. [Source: specs/002-performance-diagnostics]
 - **FpsState**: Viewer FPS tracking — SmoothedFps (EMA α=0.1), ElapsedSinceLog, WarningThreshold. [Source: specs/002-performance-diagnostics]
+- **Python Session**: Python gRPC connection handle — dataclass holding grpc.Channel, PhysicsHubStub, server address. Simplified vs F# Session (no background streaming, no body registry). [Source: specs/004-python-demo-scripts]
+- **Python Prelude**: Shared Python module providing 40+ functions mirroring the F# PhysicsClient + Prelude: session management, all simulation/view commands, 7 body presets, 5 generators, steering (push/launch), display (list_bodies/status), timing (timed context manager), batch helpers, ID generation. [Source: specs/004-python-demo-scripts]
 
 ## Edge Cases
 
@@ -359,6 +380,9 @@ A developer or CI system running AutoRun.fsx gets the same modern batching and r
 - Collision pit with 120+ spheres: bodies may stack above pit walls; settling time varies with count. [Source: specs/003-stress-test-demos]
 - Domino cascade with 120 dominoes may not fully propagate: `timed` reports cascade duration regardless. [Source: specs/003-stress-test-demos]
 - Rapid gravity changes during force frenzy: bodies respond to each change without desynchronization. [Source: specs/003-stress-test-demos]
+- Python demo Aspire stack not running: scripts fail at connection step with clear gRPC error. [Source: specs/004-python-demo-scripts]
+- Python proto stubs not generated: import error with clear message. [Source: specs/004-python-demo-scripts]
+- Python `launch()` called immediately after body creation: requires small sleep (200ms) for simulation state to include the new body. [Source: specs/004-python-demo-scripts]
 
 ## Success Criteria
 
@@ -423,3 +447,7 @@ A developer or CI system running AutoRun.fsx gets the same modern batching and r
 - **SC-059**: All stress demos complete within 5 minutes each when run individually. [Source: specs/003-stress-test-demos]
 - **SC-060**: Full demo suite (15 demos) runs end-to-end via AutoRun without manual intervention. [Source: specs/003-stress-test-demos]
 - **SC-061**: At least one stress scenario executable via MCP batch tools with comparable results to scripting. [Source: specs/003-stress-test-demos]
+- **SC-062**: All 15 Python demos execute successfully against a running Aspire stack, producing equivalent visual physics behavior to the F# demos. [Source: specs/004-python-demo-scripts]
+- **SC-063**: Python automated runner completes all 15 demos and reports results within 3 minutes. [Source: specs/004-python-demo-scripts]
+- **SC-064**: Python demos require no .NET tooling to run — only Python and pip dependencies. [Source: specs/004-python-demo-scripts]
+- **SC-065**: A Python developer unfamiliar with F# can run and understand any demo from its script alone. [Source: specs/004-python-demo-scripts]

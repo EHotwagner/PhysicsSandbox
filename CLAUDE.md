@@ -70,7 +70,7 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
-- 004-python-demo-scripts: Added Python 3.10+ + grpcio, grpcio-tools, protobuf (for gRPC stub generation and communication)
+- 004-python-demo-scripts: Python demo suite (15 demos mirroring F# suite) with shared prelude.py (40+ functions: session, commands, presets, generators, steering, display), automated runner (auto_run.py), interactive runner (run_all.py), proto stub generation. Communicates via gRPC using Python-generated stubs. 29 tasks completed.
 - 003-stress-test-demos: Added F# scripts (.fsx) on .NET 10.0 + PhysicsClient.dll (existing), PhysicsSandbox.Shared.Contracts.dll (existing), Grpc.Net.Client, Google.Protobuf
 - 001-demo-script-modernization: Demo scripts modernized with batch commands (6 demos use batchAdd) and server-side resetSimulation. Prelude.fsx adds 8 helpers: resetSimulation, makeSphereCmd, makeBoxCmd, makeImpulseCmd, makeTorqueCmd, batchAdd (auto-split at 100), nextId, toVec3. AllDemos/AutoRun/RunAll synced. 37 tasks completed.
 

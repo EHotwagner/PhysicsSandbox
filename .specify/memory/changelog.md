@@ -1,5 +1,30 @@
 # Merged Features Log
 
+## Python Demo Scripts — 2026-03-21
+**Branch:** 004-python-demo-scripts
+**Spec:** specs/004-python-demo-scripts
+
+**What was added:**
+- 15 Python demo scripts mirroring the F# demo suite (Demo 01–15), communicating via gRPC with Python-generated proto stubs
+- Shared prelude module (`prelude.py`) with 40+ functions: session management, all simulation/view commands, 7 body presets, 5 generators, steering (push/launch), display (list_bodies/status), timing (`timed` context manager), batch helpers (auto-chunking at 100), ID generation
+- Automated runner (`auto_run.py`) with sequential execution, per-demo error handling, pass/fail summary
+- Interactive runner (`run_all.py`) with keypress advancement between demos
+- Proto stub generation script (`generate_stubs.sh`) from existing `physics_hub.proto`
+- Python dependencies: grpcio, grpcio-tools, protobuf
+
+**New Components:**
+- `demos_py/prelude.py` — shared Python prelude (session, commands, presets, generators, steering, display)
+- `demos_py/demo01_hello_drop.py` through `demos_py/demo15_overload.py` — 15 demos
+- `demos_py/all_demos.py` — demo registry
+- `demos_py/auto_run.py` — automated runner
+- `demos_py/run_all.py` — interactive runner
+- `demos_py/generate_stubs.sh` — proto stub generation
+- `demos_py/generated/` — committed Python proto stubs
+
+**Tasks Completed:** 29/29 tasks
+
+---
+
 ## Stress Test Demos — 2026-03-21
 **Branch:** 003-stress-test-demos
 **Spec:** specs/003-stress-test-demos
