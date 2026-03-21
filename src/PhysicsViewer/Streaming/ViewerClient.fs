@@ -36,6 +36,14 @@ let private runWithReconnect (action: GrpcChannel -> CancellationToken -> Task<u
                 delay <- min (delay * 2) 30000
     }
 
+/// <summary>
+/// Opens a gRPC server-streaming call to receive simulation state snapshots, enqueuing each
+/// received snapshot into the provided queue. Automatically reconnects with exponential backoff on failure.
+/// </summary>
+/// <param name="serverAddress">The gRPC server address (e.g., "https://localhost:7180").</param>
+/// <param name="stateQueue">The concurrent queue where received SimulationState messages are enqueued.</param>
+/// <param name="ct">Cancellation token to stop the streaming loop.</param>
+/// <returns>A task that runs until cancellation, continuously streaming state updates.</returns>
 let streamState (serverAddress: string) (stateQueue: ConcurrentQueue<SimulationState>) (ct: CancellationToken) : Task<unit> =
     runWithReconnect (fun channel ct ->
         task {
@@ -49,6 +57,14 @@ let streamState (serverAddress: string) (stateQueue: ConcurrentQueue<SimulationS
                     stateQueue.Enqueue(stream.Current)
         }) serverAddress ct
 
+/// <summary>
+/// Opens a gRPC server-streaming call to receive view commands (camera, zoom, wireframe), enqueuing each
+/// received command into the provided queue. Automatically reconnects with exponential backoff on failure.
+/// </summary>
+/// <param name="serverAddress">The gRPC server address (e.g., "https://localhost:7180").</param>
+/// <param name="commandQueue">The concurrent queue where received ViewCommand messages are enqueued.</param>
+/// <param name="ct">Cancellation token to stop the streaming loop.</param>
+/// <returns>A task that runs until cancellation, continuously streaming view commands.</returns>
 let streamViewCommands (serverAddress: string) (commandQueue: ConcurrentQueue<ViewCommand>) (ct: CancellationToken) : Task<unit> =
     runWithReconnect (fun channel ct ->
         task {

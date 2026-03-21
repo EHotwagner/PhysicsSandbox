@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <WarnOn>3390</WarnOn>
+    <RepositoryUrl>https://github.com/EHotwagner/PhysicsSandbox</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <FsDocsLicenseLink>https://github.com/EHotwagner/PhysicsSandbox/blob/main/LICENSE</FsDocsLicenseLink>
+    <FsDocsWarnOnMissingDocs>true</FsDocsWarnOnMissingDocs>
+  </PropertyGroup>
+</Project>

@@ -1,3 +1,4 @@
+/// <summary>Manages the persistent gRPC connection to the PhysicsServer, including background streaming of simulation state, view commands, and command audit events.</summary>
 module PhysicsSandbox.Mcp.GrpcConnection
 
 open System
@@ -20,6 +21,8 @@ let private createChannel (address: string) =
         options.HttpVersionPolicy <- System.Net.Http.HttpVersionPolicy.RequestVersionExact
     GrpcChannel.ForAddress(address, options)
 
+/// <summary>Maintains a gRPC channel to the PhysicsServer and runs background streams for simulation state, view commands, and command audit events. Reconnects automatically with exponential backoff on stream failures.</summary>
+/// <param name="serverAddress">The server URL (http:// or https://) to connect to.</param>
 type GrpcConnection(serverAddress: string) =
     let channel = createChannel serverAddress
     let client = PhysicsHub.PhysicsHubClient(channel)
@@ -143,19 +146,31 @@ type GrpcConnection(serverAddress: string) =
                             delay <- min (delay * 2) 10000
             } :> Task) |> ignore
 
+    /// <summary>The underlying PhysicsHub gRPC client for sending commands and queries.</summary>
     member _.Client = client
+    /// <summary>The most recently received simulation state from the background stream, or None if no state has arrived yet.</summary>
     member _.LatestState = latestState
+    /// <summary>Timestamp of the last simulation state update received from the server.</summary>
     member _.LastUpdateTime = lastUpdateTime
+    /// <summary>Whether the simulation state stream is currently connected to the server.</summary>
     member _.StreamConnected = streamConnected
+    /// <summary>Whether the view command stream is currently connected to the server.</summary>
     member _.ViewStreamConnected = viewStreamConnected
+    /// <summary>Whether the command audit stream is currently connected to the server.</summary>
     member _.AuditStreamConnected = auditStreamConnected
+    /// <summary>The server address this connection was created with.</summary>
     member _.ServerAddress = serverAddress
+    /// <summary>The most recently received view command from the background stream, or None if none has arrived.</summary>
     member _.LatestViewCommand = latestViewCommand
 
+    /// <summary>Returns a snapshot of the most recent command events (up to 100) received from the audit stream.</summary>
     member _.CommandLog =
         lock commandLogLock (fun () ->
             commandLog |> Seq.toList)
 
+    /// <summary>Sends a batch of simulation commands to the server in a single gRPC call and tracks message/byte counts.</summary>
+    /// <param name="batch">The batch request containing multiple simulation commands.</param>
+    /// <returns>The server's batch response with per-command results.</returns>
     member _.SendBatchCommand(batch: BatchSimulationRequest) =
         task {
             let! response = client.SendBatchCommandAsync(batch)
@@ -164,6 +179,9 @@ type GrpcConnection(serverAddress: string) =
             return response
         }
 
+    /// <summary>Sends a batch of view commands to the server in a single gRPC call and tracks message/byte counts.</summary>
+    /// <param name="batch">The batch request containing multiple view commands.</param>
+    /// <returns>The server's batch response with per-command results.</returns>
     member _.SendBatchViewCommand(batch: BatchViewRequest) =
         task {
             let! response = client.SendBatchViewCommandAsync(batch)
@@ -172,10 +190,13 @@ type GrpcConnection(serverAddress: string) =
             return response
         }
 
+    /// <summary>Increments the local sent-message counter and adds to the sent-bytes total. Used by tools that send commands outside of SendBatchCommand.</summary>
+    /// <param name="bytes">Number of bytes sent in this message.</param>
     member _.IncrementSent(bytes: int64) =
         Threading.Interlocked.Increment(&mcpMsgSent) |> ignore
         Threading.Interlocked.Add(&mcpBytesSent, bytes) |> ignore
 
+    /// <summary>Returns a ServiceMetricsReport for the MCP server's own message and byte counters.</summary>
     member _.LocalMetrics =
         let report = ServiceMetricsReport()
         report.ServiceName <- "McpServer"
@@ -185,6 +206,7 @@ type GrpcConnection(serverAddress: string) =
         report.BytesReceived <- Threading.Interlocked.Read(&mcpBytesRecv)
         report
 
+    /// <summary>Starts background streams for simulation state, view commands, and command audit events. Each stream reconnects automatically on failure.</summary>
     member this.Start() =
         let loggerFactory = LoggerFactory.Create(fun b -> b.AddConsole(fun opts -> opts.LogToStandardErrorThreshold <- LogLevel.Trace) |> ignore)
         let logger = loggerFactory.CreateLogger("GrpcConnection")

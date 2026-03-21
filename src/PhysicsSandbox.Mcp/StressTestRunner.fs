@@ -9,42 +9,74 @@ open System.Threading.Tasks
 open PhysicsSandbox.Shared.Contracts
 open PhysicsSandbox.Mcp.GrpcConnection
 
+/// <summary>Runs stress test scenarios in the background, tracking progress and collecting performance results. Supports body-scaling, command-throughput, and MCP-vs-script comparison scenarios.</summary>
 [<RequireQualifiedAccess>]
 module StressTestRunner =
 
+    /// <summary>Represents the lifecycle state of a stress test run.</summary>
     type TestStatus =
+        /// <summary>Test has been created but not yet started.</summary>
         | Pending
+        /// <summary>Test is currently executing.</summary>
         | Running
+        /// <summary>Test finished successfully with results.</summary>
         | Complete
+        /// <summary>Test terminated due to an error.</summary>
         | Failed
+        /// <summary>Test was cancelled before completion.</summary>
         | Cancelled
 
+    /// <summary>Holds timing and message-count data from a comparison test that runs the same scenario via direct gRPC, individual MCP calls, and batched MCP calls.</summary>
     type ComparisonData =
-        { ScriptTimeMs: float
+        { /// <summary>Wall-clock time for the direct gRPC scripting path in milliseconds.</summary>
+          ScriptTimeMs: float
+          /// <summary>Wall-clock time for the individual MCP command path in milliseconds.</summary>
           McpTimeMs: float
+          /// <summary>Wall-clock time for the batched MCP path in milliseconds, if measured.</summary>
           BatchedMcpTimeMs: float option
+          /// <summary>Total gRPC messages sent in the direct scripting path.</summary>
           ScriptMessageCount: int
+          /// <summary>Total gRPC messages sent in the individual MCP path.</summary>
           McpMessageCount: int
+          /// <summary>Percentage overhead of MCP path relative to direct scripting.</summary>
           OverheadPercent: float }
 
+    /// <summary>Aggregated results from a completed stress test run, including peak performance metrics and optional comparison data.</summary>
     type StressTestResults =
-        { PeakBodyCount: int
+        { /// <summary>Maximum number of bodies present in the simulation during the test.</summary>
+          PeakBodyCount: int
+          /// <summary>Body count at which performance degradation was first detected, if any.</summary>
           DegradationBodyCount: int option
+          /// <summary>Highest observed command processing rate in commands per second.</summary>
           PeakCommandRate: float
+          /// <summary>Average frames per second during the test (requires viewer FPS reporting).</summary>
           AverageFps: float
+          /// <summary>Minimum frames per second observed during the test.</summary>
           MinFps: float
+          /// <summary>Total number of commands sent during the test.</summary>
           TotalCommands: int
+          /// <summary>Number of commands that failed or returned errors.</summary>
           FailedCommands: int
+          /// <summary>Distinct error messages collected during the test (capped at 10).</summary>
           ErrorMessages: string list
+          /// <summary>Optional comparison data when running an MCP-vs-script scenario.</summary>
           Comparison: ComparisonData option }
 
+    /// <summary>Tracks the full lifecycle of a single stress test execution, from creation through completion or failure.</summary>
     type StressTestRun =
-        { TestId: string
+        { /// <summary>Unique identifier for this test run (e.g., "stress-001").</summary>
+          TestId: string
+          /// <summary>Name of the scenario being run (body-scaling, command-throughput, or mcp-vs-script).</summary>
           ScenarioName: string
+          /// <summary>Current lifecycle status of this test run.</summary>
           mutable Status: TestStatus
+          /// <summary>Completion progress from 0.0 to 1.0.</summary>
           mutable Progress: float
+          /// <summary>Aggregated results, populated when the test completes or fails.</summary>
           mutable Results: StressTestResults option
+          /// <summary>When this test run was started.</summary>
           StartTime: DateTimeOffset
+          /// <summary>When this test run ended, if it has finished.</summary>
           mutable EndTime: DateTimeOffset option }
 
     let private tests = ConcurrentDictionary<string, StressTestRun>()
@@ -318,6 +350,12 @@ module StressTestRunner =
                 run.Status <- Failed
         }
 
+    /// <summary>Starts a new stress test on a background thread. Only one test may run at a time; throws if a test is already in progress.</summary>
+    /// <param name="conn">The gRPC connection to the physics server.</param>
+    /// <param name="scenario">Scenario name: "body-scaling", "command-throughput", or "mcp-vs-script".</param>
+    /// <param name="maxBodies">Maximum body count for body-scaling, or body count for comparison scenarios.</param>
+    /// <param name="durationSeconds">Duration limit for command-throughput, or step count for comparison scenarios.</param>
+    /// <returns>The unique test ID for polling status.</returns>
     let startTest (conn: GrpcConnection) (scenario: string) (maxBodies: int) (durationSeconds: int) : string =
         lock runLock (fun () ->
             match runningTest with
@@ -364,11 +402,17 @@ module StressTestRunner =
             testId
         )
 
+    /// <summary>Looks up a stress test run by its ID and returns its current state, or None if no test with that ID exists.</summary>
+    /// <param name="testId">The test ID to look up.</param>
+    /// <returns>The stress test run if found, or None.</returns>
     let getStatus (testId: string) : StressTestRun option =
         match tests.TryGetValue(testId) with
         | true, run -> Some run
         | false, _ -> None
 
+    /// <summary>Formats a stress test run's status and results into a human-readable multi-line report including progress, timing, peak metrics, and optional comparison data.</summary>
+    /// <param name="run">The stress test run to format.</param>
+    /// <returns>A formatted string report.</returns>
     let formatResults (run: StressTestRun) : string =
         let sb = StringBuilder()
         sb.AppendLine($"=== Stress Test: {run.TestId} ===") |> ignore

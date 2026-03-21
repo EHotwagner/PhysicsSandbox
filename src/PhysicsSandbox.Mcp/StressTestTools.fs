@@ -5,9 +5,11 @@ open System.Threading.Tasks
 open ModelContextProtocol.Server
 open PhysicsSandbox.Mcp.GrpcConnection
 
+/// <summary>MCP server tool type for launching and monitoring background stress tests that measure simulation performance limits.</summary>
 [<McpServerToolType>]
 type StressTestTools() =
 
+    /// <summary>Starts a background stress test using the specified scenario. Returns a test ID that can be polled with get_stress_test_status to check progress and results.</summary>
     [<McpServerTool; Description("Start a stress test scenario in the background. Available scenarios: 'body-scaling' (adds bodies until degradation), 'command-throughput' (measures max command rate). Returns a test ID for polling.")>]
     static member start_stress_test(
         conn: GrpcConnection,
@@ -25,6 +27,7 @@ type StressTestTools() =
                 return $"Error starting stress test: {ex.Message}"
         }
 
+    /// <summary>Retrieves the current status, progress, and results of a stress test identified by the given test ID.</summary>
     [<McpServerTool; Description("Get the status and results of a running or completed stress test.")>]
     static member get_stress_test_status(
         conn: GrpcConnection,

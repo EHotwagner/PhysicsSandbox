@@ -8,6 +8,7 @@ open ModelContextProtocol.Server
 open PhysicsSandbox.Shared.Contracts
 open PhysicsSandbox.Mcp.GrpcConnection
 
+/// <summary>MCP server tool type for submitting multiple simulation or view commands in a single batch call, reducing round-trip overhead.</summary>
 [<McpServerToolType>]
 type BatchTools() =
 
@@ -118,6 +119,7 @@ type BatchTools() =
         sb.AppendLine($"  Results: {successes} succeeded, {failures} failed") |> ignore
         sb.ToString()
 
+    /// <summary>Parses a JSON array of simulation commands and submits them as a single batch gRPC call. Supports add_body, apply_force, apply_impulse, step, play, pause, set_gravity, remove_body, clear_forces, and reset command types.</summary>
     [<McpServerTool; Description("Submit multiple simulation commands in a single batch. Commands is a JSON array where each element has a 'type' field (add_body, apply_force, apply_impulse, step, play, pause, set_gravity, remove_body, clear_forces, reset) and corresponding parameters.")>]
     static member batch_commands(conn: GrpcConnection, [<Description("JSON array of commands")>] commands: string) : Task<string> =
         task {
@@ -135,6 +137,7 @@ type BatchTools() =
                 return $"Error: {ex.Message}"
         }
 
+    /// <summary>Parses a JSON array of view commands and submits them as a single batch gRPC call. Supports set_camera, set_zoom, and toggle_wireframe command types.</summary>
     [<McpServerTool; Description("Submit multiple view commands in a single batch. Commands is a JSON array where each element has a 'type' field (set_camera, set_zoom, toggle_wireframe) and corresponding parameters.")>]
     static member batch_view_commands(conn: GrpcConnection, [<Description("JSON array of view commands")>] commands: string) : Task<string> =
         task {

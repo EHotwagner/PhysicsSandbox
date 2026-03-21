@@ -1,3 +1,4 @@
+/// <summary>MCP tool class for querying simulation state and server connection health.</summary>
 module PhysicsSandbox.Mcp.QueryTools
 
 open System
@@ -34,13 +35,16 @@ let private formatState (conn: GrpcConnection) =
                 sb.AppendLine($"  {id}| ({p.X:F1}, {p.Y:F1}, {p.Z:F1})".PadRight(42) + $"| ({v.X:F1}, {v.Y:F1}, {v.Z:F1})".PadRight(22) + $"| {body.Mass:F1}".PadRight(8) + $"| {formatShape body}") |> ignore
         sb.ToString().TrimEnd()
 
+/// <summary>MCP server tool type for querying simulation state snapshots and server connection status.</summary>
 [<McpServerToolType>]
 type QueryTools() =
 
+    /// <summary>Returns the current simulation state including all body positions, velocities, masses, and shapes from the cached background stream data.</summary>
     [<McpServerTool; Description("Get the current simulation state (bodies, time, running status). Returns cached data from background stream.")>]
     static member get_state(conn: GrpcConnection) : string =
         formatState conn
 
+    /// <summary>Returns the MCP server's connection health including state stream, view stream, and audit stream connectivity and data staleness.</summary>
     [<McpServerTool; Description("Get MCP server connection status and health.")>]
     static member get_status(conn: GrpcConnection) : string =
         let staleness = DateTimeOffset.UtcNow - conn.LastUpdateTime

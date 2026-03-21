@@ -1,3 +1,4 @@
+/// <summary>Bulk body generators that create arrangements of physics bodies (random scatters, stacks, rows, grids, pyramids).</summary>
 module PhysicsClient.Generators
 
 open System
@@ -7,6 +8,11 @@ open PhysicsClient.SimulationCommands
 let private nextDouble (rng: Random) (min: float) (max: float) =
     min + rng.NextDouble() * (max - min)
 
+/// <summary>Creates randomly positioned spheres with random radii and masses scattered in the simulation space.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="count">Number of spheres to create. Must be greater than 0.</param>
+/// <param name="seed">Optional random seed for reproducible generation.</param>
+/// <returns>Ok with the list of assigned body IDs, or Error if any creation fails.</returns>
 let randomSpheres (session: Session) (count: int) (seed: int option) : Result<string list, string> =
     if count <= 0 then
         Error "count must be greater than 0"
@@ -28,6 +34,11 @@ let randomSpheres (session: Session) (count: int) (seed: int option) : Result<st
         | Some e -> Error e
         | None -> Ok (List.rev ids)
 
+/// <summary>Creates randomly positioned boxes with random half-extents and masses scattered in the simulation space.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="count">Number of boxes to create. Must be greater than 0.</param>
+/// <param name="seed">Optional random seed for reproducible generation.</param>
+/// <returns>Ok with the list of assigned body IDs, or Error if any creation fails.</returns>
 let randomBoxes (session: Session) (count: int) (seed: int option) : Result<string list, string> =
     if count <= 0 then
         Error "count must be greater than 0"
@@ -51,6 +62,11 @@ let randomBoxes (session: Session) (count: int) (seed: int option) : Result<stri
         | Some e -> Error e
         | None -> Ok (List.rev ids)
 
+/// <summary>Creates a random mix of spheres and boxes with random dimensions and masses.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="count">Number of bodies to create. Must be greater than 0.</param>
+/// <param name="seed">Optional random seed for reproducible generation.</param>
+/// <returns>Ok with the list of assigned body IDs, or Error if any creation fails.</returns>
 let randomBodies (session: Session) (count: int) (seed: int option) : Result<string list, string> =
     if count <= 0 then
         Error "count must be greater than 0"
@@ -81,6 +97,11 @@ let randomBodies (session: Session) (count: int) (seed: int option) : Result<str
         | Some e -> Error e
         | None -> Ok (List.rev ids)
 
+/// <summary>Creates a vertical stack of unit-sized crates, each placed directly above the previous one.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="count">Number of crates to stack. Must be greater than 0.</param>
+/// <param name="position">Base position of the stack; defaults to origin.</param>
+/// <returns>Ok with the list of assigned body IDs (bottom to top), or Error if any creation fails.</returns>
 let stack (session: Session) (count: int) (position: (float * float * float) option) : Result<string list, string> =
     if count <= 0 then
         Error "count must be greater than 0"
@@ -98,6 +119,11 @@ let stack (session: Session) (count: int) (position: (float * float * float) opt
         | Some e -> Error e
         | None -> Ok (List.rev ids)
 
+/// <summary>Creates a horizontal row of evenly spaced spheres along the X axis.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="count">Number of spheres in the row. Must be greater than 0.</param>
+/// <param name="position">Starting position of the row; defaults to origin.</param>
+/// <returns>Ok with the list of assigned body IDs, or Error if any creation fails.</returns>
 let row (session: Session) (count: int) (position: (float * float * float) option) : Result<string list, string> =
     if count <= 0 then
         Error "count must be greater than 0"
@@ -115,6 +141,12 @@ let row (session: Session) (count: int) (position: (float * float * float) optio
         | Some e -> Error e
         | None -> Ok (List.rev ids)
 
+/// <summary>Creates a flat grid of crates on the XZ plane, spaced 1 unit apart.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="rows">Number of rows (Z direction). Must be greater than 0.</param>
+/// <param name="cols">Number of columns (X direction). Must be greater than 0.</param>
+/// <param name="position">Corner position of the grid; defaults to origin.</param>
+/// <returns>Ok with the list of assigned body IDs, or Error if any creation fails.</returns>
 let grid (session: Session) (rows: int) (cols: int) (position: (float * float * float) option) : Result<string list, string> =
     if rows <= 0 || cols <= 0 then
         Error "rows and cols must be greater than 0"
@@ -134,6 +166,11 @@ let grid (session: Session) (rows: int) (cols: int) (position: (float * float * 
         | Some e -> Error e
         | None -> Ok (List.rev ids)
 
+/// <summary>Creates a pyramid of crates, with each layer containing one fewer box than the layer below.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="layers">Number of pyramid layers. Must be greater than 0.</param>
+/// <param name="position">Base corner position of the pyramid; defaults to origin.</param>
+/// <returns>Ok with the list of assigned body IDs (bottom layer first), or Error if any creation fails.</returns>
 let pyramid (session: Session) (layers: int) (position: (float * float * float) option) : Result<string list, string> =
     if layers <= 0 then
         Error "layers must be greater than 0"

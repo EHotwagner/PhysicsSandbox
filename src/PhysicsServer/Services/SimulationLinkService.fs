@@ -7,14 +7,29 @@ open Grpc.Core
 open PhysicsSandbox.Shared.Contracts
 open PhysicsServer.Hub.MessageRouter
 
+/// <summary>Diagnostics for measuring gRPC transfer latency on the simulation link.</summary>
 [<RequireQualifiedAccess>]
 module SimulationLinkDiagnostics =
     let mutable internal transferMs = 0.0
+
+    /// <summary>Get the most recently measured gRPC transfer time in milliseconds for state streaming.</summary>
+    /// <returns>The last observed transfer duration in milliseconds.</returns>
     let getLastTransferMs () = transferMs
 
+/// <summary>
+/// gRPC service implementation for the simulation-facing SimulationLink.
+/// Manages the bidirectional stream between the server and the physics simulation:
+/// incoming state updates are published to subscribers, outgoing commands are forwarded from the channel.
+/// Only one simulation may be connected at a time.
+/// </summary>
 type SimulationLinkService(router: MessageRouter) =
     inherit SimulationLink.SimulationLinkBase()
 
+    /// <summary>
+    /// Handle the bidirectional simulation connection. Reads state updates from the simulation
+    /// and publishes them to subscribers, while concurrently forwarding queued commands back
+    /// to the simulation. Rejects the call if another simulation is already connected.
+    /// </summary>
     override _.ConnectSimulation
         (requestStream: IAsyncStreamReader<SimulationState>,
          responseStream: IServerStreamWriter<SimulationCommand>,

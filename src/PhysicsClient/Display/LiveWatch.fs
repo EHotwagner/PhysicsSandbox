@@ -1,3 +1,4 @@
+/// <summary>Provides a live-updating terminal display of simulation body state, refreshing at ~10 Hz.</summary>
 module PhysicsClient.LiveWatch
 
 open System
@@ -69,6 +70,11 @@ let private renderTable (state: SimulationState option) bodyIds shapeFilter minV
         table.Caption <- TableTitle($"Time: {s.Time:F2}s | {runLabel} | Bodies: {s.Bodies.Count}")
     table
 
+/// <summary>Starts a live-updating table in the terminal that continuously displays body state. Press Ctrl+C to stop.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="bodyIds">Optional list of body IDs to watch; None shows all bodies.</param>
+/// <param name="shapeFilter">Optional shape type filter (e.g., "sphere", "box", "plane").</param>
+/// <param name="minVelocity">Optional minimum velocity threshold; only bodies moving at least this fast are shown.</param>
 let watch (session: Session) (bodyIds: string list option) (shapeFilter: string option) (minVelocity: float option) =
     use cts = new CancellationTokenSource()
     let originalHandler = Console.CancelKeyPress

@@ -5,9 +5,11 @@ open System.Threading
 open Microsoft.Extensions.Logging
 open PhysicsSandbox.Shared.Contracts
 
+/// <summary>Thread-safe message and byte counters for tracking server throughput metrics.</summary>
 [<RequireQualifiedAccess>]
 module MetricsCounter =
 
+    /// <summary>Mutable, thread-safe counters tracking messages and bytes sent/received for a named service.</summary>
     type MetricsState =
         { ServiceName: string
           mutable MessagesSent: int64
@@ -15,6 +17,9 @@ module MetricsCounter =
           mutable BytesSent: int64
           mutable BytesReceived: int64 }
 
+    /// <summary>Create a new zeroed metrics state for the given service name.</summary>
+    /// <param name="serviceName">The display name used when reporting metrics.</param>
+    /// <returns>A fresh MetricsState with all counters at zero.</returns>
     let create (serviceName: string) : MetricsState =
         { ServiceName = serviceName
           MessagesSent = 0L
@@ -22,14 +27,25 @@ module MetricsCounter =
           BytesSent = 0L
           BytesReceived = 0L }
 
+    /// <summary>Atomically increment the sent message count and byte total.</summary>
+    /// <param name="count">Number of messages sent.</param>
+    /// <param name="bytes">Total bytes sent.</param>
+    /// <param name="state">The metrics state to update.</param>
     let incrementSent (count: int) (bytes: int64) (state: MetricsState) : unit =
         Interlocked.Add(&state.MessagesSent, int64 count) |> ignore
         Interlocked.Add(&state.BytesSent, bytes) |> ignore
 
+    /// <summary>Atomically increment the received message count and byte total.</summary>
+    /// <param name="count">Number of messages received.</param>
+    /// <param name="bytes">Total bytes received.</param>
+    /// <param name="state">The metrics state to update.</param>
     let incrementReceived (count: int) (bytes: int64) (state: MetricsState) : unit =
         Interlocked.Add(&state.MessagesReceived, int64 count) |> ignore
         Interlocked.Add(&state.BytesReceived, bytes) |> ignore
 
+    /// <summary>Capture a point-in-time snapshot of the current metrics as a protobuf report.</summary>
+    /// <param name="state">The metrics state to read.</param>
+    /// <returns>A ServiceMetricsReport populated with the current counter values.</returns>
     let snapshot (state: MetricsState) : ServiceMetricsReport =
         let report = ServiceMetricsReport()
         report.ServiceName <- state.ServiceName
@@ -39,6 +55,11 @@ module MetricsCounter =
         report.BytesReceived <- Interlocked.Read(&state.BytesReceived)
         report
 
+    /// <summary>Start a background timer that logs the current metrics at a fixed interval.</summary>
+    /// <param name="intervalSeconds">Seconds between each log entry.</param>
+    /// <param name="logger">The logger to write metrics summaries to.</param>
+    /// <param name="state">The metrics state to snapshot on each tick.</param>
+    /// <returns>An IDisposable that stops the timer when disposed.</returns>
     let startPeriodicLogging (intervalSeconds: int) (logger: ILogger) (state: MetricsState) : IDisposable =
         let timer =
             new Timer(

@@ -1,3 +1,4 @@
+/// <summary>Displays simulation state in the terminal using Spectre.Console tables and panels.</summary>
 module PhysicsClient.StateDisplay
 
 open System
@@ -5,14 +6,17 @@ open Spectre.Console
 open PhysicsSandbox.Shared.Contracts
 open PhysicsClient.Session
 
+/// <summary>Formats a Vec3 as a human-readable string with two decimal places, e.g. "(1.23, 4.56, 7.89)".</summary>
 let internal formatVec3 (v: Vec3) =
     if isNull (box v) then "(0.00, 0.00, 0.00)"
     else $"({v.X:F2}, {v.Y:F2}, {v.Z:F2})"
 
+/// <summary>Computes the scalar speed (magnitude) of a velocity vector.</summary>
 let internal velocityMagnitude (v: Vec3) =
     if isNull (box v) then 0.0
     else sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z)
 
+/// <summary>Returns a short description of a body's shape, e.g. "Sphere(r=0.50)" or "Box(1.00x1.00x1.00)".</summary>
 let internal shapeDescription (body: Body) =
     if isNull body.Shape then "Unknown"
     else
@@ -29,6 +33,8 @@ let private stalenessInfo (session: Session) =
     if age.TotalSeconds > 5.0 then
         AnsiConsole.MarkupLine($"[dim]Last updated: {age.TotalSeconds:F0}s ago[/]")
 
+/// <summary>Prints a table of all bodies in the simulation with their shape, position, velocity, and mass.</summary>
+/// <param name="session">The active server session.</param>
 let listBodies (session: Session) =
     match latestState session with
     | None ->
@@ -54,6 +60,9 @@ let listBodies (session: Session) =
         AnsiConsole.Write(table)
         stalenessInfo session
 
+/// <summary>Prints a detailed panel for a single body showing all its properties including orientation.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="bodyId">The ID of the body to inspect.</param>
 let inspect (session: Session) (bodyId: string) =
     match latestState session with
     | None -> AnsiConsole.MarkupLine("[yellow]No simulation state available[/]")
@@ -75,6 +84,8 @@ let inspect (session: Session) (bodyId: string) =
             panel.Header <- PanelHeader($"[bold]{b.Id}[/]")
             AnsiConsole.Write(panel)
 
+/// <summary>Prints a summary panel showing simulation time, running/paused status, and total body count.</summary>
+/// <param name="session">The active server session.</param>
 let status (session: Session) =
     match latestState session with
     | None -> AnsiConsole.MarkupLine("[yellow]No simulation state available[/]")
@@ -88,5 +99,8 @@ let status (session: Session) =
         AnsiConsole.Write(panel)
         stalenessInfo session
 
+/// <summary>Returns the latest cached simulation state without any console output.</summary>
+/// <param name="session">The active server session.</param>
+/// <returns>The most recent SimulationState if available, or None if no state has been received yet.</returns>
 let snapshot (session: Session) =
     latestState session

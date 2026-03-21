@@ -7,9 +7,11 @@ open ModelContextProtocol.Server
 open PhysicsSandbox.Shared.Contracts
 open PhysicsSandbox.Mcp.GrpcConnection
 
+/// <summary>MCP server tool type for retrieving performance metrics and pipeline diagnostics from all services.</summary>
 [<McpServerToolType>]
 type MetricsTools() =
 
+    /// <summary>Fetches performance metrics from all services (Server, Simulation, Viewer, MCP) including message counts, byte volumes, and pipeline timing breakdowns.</summary>
     [<McpServerTool; Description("Get performance metrics from all services: message counts, data volumes, and pipeline timings")>]
     static member get_metrics(conn: GrpcConnection) : Task<string> =
         task {
@@ -43,6 +45,7 @@ type MetricsTools() =
                 return $"Error fetching metrics: {ex.Message}"
         }
 
+    /// <summary>Fetches pipeline diagnostics showing the timing breakdown across simulation tick, serialization, gRPC transfer, and rendering stages, highlighting the slowest bottleneck.</summary>
     [<McpServerTool; Description("Get pipeline diagnostics: timing breakdown across simulation tick, serialization, gRPC transfer, and rendering stages. Highlights the slowest stage.")>]
     static member get_diagnostics(conn: GrpcConnection) : Task<string> =
         task {

@@ -1,3 +1,4 @@
+/// <summary>Manages gRPC connections to the physics server, including state streaming and automatic reconnection.</summary>
 module PhysicsClient.Session
 
 open System
@@ -9,6 +10,7 @@ open Grpc.Core
 open Grpc.Net.Client
 open PhysicsSandbox.Shared.Contracts
 
+/// <summary>Opaque session handle that holds the gRPC channel, client, body registry, and cached simulation state.</summary>
 type Session =
     { Channel: GrpcChannel
       Client: PhysicsHub.PhysicsHubClient
@@ -58,6 +60,9 @@ let private startStateStream (session: Session) =
                         delay <- min (delay * 2) 10000
         } :> Task) |> ignore
 
+/// <summary>Connects to the physics server at the given address and starts a background state stream.</summary>
+/// <param name="serverAddress">The server URL (e.g., "http://localhost:5180" or "https://localhost:7180").</param>
+/// <returns>Ok with the connected session, or Error with a failure message.</returns>
 let connect (serverAddress: string) : Result<Session, string> =
     try
         let channel = createChannel serverAddress
@@ -76,31 +81,43 @@ let connect (serverAddress: string) : Result<Session, string> =
     with ex ->
         Error $"Failed to connect to {serverAddress}: {ex.Message}"
 
+/// <summary>Disconnects from the server, cancels the state stream, and disposes the gRPC channel.</summary>
+/// <param name="session">The session to disconnect.</param>
 let disconnect (session: Session) : unit =
     session.IsConnected <- false
     try session.Cts.Cancel() with _ -> ()
     try session.Cts.Dispose() with _ -> ()
     try session.Channel.Dispose() with _ -> ()
 
+/// <summary>Disconnects the current session and creates a new connection to the same server address.</summary>
+/// <param name="session">The session to reconnect.</param>
+/// <returns>Ok with a fresh session, or Error with a failure message.</returns>
 let reconnect (session: Session) : Result<Session, string> =
     disconnect session
     connect session.ServerAddress
 
+/// <summary>Returns whether the session is currently connected to the server.</summary>
+/// <param name="session">The session to check.</param>
 let isConnected (session: Session) : bool =
     session.IsConnected
 
+/// <summary>Gets the underlying gRPC client from a session. Used internally by command modules.</summary>
 let internal client (session: Session) : PhysicsHub.PhysicsHubClient =
     session.Client
 
+/// <summary>Gets the local body registry that maps body IDs to their shape kinds.</summary>
 let internal bodyRegistry (session: Session) : ConcurrentDictionary<string, string> =
     session.BodyRegistry
 
+/// <summary>Gets the most recently received simulation state from the background stream, if any.</summary>
 let internal latestState (session: Session) : SimulationState option =
     session.LatestState
 
+/// <summary>Gets the UTC timestamp of the last state update received from the server.</summary>
 let internal lastStateUpdate (session: Session) : DateTime =
     session.LastStateUpdate
 
+/// <summary>Sends a simulation command to the server and returns the acknowledgement result. Marks the session as disconnected on gRPC transport errors.</summary>
 let internal sendCommand (session: Session) (cmd: SimulationCommand) : Result<unit, string> =
     if not session.IsConnected then
         Error "Not connected to server"
@@ -116,6 +133,7 @@ let internal sendCommand (session: Session) (cmd: SimulationCommand) : Result<un
         | ex ->
             Error $"Command failed: {ex.Message}"
 
+/// <summary>Sends a view command to the server and returns the acknowledgement result. Marks the session as disconnected on gRPC transport errors.</summary>
 let internal sendViewCommand (session: Session) (cmd: ViewCommand) : Result<unit, string> =
     if not session.IsConnected then
         Error "Not connected to server"

@@ -5,17 +5,25 @@ open Grpc.Core
 open PhysicsSandbox.Shared.Contracts
 open PhysicsServer.Hub.MessageRouter
 
+/// <summary>
+/// gRPC service implementation for the client/viewer-facing PhysicsHub.
+/// Handles command submission, state streaming, batch operations, and metrics reporting
+/// by delegating to the central MessageRouter.
+/// </summary>
 type PhysicsHubService(router: MessageRouter) =
     inherit PhysicsHub.PhysicsHubBase()
 
+    /// <summary>Forward a single simulation command to the router and return an acknowledgment.</summary>
     override _.SendCommand(request: SimulationCommand, context: ServerCallContext) =
         let ack = submitCommand router request
         Task.FromResult(ack)
 
+    /// <summary>Forward a single view command to the router and return an acknowledgment.</summary>
     override _.SendViewCommand(request: ViewCommand, context: ServerCallContext) =
         let ack = submitViewCommand router request
         Task.FromResult(ack)
 
+    /// <summary>Stream live simulation state updates to the client. Sends the cached state immediately for late joiners, then subscribes to live updates until the client disconnects.</summary>
     override _.StreamState
         (request: StateRequest, responseStream: IServerStreamWriter<SimulationState>, context: ServerCallContext)
         =
@@ -43,6 +51,7 @@ type PhysicsHubService(router: MessageRouter) =
             do! tcs.Task
         }
 
+    /// <summary>Stream pending view commands to the viewer. Reads from the view command channel until the client disconnects.</summary>
     override _.StreamViewCommands
         (request: StateRequest, responseStream: IServerStreamWriter<ViewCommand>, context: ServerCallContext)
         =
@@ -53,14 +62,17 @@ type PhysicsHubService(router: MessageRouter) =
                 | None -> ()
         }
 
+    /// <summary>Submit a batch of simulation commands and return per-command results with total timing.</summary>
     override _.SendBatchCommand(request: BatchSimulationRequest, context: ServerCallContext) =
         let response = sendBatchCommand router request
         Task.FromResult(response)
 
+    /// <summary>Submit a batch of view commands and return per-command results with total timing.</summary>
     override _.SendBatchViewCommand(request: BatchViewRequest, context: ServerCallContext) =
         let response = sendBatchViewCommand router request
         Task.FromResult(response)
 
+    /// <summary>Return server throughput metrics and pipeline timing diagnostics (simulation tick, serialization, gRPC transfer).</summary>
     override _.GetMetrics(request: MetricsRequest, context: ServerCallContext) =
         let response = MetricsResponse()
         response.Services.Add(getMetrics router)
@@ -76,6 +88,7 @@ type PhysicsHubService(router: MessageRouter) =
         response.Pipeline <- timings
         Task.FromResult(response)
 
+    /// <summary>Stream command audit events to the client. Subscribes to all command events and forwards them until the client disconnects.</summary>
     override _.StreamCommands
         (request: StateRequest, responseStream: IServerStreamWriter<CommandEvent>, context: ServerCallContext)
         =

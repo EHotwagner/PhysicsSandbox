@@ -1,3 +1,4 @@
+/// <summary>MCP tool class for retrieving the recent command audit log showing all commands routed through the physics server.</summary>
 module PhysicsSandbox.Mcp.AuditTools
 
 open System.ComponentModel
@@ -6,9 +7,11 @@ open ModelContextProtocol.Server
 open PhysicsSandbox.Mcp.GrpcConnection
 open PhysicsSandbox.Shared.Contracts
 
+/// <summary>MCP server tool type for accessing the command audit trail.</summary>
 [<McpServerToolType>]
 type AuditTools() =
 
+    /// <summary>Returns the most recent command events from the audit stream, formatted with human-readable descriptions of each simulation or view command.</summary>
     [<McpServerTool>]
     [<Description("Get the recent command log showing all commands sent through the server")>]
     static member get_command_log(connection: GrpcConnection, [<Description("Maximum number of entries to return (default 20)")>] count: int) =

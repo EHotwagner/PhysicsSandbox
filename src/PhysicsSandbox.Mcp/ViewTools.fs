@@ -1,3 +1,4 @@
+/// <summary>MCP tool class for controlling the 3D viewer: camera positioning, zoom, and wireframe rendering.</summary>
 module PhysicsSandbox.Mcp.ViewTools
 
 open System.ComponentModel
@@ -16,9 +17,11 @@ let private sendView (conn: GrpcConnection) (cmd: ViewCommand) =
             return $"Error: {ex.Message}"
     }
 
+/// <summary>MCP server tool type providing 3D viewer controls for camera, zoom, and rendering mode.</summary>
 [<McpServerToolType>]
 type ViewTools() =
 
+    /// <summary>Sets the 3D viewer camera position and look-at target. Unspecified components default to a sensible overhead view.</summary>
     [<McpServerTool; Description("Set the 3D viewer camera position and target.")>]
     static member set_camera(
         conn: GrpcConnection,
@@ -35,6 +38,7 @@ type ViewTools() =
         )
         sendView conn (ViewCommand(SetCamera = cmd))
 
+    /// <summary>Sets the 3D viewer zoom level, where 1.0 is the default zoom.</summary>
     [<McpServerTool; Description("Set the 3D viewer zoom level.")>]
     static member set_zoom(
         conn: GrpcConnection,
@@ -42,6 +46,7 @@ type ViewTools() =
     ) : Task<string> =
         sendView conn (ViewCommand(SetZoom = SetZoom(Level = level)))
 
+    /// <summary>Toggles wireframe rendering mode on or off in the 3D viewer.</summary>
     [<McpServerTool; Description("Toggle wireframe rendering mode in the 3D viewer.")>]
     static member toggle_wireframe(conn: GrpcConnection) : Task<string> =
         sendView conn (ViewCommand(ToggleWireframe = ToggleWireframe()))

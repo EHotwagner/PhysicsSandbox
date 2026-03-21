@@ -1,3 +1,4 @@
+/// <summary>MCP tool class for procedurally generating arrangements of bodies: random scatters, stacks, rows, grids, and pyramids.</summary>
 module PhysicsSandbox.Mcp.GeneratorTools
 
 open System
@@ -13,9 +14,11 @@ let private nextGenId (prefix: string) =
     let n = Interlocked.Increment(&genCount)
     $"{prefix}-{n}"
 
+/// <summary>MCP server tool type for procedurally generating spatial arrangements of physics bodies.</summary>
 [<McpServerToolType>]
 type GeneratorTools() =
 
+    /// <summary>Generates a random mix of spheres and boxes with randomized positions, sizes, and masses within a bounded volume.</summary>
     [<McpServerTool>]
     [<Description("Generate random bodies (mix of spheres and boxes)")>]
     static member generate_random_bodies(connection: GrpcConnection,
@@ -46,6 +49,7 @@ type GeneratorTools() =
                     sb.AppendLine($"  {id}: {result}") |> ignore
             sb.ToString()
 
+    /// <summary>Generates a vertical stack of unit-sized crates at the specified base position, each spaced 1 unit apart vertically.</summary>
     [<McpServerTool>]
     [<Description("Generate a vertical stack of crates")>]
     static member generate_stack(connection: GrpcConnection,
@@ -64,6 +68,7 @@ type GeneratorTools() =
                 sb.AppendLine($"  {id}: {result}") |> ignore
             sb.ToString()
 
+    /// <summary>Generates a horizontal row of spheres along the X axis with configurable spacing.</summary>
     [<McpServerTool>]
     [<Description("Generate a horizontal row of spheres")>]
     static member generate_row(connection: GrpcConnection,
@@ -84,6 +89,7 @@ type GeneratorTools() =
                 sb.AppendLine($"  {id}: {result}") |> ignore
             sb.ToString()
 
+    /// <summary>Generates a 2D grid of crates on the XZ plane with 1-unit spacing between centers.</summary>
     [<McpServerTool>]
     [<Description("Generate a grid of crates on a plane")>]
     static member generate_grid(connection: GrpcConnection,
@@ -106,6 +112,7 @@ type GeneratorTools() =
                     sb.AppendLine($"  {id}: {result}") |> ignore
             sb.ToString()
 
+    /// <summary>Generates a pyramid of crates with the widest layer at the base, narrowing by one crate per layer.</summary>
     [<McpServerTool>]
     [<Description("Generate a pyramid of crates")>]
     static member generate_pyramid(connection: GrpcConnection,

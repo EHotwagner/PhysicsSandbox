@@ -1,3 +1,4 @@
+/// <summary>MCP tool class for high-level body movement: pushing in compass directions, launching toward targets, spinning, and stopping.</summary>
 module PhysicsSandbox.Mcp.SteeringTools
 
 open System.ComponentModel
@@ -15,9 +16,11 @@ let private directionToVec (direction: string) =
     | "west" -> Some (-1.0, 0.0, 0.0)
     | _ -> None
 
+/// <summary>MCP server tool type providing intuitive body movement commands using compass directions and target-based launching.</summary>
 [<McpServerToolType>]
 type SteeringTools() =
 
+    /// <summary>Pushes a body with an impulse in one of six compass directions (up, down, north, south, east, west).</summary>
     [<McpServerTool>]
     [<Description("Push a body in a compass direction (up/down/north/south/east/west)")>]
     static member push_body(connection: GrpcConnection,
@@ -30,6 +33,7 @@ type SteeringTools() =
             let mag = if strength <= 0.0 then 10.0 else strength
             applyImpulse connection body_id (dx * mag, dy * mag, dz * mag)
 
+    /// <summary>Launches a body toward a target position by computing the direction vector from the body's current position and applying a normalized impulse at the given speed.</summary>
     [<McpServerTool>]
     [<Description("Launch a body toward a target position")>]
     static member launch_body(connection: GrpcConnection,
@@ -55,6 +59,7 @@ type SteeringTools() =
                     let nx, ny, nz = dx/len, dy/len, dz/len
                     applyImpulse connection body_id (nx * sp, ny * sp, nz * sp)
 
+    /// <summary>Applies a rotational torque to spin a body around one of six compass-direction axes.</summary>
     [<McpServerTool>]
     [<Description("Spin a body around an axis")>]
     static member spin_body(connection: GrpcConnection,
@@ -67,6 +72,7 @@ type SteeringTools() =
             let mag = if strength <= 0.0 then 10.0 else strength
             applyTorque connection body_id (ax * mag, ay * mag, az * mag)
 
+    /// <summary>Stops a body by clearing its forces and applying an opposing impulse proportional to its current momentum to cancel its velocity.</summary>
     [<McpServerTool>]
     [<Description("Stop a body by clearing forces and applying opposing impulse")>]
     static member stop_body(connection: GrpcConnection,

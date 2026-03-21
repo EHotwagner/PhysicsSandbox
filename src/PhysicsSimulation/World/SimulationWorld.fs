@@ -9,23 +9,46 @@ open BepuFSharp
 type ProtoSphere = PhysicsSandbox.Shared.Contracts.Sphere
 type ProtoBox = PhysicsSandbox.Shared.Contracts.Box
 
+/// <summary>
+/// Internal record tracking a single rigid body in the simulation, mapping
+/// between the user-facing string identifier and the underlying BepuPhysics2 handle.
+/// </summary>
 type BodyRecord =
-    { Id: string
+    { /// <summary>User-assigned unique identifier for this body.</summary>
+      Id: string
+      /// <summary>BepuPhysics2 body handle (unused for static bodies).</summary>
       BepuBodyId: BodyId
+      /// <summary>BepuPhysics2 collision shape handle.</summary>
       ShapeId: ShapeId
+      /// <summary>Mass in kilograms. Zero for static bodies.</summary>
       Mass: float32
+      /// <summary>Protobuf shape descriptor echoed back in state snapshots.</summary>
       ShapeProto: Shape
+      /// <summary>Whether this body is static (immovable).</summary>
       IsStatic: bool
+      /// <summary>Cached position for static bodies (not queried from Bepu each frame).</summary>
       StaticPosition: Vector3
+      /// <summary>Cached orientation for static bodies.</summary>
       StaticOrientation: Quaternion }
 
+/// <summary>
+/// Mutable simulation world containing the BepuPhysics2 engine, tracked bodies,
+/// persistent forces, gravity, and timing state.
+/// </summary>
 type World =
-    { Physics: PhysicsWorld
+    { /// <summary>Underlying BepuPhysics2 physics world.</summary>
+      Physics: PhysicsWorld
+      /// <summary>Map of user-facing body ID to body record.</summary>
       mutable Bodies: Map<string, BodyRecord>
+      /// <summary>Accumulated persistent forces per body, applied every tick.</summary>
       mutable ActiveForces: Map<string, Vec3 list>
+      /// <summary>Current gravity vector applied as a force to all dynamic bodies.</summary>
       mutable Gravity: Vector3
+      /// <summary>Elapsed simulation time in seconds.</summary>
       mutable SimulationTime: double
+      /// <summary>Whether the simulation is actively stepping.</summary>
       mutable Running: bool
+      /// <summary>Fixed time step duration in seconds (default 1/60).</summary>
       TimeStep: float32 }
 
 let private toVector3 (v: Vec3) =
@@ -90,6 +113,10 @@ let private applyAllForces (world: World) =
                 PhysicsWorld.applyForce record.BepuBodyId (toVector3 force) dt world.Physics
         | None -> ()
 
+/// <summary>
+/// Creates a new simulation world with zero gravity, paused state, and a 60 Hz fixed time step.
+/// </summary>
+/// <returns>A fresh World instance ready for bodies and commands.</returns>
 let create () =
     let config = { PhysicsConfig.defaults with Gravity = Vector3.Zero }
     { Physics = PhysicsWorld.create config
@@ -104,16 +131,41 @@ let create () =
 let mutable private lastTickMs = 0.0
 let mutable private lastSerializeMs = 0.0
 
+/// <summary>
+/// Returns the physics tick duration in milliseconds from the most recent simulation step.
+/// </summary>
 let latestTickMs () = lastTickMs
+
+/// <summary>
+/// Returns the state serialization duration in milliseconds from the most recent simulation step.
+/// </summary>
 let latestSerializeMs () = lastSerializeMs
 
+/// <summary>
+/// Destroys the simulation world and releases all BepuPhysics2 resources.
+/// </summary>
+/// <param name="world">The world to destroy.</param>
 let destroy (world: World) =
     PhysicsWorld.destroy world.Physics
 
+/// <summary>
+/// Returns whether the simulation is currently running (playing).
+/// </summary>
+/// <param name="world">The world to query.</param>
 let isRunning (world: World) = world.Running
 
+/// <summary>
+/// Returns the current simulation time in seconds.
+/// </summary>
+/// <param name="world">The world to query.</param>
 let time (world: World) = world.SimulationTime
 
+/// <summary>
+/// Advances the simulation by one fixed time step, applying all forces and gravity,
+/// then returns the new state as a protobuf SimulationState with timing diagnostics.
+/// </summary>
+/// <param name="world">The world to step.</param>
+/// <returns>A SimulationState snapshot after the step, including tick and serialize timing.</returns>
 let step (world: World) =
     let sw = Stopwatch.StartNew()
     applyAllForces world
@@ -131,15 +183,32 @@ let step (world: World) =
     state.SerializeMs <- lastSerializeMs
     state
 
+/// <summary>
+/// Returns the current simulation state without advancing time. Includes the latest timing diagnostics.
+/// </summary>
+/// <param name="world">The world to snapshot.</param>
+/// <returns>A SimulationState reflecting the current positions and velocities of all bodies.</returns>
 let currentState (world: World) =
     let state = buildState world
     state.TickMs <- lastTickMs
     state.SerializeMs <- lastSerializeMs
     state
 
+/// <summary>
+/// Sets whether the simulation is running (playing) or paused.
+/// </summary>
+/// <param name="world">The world to update.</param>
+/// <param name="running">True to play, false to pause.</param>
 let setRunning (world: World) (running: bool) =
     world.Running <- running
 
+/// <summary>
+/// Adds a rigid body to the simulation. Supports spheres, boxes, and planes (approximated as
+/// large static boxes). Fails if a body with the same ID already exists or mass is non-positive.
+/// </summary>
+/// <param name="world">The world to add the body to.</param>
+/// <param name="cmd">The AddBody protobuf command specifying shape, mass, position, and velocity.</param>
+/// <returns>A CommandAck indicating success or failure with a descriptive message.</returns>
 let addBody (world: World) (cmd: AddBody) =
     let isPlaneShape = cmd.Shape <> null && cmd.Shape.ShapeCase = Shape.ShapeOneofCase.Plane
     if world.Bodies |> Map.containsKey cmd.Id then
@@ -205,6 +274,13 @@ let addBody (world: World) (cmd: AddBody) =
             world.Bodies <- Map.add cmd.Id record world.Bodies
             CommandAck(Success = true, Message = $"Body '{cmd.Id}' added")
 
+/// <summary>
+/// Removes a body by its identifier. Returns success even if the body does not exist (no-op).
+/// Static bodies are untracked but remain in the Bepu engine (no remove API for statics).
+/// </summary>
+/// <param name="world">The world to remove the body from.</param>
+/// <param name="id">The user-facing body identifier.</param>
+/// <returns>A CommandAck indicating the result.</returns>
 let removeBody (world: World) (id: string) =
     match Map.tryFind id world.Bodies with
     | Some record ->
@@ -217,6 +293,14 @@ let removeBody (world: World) (id: string) =
     | None ->
         CommandAck(Success = true, Message = $"Body '{id}' not found (no-op)")
 
+/// <summary>
+/// Adds a persistent force to a body. Forces accumulate and are applied every simulation step
+/// until explicitly cleared with clearForces.
+/// </summary>
+/// <param name="world">The simulation world.</param>
+/// <param name="id">Target body identifier.</param>
+/// <param name="force">Force vector to apply persistently.</param>
+/// <returns>A CommandAck indicating the result.</returns>
 let applyForce (world: World) (id: string) (force: Vec3) =
     match Map.tryFind id world.Bodies with
     | Some _ ->
@@ -226,6 +310,14 @@ let applyForce (world: World) (id: string) (force: Vec3) =
     | None ->
         CommandAck(Success = true, Message = $"Body '{id}' not found (no-op)")
 
+/// <summary>
+/// Applies a one-shot linear impulse to a body, immediately changing its velocity.
+/// Unlike forces, impulses are not stored and only take effect once.
+/// </summary>
+/// <param name="world">The simulation world.</param>
+/// <param name="id">Target body identifier.</param>
+/// <param name="impulse">Impulse vector to apply.</param>
+/// <returns>A CommandAck indicating the result.</returns>
 let applyImpulse (world: World) (id: string) (impulse: Vec3) =
     match Map.tryFind id world.Bodies with
     | Some record ->
@@ -234,6 +326,13 @@ let applyImpulse (world: World) (id: string) (impulse: Vec3) =
     | None ->
         CommandAck(Success = true, Message = $"Body '{id}' not found (no-op)")
 
+/// <summary>
+/// Applies a rotational torque to a body for a single time step.
+/// </summary>
+/// <param name="world">The simulation world.</param>
+/// <param name="id">Target body identifier.</param>
+/// <param name="torque">Torque vector to apply.</param>
+/// <returns>A CommandAck indicating the result.</returns>
 let applyTorque (world: World) (id: string) (torque: Vec3) =
     match Map.tryFind id world.Bodies with
     | Some record ->
@@ -242,13 +341,31 @@ let applyTorque (world: World) (id: string) (torque: Vec3) =
     | None ->
         CommandAck(Success = true, Message = $"Body '{id}' not found (no-op)")
 
+/// <summary>
+/// Removes all persistent forces from a body. Succeeds even if no forces were active.
+/// </summary>
+/// <param name="world">The simulation world.</param>
+/// <param name="id">Target body identifier.</param>
+/// <returns>A CommandAck confirming forces were cleared.</returns>
 let clearForces (world: World) (id: string) =
     world.ActiveForces <- Map.remove id world.ActiveForces
     CommandAck(Success = true, Message = $"Forces cleared for '{id}'")
 
+/// <summary>
+/// Sets the global gravity vector. Gravity is applied as a force (mass * gravity) to all
+/// dynamic bodies each simulation step.
+/// </summary>
+/// <param name="world">The simulation world.</param>
+/// <param name="gravity">The new gravity vector.</param>
 let setGravity (world: World) (gravity: Vec3) =
     world.Gravity <- toVector3 gravity
 
+/// <summary>
+/// Resets the simulation to its initial state: removes all dynamic bodies from the physics
+/// engine, clears all tracked bodies and forces, resets time to zero, and pauses the simulation.
+/// </summary>
+/// <param name="world">The world to reset.</param>
+/// <returns>A CommandAck confirming the reset.</returns>
 let resetSimulation (world: World) =
     // Remove all dynamic bodies from the physics engine (static bodies have no remove API)
     for kvp in world.Bodies do

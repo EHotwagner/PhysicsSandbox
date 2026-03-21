@@ -10,12 +10,17 @@ open PhysicsSandbox.Shared.Contracts
 open PhysicsSimulation.SimulationWorld
 open Microsoft.Extensions.Logging
 
+/// <summary>Target interval between simulation steps in milliseconds (60 Hz).</summary>
 let private stepIntervalMs = int (1000.0f / 60.0f)
 
 // Metrics counters (thread-safe)
+/// <summary>Total number of gRPC messages sent to the server.</summary>
 let mutable private msgSent = 0L
+/// <summary>Total number of gRPC messages received from the server.</summary>
 let mutable private msgRecv = 0L
+/// <summary>Total bytes sent to the server (protobuf-serialized size).</summary>
 let mutable private bytesSent = 0L
+/// <summary>Total bytes received from the server (protobuf-serialized size).</summary>
 let mutable private bytesRecv = 0L
 
 let private createChannel (address: string) =
@@ -110,6 +115,14 @@ let private runSession (logger: ILogger) (world: World) (client: SimulationLink.
         with _ -> ()
     }
 
+/// <summary>
+/// Runs the simulation client, connecting to the PhysicsServer via a bidirectional gRPC
+/// SimulationLink stream. Creates a local physics world, processes incoming commands, steps
+/// the simulation at 60 Hz when playing, and streams state back to the server. Automatically
+/// reconnects with exponential backoff on disconnection. Blocks until cancellation.
+/// </summary>
+/// <param name="serverAddress">The gRPC server address (e.g., "https://localhost:7180").</param>
+/// <param name="ct">Cancellation token to signal shutdown.</param>
 let run (serverAddress: string) (ct: CancellationToken) =
     async {
         let loggerFactory = LoggerFactory.Create(fun builder -> builder.AddConsole() |> ignore)
