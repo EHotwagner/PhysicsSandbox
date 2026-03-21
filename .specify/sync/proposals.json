@@ -1,42 +1,26 @@
 {
-  "generated": "2026-03-20T00:00:00Z",
-  "based_on": "drift-report from 2026-03-20 (full project)",
+  "generated": "2026-03-21T08:00:00Z",
+  "based_on": "drift-report from 2026-03-21T08:00:00Z",
   "summary": {
-    "backfill": 0,
+    "backfill": 1,
     "align": 0,
     "human_decision": 0,
-    "new_specs": 1,
-    "remove_from_spec": 0,
-    "no_change": 1
+    "new_specs": 0,
+    "remove": 0
   },
-  "prior_proposals": [
-    {"id": "P1", "spec_id": "001-server-hub", "requirement": "FR-002", "direction": "BACKFILL", "status": "applied"},
-    {"id": "P2", "spec_id": "001-server-hub", "requirement": "SC-002", "direction": "BACKFILL", "status": "applied"},
-    {"id": "P3", "spec_id": "001-server-hub", "requirement": null, "direction": "BACKFILL", "status": "applied"},
-    {"id": "P4", "spec_id": "002-physics-simulation", "requirement": "FR-013", "direction": "BACKFILL", "status": "applied"},
-    {"id": "P5", "spec_id": "002-physics-simulation", "requirement": "SC-003", "direction": "BACKFILL", "status": "applied"},
-    {"id": "P6", "spec_id": "002-physics-simulation", "requirement": "Assumptions", "direction": "BACKFILL", "status": "applied"}
-  ],
   "proposals": [
     {
-      "id": "P7",
-      "direction": "NEW_SPEC",
-      "feature": "Demo Scripts",
-      "location": "demos/",
-      "lines": 500,
-      "suggested_spec_id": "006-demos",
-      "draft_requirements": ["FR-001: 10+ demo scripts", "FR-002: self-contained demos", "FR-003: automated runner", "FR-004: uses PhysicsClient API", "FR-005: runnable via dotnet fsi", "FR-006: shared prelude"],
+      "id": "P1",
+      "spec_id": "001-mcp-persistent-service",
+      "requirement": "US2-Scenario-2",
+      "direction": "BACKFILL",
+      "spec_text": "it sees the raw command that was sent (command type, parameters, sender)",
+      "actual": "CommandEvent proto contains command type and parameters but no sender field",
+      "proposed_text": "it sees the raw command that was sent (command type and parameters)",
+      "rationale": "PhysicsServer routes commands without tracking sender identity. Adding sender tracking would require protocol-level changes beyond feature scope. FR-004 does not mention sender.",
       "confidence": "HIGH",
-      "status": "pending"
-    },
-    {
-      "id": "P8",
-      "direction": "NO_CHANGE",
-      "feature": "Error Report",
-      "location": "2026-03-20-Error-Report.md",
-      "rationale": "Historical artifact; all fixes applied in spec 005. Recommend archiving.",
-      "confidence": "HIGH",
-      "status": "pending"
+      "severity": "minor",
+      "status": "applied"
     }
   ]
 }

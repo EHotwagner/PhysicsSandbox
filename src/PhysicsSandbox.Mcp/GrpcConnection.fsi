@@ -10,6 +10,10 @@ type GrpcConnection =
     member LatestState : SimulationState option
     member LastUpdateTime : DateTimeOffset
     member StreamConnected : bool
+    member ViewStreamConnected : bool
+    member AuditStreamConnected : bool
     member ServerAddress : string
+    member LatestViewCommand : ViewCommand option
+    member CommandLog : CommandEvent list
     member Start : unit -> unit
     interface IDisposable

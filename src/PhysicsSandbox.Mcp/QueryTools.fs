@@ -47,5 +47,11 @@ type QueryTools() =
         let streamStatus =
             if conn.StreamConnected then $"connected (last update {staleness.TotalSeconds:F1}s ago)"
             else $"disconnected (last update {staleness.TotalSeconds:F1}s ago)"
+        let viewStreamStatus =
+            if conn.ViewStreamConnected then "connected"
+            else "disconnected"
+        let auditStreamStatus =
+            if conn.AuditStreamConnected then "connected"
+            else "disconnected"
         let hasState = conn.LatestState.IsSome
-        $"MCP Server Status\nServer: {conn.ServerAddress}\nState Stream: {streamStatus}\nHas State Data: {hasState}"
+        $"MCP Server Status\nServer: {conn.ServerAddress}\nState Stream: {streamStatus}\nView Command Stream: {viewStreamStatus}\nAudit Stream: {auditStreamStatus}\nHas State Data: {hasState}"

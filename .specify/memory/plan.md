@@ -1,12 +1,12 @@
 # PhysicsSandbox — Main Implementation Plan
 
-**Last Updated**: 2026-03-20
-**Revision**: Updated with 006-mcp-aspire-orchestration archival
+**Last Updated**: 2026-03-21
+**Revision**: Updated with 001-mcp-persistent-service archival
 
 ## Technical Context
 
 **Language/Version**: F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
-**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0 (local NuGet), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 (MCP server)
+**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0 (local NuGet), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 + ModelContextProtocol.AspNetCore 1.1.* (MCP server — HTTP/SSE transport)
 **Storage**: N/A (in-memory physics world, stateless message routing)
 **Testing**: xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x
 **Target Platform**: Linux (rootless Podman for containers)
@@ -72,12 +72,17 @@ src/
     ├── Program.fs                       # Aspire entry point
     └── PhysicsClient.fsx                # FSI convenience script
 │
-└── PhysicsSandbox.Mcp/                 # F# — MCP server (interactive debugging via AI assistants)
-    ├── GrpcConnection.fsi/.fs          # gRPC channel + background state stream cache
+└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 32 tools)
+    ├── GrpcConnection.fsi/.fs          # gRPC channel + 3 background streams (state, view, audit)
     ├── SimulationTools.fsi/.fs         # 10 simulation command MCP tools
     ├── ViewTools.fsi/.fs               # 3 view command MCP tools
     ├── QueryTools.fsi/.fs              # get_state, get_status MCP tools
-    └── Program.fs                      # Host + stdio MCP transport
+    ├── AuditTools.fsi/.fs              # Command audit log query tool
+    ├── ClientAdapter.fsi/.fs           # Adapter bridging GrpcConnection with convenience functions
+    ├── PresetTools.fsi/.fs             # 7 body preset MCP tools
+    ├── GeneratorTools.fsi/.fs          # 5 scene generator MCP tools
+    ├── SteeringTools.fsi/.fs           # 4 steering MCP tools
+    └── Program.fs                      # WebApplication + HTTP/SSE MCP transport
 
 tests/
 ├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests (35 tests)
@@ -88,7 +93,7 @@ tests/
 │   ├── ErrorConditionTests.cs          # 5 tests (no simulation, empty command, rapid stress)
 │   ├── McpOrchestrationTests.cs       # 3 tests (MCP resource lifecycle in Aspire)
 │   └── xunit.runner.json              # Test runner configuration
-├── PhysicsServer.Tests/                 # F# — unit tests (13 tests)
+├── PhysicsServer.Tests/                 # F# — unit tests (16 tests)
 │   ├── StateCacheTests.fs
 │   ├── MessageRouterTests.fs            # Includes readViewCommand tests
 │   └── PublicApiBaseline.txt            # Surface-area baseline
@@ -155,7 +160,7 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - Client gRPC channels are lazy — `GrpcChannel.ForAddress` succeeds immediately; failures surface on first RPC call. [Source: specs/004-client-repl]
 - Client IdGenerator uses ConcurrentDictionary.AddOrUpdate which may invoke the update delegate multiple times under contention — but always produces correct results. Use unique shape keys in tests to avoid cross-test interference. [Source: specs/004-client-repl]
 - Spectre.Console Live context with Ctrl+C cancellation: must set `args.Cancel = true` in CancelKeyPress handler to prevent process termination. [Source: specs/004-client-repl]
-- MCP server must log to stderr only — stdout is the stdio MCP transport. Use `LogToStandardErrorThreshold = LogLevel.Trace` in host configuration. [Source: specs/005-mcp-server-testing]
+- ~~MCP server must log to stderr only — stdout is the stdio MCP transport.~~ Superseded: MCP now uses HTTP/SSE transport; logging goes through standard ASP.NET Core logging pipeline with ServiceDefaults. [Source: specs/005-mcp-server-testing → specs/001-mcp-persistent-service]
 - MCP `[<McpServerToolType>]` requires static methods on types — F# types with static members compile correctly for SDK discovery via `WithToolsFromAssembly()`. [Source: specs/005-mcp-server-testing]
 - Simulation SSL: must use SocketsHttpHandler with `RemoteCertificateValidationCallback` returning true (same as PhysicsClient and integration tests). Without this, bidirectional stream fails silently on HTTPS. [Source: specs/005-mcp-server-testing]
 - Simulation reconnection: exponential backoff (1s → 10s max) preserves BepuPhysics world across stream reconnections. Only exits on CancellationToken cancellation. [Source: specs/005-mcp-server-testing]

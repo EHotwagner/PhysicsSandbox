@@ -1,20 +1,32 @@
 {
-  "generated": "2026-03-20T19:30:00Z",
+  "generated": "2026-03-21T08:00:00Z",
   "project": "PhysicsSandbox",
   "summary": {
     "specs_analyzed": 1,
-    "requirements_checked": 11,
-    "aligned": 11,
-    "drifted": 0,
+    "requirements_checked": 18,
+    "aligned": 17,
+    "drifted": 1,
     "not_implemented": 0,
     "unspecced_features": 0
   },
   "specs": [
     {
-      "id": "006-mcp-aspire-orchestration",
-      "title": "Add MCP Server to Aspire AppHost Orchestration",
-      "aligned": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "SC-001", "SC-002", "SC-003", "SC-004"],
-      "drifted": [],
+      "id": "001-mcp-persistent-service",
+      "title": "MCP Persistent Service",
+      "aligned": [
+        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006",
+        "FR-007", "FR-008", "FR-009", "FR-010", "FR-011", "FR-012",
+        "SC-001", "SC-002", "SC-003", "SC-005", "SC-006"
+      ],
+      "drifted": [
+        {
+          "requirement": "US2-Scenario-2",
+          "spec_text": "it sees the raw command that was sent (command type, parameters, sender)",
+          "actual": "CommandEvent proto contains command type and parameters but no sender field",
+          "location": "src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto:179-184",
+          "severity": "minor"
+        }
+      ],
       "not_implemented": []
     }
   ],

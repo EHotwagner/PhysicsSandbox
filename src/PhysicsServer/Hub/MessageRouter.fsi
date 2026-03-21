@@ -1,5 +1,6 @@
 module PhysicsServer.Hub.MessageRouter
 
+open System
 open System.Threading
 open System.Threading.Tasks
 open PhysicsSandbox.Shared.Contracts
@@ -28,6 +29,16 @@ val subscribe: MessageRouter -> (SimulationState -> Task) -> SubscriptionId
 
 /// Remove a state stream subscription.
 val unsubscribe: MessageRouter -> SubscriptionId -> unit
+
+/// Subscribe to command audit events. The callback is invoked for each command.
+/// Returns a subscription id for later unsubscription.
+val subscribeCommands: MessageRouter -> (CommandEvent -> Task) -> System.Guid
+
+/// Remove a command audit subscription.
+val unsubscribeCommands: MessageRouter -> System.Guid -> unit
+
+/// Publish a command event to all command audit subscribers.
+val publishCommandEvent: MessageRouter -> CommandEvent -> Task<unit>
 
 /// Publish a simulation state to all subscribers and update the cache.
 val publishState: MessageRouter -> SimulationState -> Task<unit>

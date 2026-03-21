@@ -21,6 +21,10 @@ service PhysicsHub {
   // Viewer subscribes to receive camera, wireframe, and zoom commands
   // forwarded from the client via SendViewCommand.
   rpc StreamViewCommands (StateRequest) returns (stream ViewCommand);
+
+  // Audit stream: broadcasts every incoming command to subscribers.
+  // No late-joiner backfill — commands are ephemeral.
+  rpc StreamCommands (StateRequest) returns (stream CommandEvent);
 }
 
 // ─── Simulation-facing service ──────────────────────────────────────────────
@@ -170,4 +174,11 @@ message CommandAck {
 
 message StateRequest {
   // Empty — subscribes the caller to state updates.
+}
+
+message CommandEvent {
+  oneof command {
+    SimulationCommand simulation_command = 1;
+    ViewCommand view_command = 2;
+  }
 }

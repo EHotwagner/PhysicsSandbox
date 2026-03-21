@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -18,11 +18,22 @@
     <Compile Include="ViewTools.fs" />
     <Compile Include="QueryTools.fsi" />
     <Compile Include="QueryTools.fs" />
+    <Compile Include="AuditTools.fsi" />
+    <Compile Include="AuditTools.fs" />
+    <Compile Include="ClientAdapter.fsi" />
+    <Compile Include="ClientAdapter.fs" />
+    <Compile Include="PresetTools.fsi" />
+    <Compile Include="PresetTools.fs" />
+    <Compile Include="GeneratorTools.fsi" />
+    <Compile Include="GeneratorTools.fs" />
+    <Compile Include="SteeringTools.fsi" />
+    <Compile Include="SteeringTools.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ModelContextProtocol" Version="1.1.*" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.1.*" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.*" />
     <PackageReference Include="Grpc.Net.Client" Version="2.*" />
     <PackageReference Include="Google.Protobuf" Version="3.*" />
@@ -30,6 +41,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PhysicsSandbox.Shared.Contracts\PhysicsSandbox.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\PhysicsClient\PhysicsClient.fsproj" />
+    <ProjectReference Include="..\PhysicsSandbox.ServiceDefaults\PhysicsSandbox.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

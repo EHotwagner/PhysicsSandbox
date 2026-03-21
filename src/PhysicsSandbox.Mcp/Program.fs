@@ -1,37 +1,36 @@
 open System
+open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open ModelContextProtocol.Server
 open PhysicsSandbox.Mcp.GrpcConnection
 
-[<EntryPoint>]
-let main args =
-    let serverAddress =
-        if args.Length > 0 then args.[0]
-        else
-            let envHttps = Environment.GetEnvironmentVariable("services__server__https__0")
-            let envHttp = Environment.GetEnvironmentVariable("services__server__http__0")
-            match envHttps, envHttp with
-            | url, _ when not (String.IsNullOrEmpty url) -> url
-            | _, url when not (String.IsNullOrEmpty url) -> url
-            | _ -> "https://localhost:7180"
+let builder = WebApplication.CreateBuilder()
+builder.AddServiceDefaults() |> ignore
 
-    let builder = Host.CreateApplicationBuilder(args)
+// Resolve server address from environment or defaults
+let serverAddress =
+    let envHttps = Environment.GetEnvironmentVariable("services__server__https__0")
+    let envHttp = Environment.GetEnvironmentVariable("services__server__http__0")
+    match envHttps, envHttp with
+    | url, _ when not (String.IsNullOrEmpty url) -> url
+    | _, url when not (String.IsNullOrEmpty url) -> url
+    | _ -> "https://localhost:7180"
 
-    builder.Logging.AddConsole(fun opts ->
-        opts.LogToStandardErrorThreshold <- LogLevel.Trace) |> ignore
+// Register GrpcConnection as singleton
+builder.Services.AddSingleton<GrpcConnection>(fun _ ->
+    let conn = new GrpcConnection(serverAddress)
+    conn.Start()
+    conn) |> ignore
 
-    // Register GrpcConnection as singleton
-    builder.Services.AddSingleton<GrpcConnection>(fun _ ->
-        let conn = new GrpcConnection(serverAddress)
-        conn.Start()
-        conn) |> ignore
+builder.Services
+    .AddMcpServer()
+    .WithToolsFromAssembly() |> ignore
 
-    builder.Services
-        .AddMcpServer()
-        .WithStdioServerTransport()
-        .WithToolsFromAssembly() |> ignore
+let app = builder.Build()
 
-    builder.Build().RunAsync().GetAwaiter().GetResult()
-    0
+app.MapMcp() |> ignore
+app.MapDefaultEndpoints() |> ignore
+
+app.Run()

@@ -13,6 +13,7 @@ type SubscriptionId = SubscriptionId of Guid
 type MessageRouter =
     { StateCache: StateCache.StateCache
       Subscribers: ConcurrentDictionary<Guid, SimulationState -> Task>
+      CommandSubscribers: ConcurrentDictionary<Guid, CommandEvent -> Task>
       CommandChannel: Channel<SimulationCommand>
       ViewCommandChannel: Channel<ViewCommand>
       mutable SimulationConnected: bool
@@ -21,10 +22,28 @@ type MessageRouter =
 let create () =
     { StateCache = StateCache.create ()
       Subscribers = ConcurrentDictionary<Guid, SimulationState -> Task>()
+      CommandSubscribers = ConcurrentDictionary<Guid, CommandEvent -> Task>()
       CommandChannel = Channel.CreateBounded<SimulationCommand>(100)
       ViewCommandChannel = Channel.CreateBounded<ViewCommand>(100)
       SimulationConnected = false
       SimulationLock = obj () }
+
+let subscribeCommands (router: MessageRouter) (callback: CommandEvent -> Task) =
+    let id = Guid.NewGuid()
+    router.CommandSubscribers.TryAdd(id, callback) |> ignore
+    id
+
+let unsubscribeCommands (router: MessageRouter) (id: Guid) =
+    router.CommandSubscribers.TryRemove(id) |> ignore
+
+let publishCommandEvent (router: MessageRouter) (evt: CommandEvent) =
+    task {
+        for kvp in router.CommandSubscribers do
+            try
+                do! kvp.Value evt
+            with
+            | _ -> ()
+    }
 
 let submitCommand (router: MessageRouter) (cmd: SimulationCommand) =
     // Try to write to the command channel; drop if full or no simulation connected
@@ -34,6 +53,11 @@ let submitCommand (router: MessageRouter) (cmd: SimulationCommand) =
                 router.CommandChannel.Writer.TryWrite(cmd)
             else
                 false)
+
+    // Publish to command audit subscribers
+    let evt = CommandEvent()
+    evt.SimulationCommand <- cmd
+    publishCommandEvent router evt |> ignore
 
     CommandAck(
         Success = true,
@@ -47,6 +71,11 @@ let submitCommand (router: MessageRouter) (cmd: SimulationCommand) =
 let submitViewCommand (router: MessageRouter) (cmd: ViewCommand) =
     // Try to write to the view command channel; drop if full or no viewer connected
     let _written = router.ViewCommandChannel.Writer.TryWrite(cmd)
+
+    // Publish to command audit subscribers
+    let evt = CommandEvent()
+    evt.ViewCommand <- cmd
+    publishCommandEvent router evt |> ignore
 
     CommandAck(
         Success = true,

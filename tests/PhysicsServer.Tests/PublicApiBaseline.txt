@@ -61,6 +61,17 @@ val disconnectSimulation: MessageRouter -> unit
 
 /// Read a pending simulation command. Blocks until one is available or cancellation.
 val readCommand: MessageRouter -> CancellationToken -> Task<SimulationCommand option>
+
+/// Subscribe to command audit events. The callback is invoked for each command.
+/// Returns a subscription id for later unsubscription.
+val subscribeCommands: MessageRouter -> (CommandEvent -> Task) -> System.Guid
+
+/// Remove a command audit subscription.
+val unsubscribeCommands: MessageRouter -> System.Guid -> unit
+
+/// Publish a command event to all command audit subscribers.
+val publishCommandEvent: MessageRouter -> CommandEvent -> Task<unit>
+
 namespace PhysicsServer.Services
 
 open Grpc.Core
@@ -84,6 +95,13 @@ type PhysicsHubService =
         responseStream: IServerStreamWriter<SimulationState> *
         context: ServerCallContext ->
             System.Threading.Tasks.Task
+
+    override StreamCommands:
+        request: StateRequest *
+        responseStream: IServerStreamWriter<CommandEvent> *
+        context: ServerCallContext ->
+            System.Threading.Tasks.Task
+
 namespace PhysicsServer.Services
 
 open Grpc.Core

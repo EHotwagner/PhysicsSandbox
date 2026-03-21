@@ -1,6 +1,7 @@
 module PhysicsSandbox.Mcp.GrpcConnection
 
 open System
+open System.Collections.Generic
 open System.Net.Http
 open System.Threading
 open System.Threading.Tasks
@@ -26,6 +27,18 @@ type GrpcConnection(serverAddress: string) =
     let mutable latestState: SimulationState option = None
     let mutable lastUpdateTime = DateTimeOffset.UtcNow
     let mutable streamConnected = false
+    let mutable viewStreamConnected = false
+    let mutable auditStreamConnected = false
+    let mutable latestViewCommand: ViewCommand option = None
+    let commandLog = LinkedList<CommandEvent>()
+    let commandLogLock = obj ()
+    let commandLogMax = 100
+
+    let addToCommandLog (evt: CommandEvent) =
+        lock commandLogLock (fun () ->
+            commandLog.AddLast(evt) |> ignore
+            while commandLog.Count > commandLogMax do
+                commandLog.RemoveFirst())
 
     let startStateStream (logger: ILogger) =
         Task.Run(fun () ->
@@ -59,16 +72,87 @@ type GrpcConnection(serverAddress: string) =
                             delay <- min (delay * 2) 10000
             } :> Task) |> ignore
 
+    let startViewCommandStream (logger: ILogger) =
+        Task.Run(fun () ->
+            task {
+                let mutable delay = 1000
+                while not cts.Token.IsCancellationRequested do
+                    try
+                        use call = client.StreamViewCommands(StateRequest(), cancellationToken = cts.Token)
+                        let stream = call.ResponseStream
+                        viewStreamConnected <- true
+                        delay <- 1000
+                        logger.LogInformation("View command stream connected to {Address}", serverAddress)
+                        while not cts.Token.IsCancellationRequested do
+                            let! hasNext = stream.MoveNext(cts.Token)
+                            if hasNext then
+                                latestViewCommand <- Some stream.Current
+                    with
+                    | :? OperationCanceledException -> ()
+                    | :? RpcException when cts.Token.IsCancellationRequested -> ()
+                    | :? RpcException ->
+                        viewStreamConnected <- false
+                        if not cts.Token.IsCancellationRequested then
+                            logger.LogWarning("View command stream disconnected, retrying in {Delay}ms", delay)
+                            do! Task.Delay(delay, cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
+                            delay <- min (delay * 2) 10000
+                    | _ ->
+                        viewStreamConnected <- false
+                        if not cts.Token.IsCancellationRequested then
+                            do! Task.Delay(delay, cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
+                            delay <- min (delay * 2) 10000
+            } :> Task) |> ignore
+
+    let startCommandAuditStream (logger: ILogger) =
+        Task.Run(fun () ->
+            task {
+                let mutable delay = 1000
+                while not cts.Token.IsCancellationRequested do
+                    try
+                        use call = client.StreamCommands(StateRequest(), cancellationToken = cts.Token)
+                        let stream = call.ResponseStream
+                        auditStreamConnected <- true
+                        delay <- 1000
+                        logger.LogInformation("Command audit stream connected to {Address}", serverAddress)
+                        while not cts.Token.IsCancellationRequested do
+                            let! hasNext = stream.MoveNext(cts.Token)
+                            if hasNext then
+                                addToCommandLog stream.Current
+                    with
+                    | :? OperationCanceledException -> ()
+                    | :? RpcException when cts.Token.IsCancellationRequested -> ()
+                    | :? RpcException ->
+                        auditStreamConnected <- false
+                        if not cts.Token.IsCancellationRequested then
+                            logger.LogWarning("Command audit stream disconnected, retrying in {Delay}ms", delay)
+                            do! Task.Delay(delay, cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
+                            delay <- min (delay * 2) 10000
+                    | _ ->
+                        auditStreamConnected <- false
+                        if not cts.Token.IsCancellationRequested then
+                            do! Task.Delay(delay, cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
+                            delay <- min (delay * 2) 10000
+            } :> Task) |> ignore
+
     member _.Client = client
     member _.LatestState = latestState
     member _.LastUpdateTime = lastUpdateTime
     member _.StreamConnected = streamConnected
+    member _.ViewStreamConnected = viewStreamConnected
+    member _.AuditStreamConnected = auditStreamConnected
     member _.ServerAddress = serverAddress
+    member _.LatestViewCommand = latestViewCommand
+
+    member _.CommandLog =
+        lock commandLogLock (fun () ->
+            commandLog |> Seq.toList)
 
     member this.Start() =
         let loggerFactory = LoggerFactory.Create(fun b -> b.AddConsole(fun opts -> opts.LogToStandardErrorThreshold <- LogLevel.Trace) |> ignore)
         let logger = loggerFactory.CreateLogger("GrpcConnection")
         startStateStream logger
+        startViewCommandStream logger
+        startCommandAuditStream logger
 
     interface IDisposable with
         member _.Dispose() =

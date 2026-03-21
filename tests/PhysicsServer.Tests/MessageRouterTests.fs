@@ -103,3 +103,61 @@ let ``readViewCommand blocks when no commands available`` () =
         let! result = readViewCommand router cts.Token
         Assert.True(result.IsNone)
     }
+
+[<Fact>]
+let ``SubscribeCommands delivers command events to subscribers`` () =
+    task {
+        let router = create ()
+        let received = ResizeArray<CommandEvent>()
+
+        let subId = subscribeCommands router (fun evt -> received.Add(evt); Task.CompletedTask)
+
+        let cmd = SimulationCommand()
+        cmd.Step <- StepSimulation(DeltaTime = 0.016)
+        let evt = CommandEvent()
+        evt.SimulationCommand <- cmd
+        do! publishCommandEvent router evt
+
+        Assert.Equal(1, received.Count)
+        Assert.NotNull(received.[0].SimulationCommand)
+
+        unsubscribeCommands router subId
+    }
+
+[<Fact>]
+let ``UnsubscribeCommands stops delivery`` () =
+    task {
+        let router = create ()
+        let received = ResizeArray<CommandEvent>()
+
+        let subId = subscribeCommands router (fun evt -> received.Add(evt); Task.CompletedTask)
+        unsubscribeCommands router subId
+
+        let cmd = SimulationCommand()
+        cmd.Step <- StepSimulation(DeltaTime = 0.016)
+        let evt = CommandEvent()
+        evt.SimulationCommand <- cmd
+        do! publishCommandEvent router evt
+
+        Assert.Equal(0, received.Count)
+    }
+
+[<Fact>]
+let ``PublishCommandEvent fans out to multiple command subscribers`` () =
+    task {
+        let router = create ()
+        let received1 = ResizeArray<CommandEvent>()
+        let received2 = ResizeArray<CommandEvent>()
+
+        let _sub1 = subscribeCommands router (fun evt -> received1.Add(evt); Task.CompletedTask)
+        let _sub2 = subscribeCommands router (fun evt -> received2.Add(evt); Task.CompletedTask)
+
+        let viewCmd = ViewCommand()
+        viewCmd.SetZoom <- SetZoom(Level = 2.0)
+        let evt = CommandEvent()
+        evt.ViewCommand <- viewCmd
+        do! publishCommandEvent router evt
+
+        Assert.Equal(1, received1.Count)
+        Assert.Equal(1, received2.Count)
+    }

@@ -1,5 +1,42 @@
 # Merged Features Log
 
+## MCP Persistent Service — 2026-03-21
+**Branch:** 001-mcp-persistent-service
+**Spec:** specs/001-mcp-persistent-service
+
+**What was added:**
+- MCP server switched from stdio to persistent HTTP/SSE transport (ModelContextProtocol.AspNetCore)
+- New `CommandEvent` proto message + `StreamCommands` audit RPC on PhysicsServer
+- GrpcConnection subscribes to 3 streams (state, view commands, command audit) with independent reconnection
+- 32 total MCP tools: 10 simulation + 3 view + 2 query + 1 audit + 7 presets + 5 generators + 4 steering
+- PhysicsClient referenced as library for convenience tool logic (ClientAdapter bridging layer)
+- ServiceDefaults added for health checks and structured logging
+- 3 new PhysicsServer unit tests (audit subscriber functions)
+- 2 new integration test files (McpHttpTransportTests, CommandAuditStreamTests)
+
+**Modified Components:**
+- `src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto` — CommandEvent message, StreamCommands RPC
+- `src/PhysicsServer/Hub/MessageRouter.fsi/.fs` — CommandSubscribers, audit publishing
+- `src/PhysicsServer/Services/PhysicsHubService.fs` — StreamCommands implementation
+- `src/PhysicsSandbox.Mcp/Program.fs` — WebApplication + HTTP/SSE transport
+- `src/PhysicsSandbox.Mcp/GrpcConnection.fsi/.fs` — 3 background streams, CommandLog
+- `src/PhysicsSandbox.Mcp/QueryTools.fs` — 3-stream status reporting
+- `src/PhysicsSandbox.Mcp/PhysicsSandbox.Mcp.fsproj` — SDK.Web, new packages + references
+- `.mcp.json` — SSE transport URL
+
+**New Components:**
+- `src/PhysicsSandbox.Mcp/AuditTools.fsi/.fs` — Command audit log query tool
+- `src/PhysicsSandbox.Mcp/ClientAdapter.fsi/.fs` — GrpcConnection ↔ convenience function bridge
+- `src/PhysicsSandbox.Mcp/PresetTools.fsi/.fs` — 7 body preset tools
+- `src/PhysicsSandbox.Mcp/GeneratorTools.fsi/.fs` — 5 scene generator tools
+- `src/PhysicsSandbox.Mcp/SteeringTools.fsi/.fs` — 4 steering tools
+- `tests/PhysicsSandbox.Integration.Tests/McpHttpTransportTests.cs`
+- `tests/PhysicsSandbox.Integration.Tests/CommandAuditStreamTests.cs`
+
+**Tasks Completed:** 48/48 tasks
+
+---
+
 ## MCP Server Aspire Orchestration — 2026-03-20
 **Branch:** 006-mcp-aspire-orchestration
 **Spec:** specs/006-mcp-aspire-orchestration

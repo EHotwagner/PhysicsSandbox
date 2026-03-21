@@ -52,3 +52,24 @@ type PhysicsHubService(router: MessageRouter) =
                 | Some cmd -> do! responseStream.WriteAsync(cmd)
                 | None -> ()
         }
+
+    override _.StreamCommands
+        (request: StateRequest, responseStream: IServerStreamWriter<CommandEvent>, context: ServerCallContext)
+        =
+        task {
+            let tcs = TaskCompletionSource()
+
+            let subId =
+                subscribeCommands router (fun evt ->
+                    task {
+                        if not context.CancellationToken.IsCancellationRequested then
+                            do! responseStream.WriteAsync(evt)
+                    })
+
+            use _registration =
+                context.CancellationToken.Register(fun () ->
+                    unsubscribeCommands router subId
+                    tcs.TrySetResult() |> ignore)
+
+            do! tcs.Task
+        }

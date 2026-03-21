@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
-**Last Updated**: 2026-03-20
-**Revision**: Updated with 006-mcp-aspire-orchestration archival
+**Last Updated**: 2026-03-21
+**Revision**: Updated with 001-mcp-persistent-service archival
 
 ## Overview
 
@@ -84,6 +84,21 @@ A developer expects the MCP server to automatically discover and connect to the 
 ### US-025: MCP Server Logs in Aspire Dashboard (P2)
 A developer debugging physics simulation issues through an AI assistant can view the MCP server's logs in the Aspire dashboard's structured logging view, correlated with other service activity. [Source: specs/006-mcp-aspire-orchestration]
 
+### US-026: Persistent MCP Connection (P1)
+An AI assistant connects to the MCP server via HTTP/SSE. The MCP server stays running permanently as part of the Aspire AppHost, regardless of whether any AI assistant is connected. Assistants disconnect and reconnect freely without the server shutting down. [Source: specs/001-mcp-persistent-service]
+
+### US-027: Full Message Visibility (P1)
+The MCP server receives all messages flowing through the PhysicsServer — simulation state updates, view commands, and a live audit feed of every command sent by any client. The AI assistant can observe the complete system state including raw commands (type and parameters). [Source: specs/001-mcp-persistent-service]
+
+### US-028: Full Command Capability (P1)
+The AI assistant can send any simulation command and view command the system supports — all 12 command types (9 simulation + 3 view) through the MCP server, matching the REPL client's command surface. [Source: specs/001-mcp-persistent-service]
+
+### US-029: MCP Convenience Functions and Presets (P2)
+The AI assistant has access to high-level convenience tools — 7 body presets, 5 scene generators, and 4 steering helpers — simplifying common operations without manual low-level parameter specification. [Source: specs/001-mcp-persistent-service]
+
+### US-030: Full Command Coverage for State Testing (P2)
+The AI assistant can send all 12 command types available through the server's client-facing interface (PhysicsHub only, no SimulationLink), enabling it to create any reachable application state by issuing the right sequence of commands. [Source: specs/001-mcp-persistent-service]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -149,7 +164,7 @@ A developer debugging physics simulation issues through an AI assistant can view
 - **FR-061**: MCP server exposes ~15 fine-grained tools (one per operation): add_body, apply_force, apply_impulse, apply_torque, set_gravity, step, play, pause, remove_body, clear_forces, set_camera, set_zoom, toggle_wireframe, get_state, get_status. [Source: specs/005-mcp-server-testing]
 - **FR-062**: MCP get_state tool returns cached simulation state from background StreamState subscription with staleness timestamp. Instant response (no per-call stream). [Source: specs/005-mcp-server-testing]
 - **FR-063**: Each MCP tool accepts structured parameters matching gRPC schemas and returns human-readable results ("Success/Failed/Error" format). [Source: specs/005-mcp-server-testing]
-- **FR-064**: MCP server communicates via stdio transport (standard MCP convention for local tool servers). [Source: specs/005-mcp-server-testing]
+- **FR-064**: ~~MCP server communicates via stdio transport.~~ Superseded by FR-080: MCP server now uses HTTP/SSE transport via ModelContextProtocol.AspNetCore. [Source: specs/005-mcp-server-testing → specs/001-mcp-persistent-service]
 - **FR-065**: MCP server handles gRPC connection failures gracefully with descriptive error messages through the MCP protocol. [Source: specs/005-mcp-server-testing]
 - **FR-066**: Simulation service maintains stable gRPC connection over HTTPS with dev certificate bypass and auto-reconnection using exponential backoff (1s → 10s max) on stream failure. World state preserved across reconnections. [Source: specs/005-mcp-server-testing]
 - **FR-067**: Viewer service receives DISPLAY environment variable from Aspire orchestrator (fallback `:0`). [Source: specs/005-mcp-server-testing]
@@ -165,6 +180,18 @@ A developer debugging physics simulation issues through an AI assistant can view
 - **FR-077**: MCP server appears in the Aspire dashboard with its resource name, state, and logs. [Source: specs/006-mcp-aspire-orchestration]
 - **FR-078**: MCP server shuts down gracefully when the AppHost is stopped. [Source: specs/006-mcp-aspire-orchestration]
 - **FR-079**: Existing MCP server functionality (15 tools, stdio transport, gRPC connection management) remains unchanged after orchestration integration. [Source: specs/006-mcp-aspire-orchestration]
+- **FR-080**: MCP server MUST use HTTP/SSE network transport (via ModelContextProtocol.AspNetCore) instead of stdio, persisting independently of client connections. Supersedes FR-064. [Source: specs/001-mcp-persistent-service]
+- **FR-081**: MCP server MUST accept multiple concurrent client connections, all sharing a single underlying gRPC connection, state cache, and body ID counter. [Source: specs/001-mcp-persistent-service]
+- **FR-082**: MCP server MUST receive all simulation state updates, all view commands, and a live audit feed of every command via the new StreamCommands RPC. Three background streams with independent exponential backoff reconnection. [Source: specs/001-mcp-persistent-service]
+- **FR-083**: Proto contract extended with `CommandEvent` message (oneof wrapping SimulationCommand/ViewCommand) and `StreamCommands` RPC on PhysicsHub. Additive, no breaking changes. [Source: specs/001-mcp-persistent-service]
+- **FR-084**: PhysicsServer MessageRouter extended with `CommandSubscribers` for audit stream fan-out. `submitCommand` and `submitViewCommand` publish to audit subscribers. [Source: specs/001-mcp-persistent-service]
+- **FR-085**: MCP server exposes 7 body preset tools (marble, bowling ball, beach ball, crate, brick, boulder, die) with configurable position, mass, and ID. [Source: specs/001-mcp-persistent-service]
+- **FR-086**: MCP server exposes 5 scene generator tools (random bodies, stack, row, grid, pyramid) with configurable parameters. [Source: specs/001-mcp-persistent-service]
+- **FR-087**: MCP server exposes 4 steering tools (push in direction, launch to target, spin around axis, stop body). [Source: specs/001-mcp-persistent-service]
+- **FR-088**: MCP server exposes 1 audit tool (get_command_log) returning recent commands from a bounded circular buffer (100 entries). [Source: specs/001-mcp-persistent-service]
+- **FR-089**: MCP server can send all 12 command types via PhysicsHub only (no SimulationLink access). [Source: specs/001-mcp-persistent-service]
+- **FR-090**: MCP server reports connection status for all three streams (state, view, audit) via get_status tool. [Source: specs/001-mcp-persistent-service]
+- **FR-091**: MCP server uses ServiceDefaults for health checks and structured logging. [Source: specs/001-mcp-persistent-service]
 
 ## Key Entities
 
@@ -189,8 +216,10 @@ A developer debugging physics simulation issues through an AI assistant can view
 - **BodyPreset**: Named pre-configured body parameters (shape, mass, size) instantiated with optional overrides. 7 presets: marble, bowlingBall, beachBall, crate, brick, boulder, die. [Source: specs/004-client-repl]
 - **Direction**: Discriminated union for steering — Up (+Y), Down (-Y), North (-Z), South (+Z), East (+X), West (-X). [Source: specs/004-client-repl]
 - **IdGenerator**: Thread-safe per-shape-type counter producing human-readable IDs ("sphere-1", "box-3"). CAS-based ConcurrentDictionary. [Source: specs/004-client-repl]
-- **MCP Tool**: A named operation exposed by the MCP server, corresponding to a gRPC RPC. Each has an input schema and returns human-readable text. 15 tools across 3 categories: simulation (10), view (3), query (2). [Source: specs/005-mcp-server-testing]
-- **GrpcConnection**: MCP server's gRPC bridge — holds PhysicsHubClient, background StreamState subscription with cached SimulationState, LastUpdateTime, StreamConnected flag. Registered as DI singleton. [Source: specs/005-mcp-server-testing]
+- **MCP Tool**: A named operation exposed by the MCP server. 32 tools across 7 categories: simulation (10), view (3), query (2), audit (1), presets (7), generators (5), steering (4). [Source: specs/005-mcp-server-testing, specs/001-mcp-persistent-service]
+- **GrpcConnection**: MCP server's gRPC bridge — holds PhysicsHubClient, 3 background stream subscriptions (state, view commands, command audit) with independent exponential backoff, cached SimulationState, LatestViewCommand, CommandLog (bounded 100-entry buffer). Registered as DI singleton. [Source: specs/005-mcp-server-testing, specs/001-mcp-persistent-service]
+- **CommandEvent**: Proto message wrapping SimulationCommand or ViewCommand in a oneof for the audit stream. Used by StreamCommands RPC. [Source: specs/001-mcp-persistent-service]
+- **ClientAdapter**: MCP-side adapter bridging GrpcConnection with convenience tool functions (addSphere, addBox, applyImpulse, applyTorque, clearForces). [Source: specs/001-mcp-persistent-service]
 
 ## Edge Cases
 
@@ -221,6 +250,10 @@ A developer debugging physics simulation issues through an AI assistant can view
 - Simulation gRPC stream dies but process alive: auto-reconnects with exponential backoff (1s → 10s max), preserving world state. [Source: specs/005-mcp-server-testing]
 - MCP server crashes under Aspire: reported as failed in dashboard, consistent with other project resources. [Source: specs/006-mcp-aspire-orchestration]
 - MCP server started but no AI assistant connects: idles gracefully without errors. [Source: specs/006-mcp-aspire-orchestration]
+- Multiple AI assistants connect simultaneously: all sessions share single gRPC connection, state cache, and body ID counter. [Source: specs/001-mcp-persistent-service]
+- MCP client disconnects via HTTP/SSE: MCP server continues running and accepts new connections. [Source: specs/001-mcp-persistent-service]
+- PhysicsServer goes down while MCP running: MCP remains running, reports disconnection, attempts reconnection with backoff. [Source: specs/001-mcp-persistent-service]
+- Invalid MCP command (bad body ID, malformed params): clear error message returned without crash. [Source: specs/001-mcp-persistent-service]
 
 ## Success Criteria
 
@@ -261,3 +294,9 @@ A developer debugging physics simulation issues through an AI assistant can view
 - **SC-035**: MCP server connects to PhysicsServer without any manually specified address when launched through Aspire. [Source: specs/006-mcp-aspire-orchestration]
 - **SC-036**: All existing tests continue to pass after orchestration change. [Source: specs/006-mcp-aspire-orchestration]
 - **SC-037**: 153 total tests passing (52 client + 16 viewer + 13 server + 37 simulation + 35 integration). [Source: specs/006-mcp-aspire-orchestration]
+- **SC-038**: MCP server remains running for entire AppHost lifetime with zero unplanned shutdowns due to client disconnections. [Source: specs/001-mcp-persistent-service]
+- **SC-039**: AI assistant can connect, disconnect, and reconnect to MCP server without service interruption. [Source: specs/001-mcp-persistent-service]
+- **SC-040**: All 12 command types (9 simulation + 3 view) executable through MCP, covering 100% of the protocol's command surface. [Source: specs/001-mcp-persistent-service]
+- **SC-041**: Convenience tools (presets, generators, steering) available and functional. [Source: specs/001-mcp-persistent-service]
+- **SC-042**: State queries return data with staleness under 2 seconds during normal operation. [Source: specs/001-mcp-persistent-service]
+- **SC-043**: 16 PhysicsServer.Tests pass (3 new audit subscriber tests). [Source: specs/001-mcp-persistent-service]

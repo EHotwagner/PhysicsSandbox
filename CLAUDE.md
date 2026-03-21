@@ -1,8 +1,10 @@
 # PhysicsSandbox Development Guidelines
 
-Last updated: 2026-03-20
+Last updated: 2026-03-21
 
 ## Active Technologies
+- F# on .NET 10.0 (MCP server, PhysicsServer), C# on .NET 10.0 (AppHost, contracts) + ModelContextProtocol.AspNetCore 1.1.*, Grpc.Net.Client 2.*, Google.Protobuf 3.*, PhysicsClient (project ref) (001-mcp-persistent-service)
+- N/A (in-memory state cache and bounded command log) (001-mcp-persistent-service)
 
 - F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
 - .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x
@@ -45,6 +47,10 @@ dotnet build PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true
 # Run (starts Aspire dashboard + server + simulation + viewer + client + mcp)
 dotnet run --project src/PhysicsSandbox.AppHost
 
+# Run (with process cleanup, kills existing instances first)
+./start.sh          # HTTPS profile
+./start.sh --http   # HTTP profile
+
 # Test
 dotnet test PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true
 
@@ -61,9 +67,14 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 001-mcp-persistent-service: MCP server switched from stdio to persistent HTTP/SSE transport (ModelContextProtocol.AspNetCore). New CommandEvent proto message + StreamCommands audit RPC on PhysicsServer. GrpcConnection subscribes to 3 streams (state, view commands, command audit). 32 MCP tools total: 10 simulation + 3 view + 2 query + 1 audit + 7 presets + 5 generators + 4 steering. PhysicsClient referenced as library for convenience tool logic.
 - 006-mcp-aspire-orchestration: MCP server added to Aspire AppHost orchestration. Service discovery via env vars (services__server__https/http__0), auto-starts with AppHost, visible in dashboard. 3 new integration tests.
 - 005-mcp-server-testing: MCP server (15 tools for interactive physics debugging via AI assistants), simulation SSL + reconnection fix, viewer DISPLAY env fix, 20+ integration tests. ModelContextProtocol 1.1.0.
-- 004-client-repl: PhysicsClient REPL library with 9 F# modules — Session (gRPC connection), SimulationCommands (all proto commands), ViewCommands (camera/zoom/wireframe), Presets (7 body presets), Generators (random bodies + scene builders), Steering (push/launch/spin/stop), StateDisplay (Spectre.Console tables), LiveWatch (cancellable live state feed). Auto-generated human-readable IDs, Result-based error handling, FSI-loadable. 52 unit tests
+
+## Environment
+
+- Container with GPU passthrough — not headless
+- Stride3D viewer and other GPU workloads are expected to run
 
 ## Known Issues & Gotchas
 
