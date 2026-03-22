@@ -25,6 +25,7 @@ jobs:
       - run: dotnet tool restore
 
       # Pack local NuGet dependencies in dependency order
+      - run: mkdir -p local-packages
       - name: Pack Contracts
         run: |
           dotnet pack src/PhysicsSandbox.Shared.Contracts/PhysicsSandbox.Shared.Contracts.csproj -c Release -o local-packages
