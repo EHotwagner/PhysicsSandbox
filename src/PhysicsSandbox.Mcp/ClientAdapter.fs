@@ -4,17 +4,8 @@ module PhysicsSandbox.Mcp.ClientAdapter
 open PhysicsSandbox.Mcp.GrpcConnection
 open PhysicsSandbox.Shared.Contracts
 
-/// <summary>Creates a protobuf Vec3 from a float triple.</summary>
-/// <param name="x">X component.</param>
-/// <param name="y">Y component.</param>
-/// <param name="z">Z component.</param>
-/// <returns>A new Vec3 instance with the given coordinates.</returns>
-let toVec3 (x: float, y: float, z: float) =
-    let v = Vec3()
-    v.X <- x
-    v.Y <- y
-    v.Z <- z
-    v
+/// <summary>Creates a protobuf Vec3 from a float triple. Delegates to PhysicsSandbox.Scripting.Vec3Builders.</summary>
+let toVec3 (v: float * float * float) = PhysicsSandbox.Scripting.Vec3Builders.toVec3 v
 
 /// <summary>Sends a simulation command via the shared GrpcConnection and returns the server acknowledgment message.</summary>
 /// <param name="connection">The active gRPC connection to the physics server.</param>

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>PhysicsSandbox.Scripting</PackageId>
+    <Version>0.1.0</Version>
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PhysicsSandbox.Scripting.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Helpers.fsi" />
+    <Compile Include="Helpers.fs" />
+    <Compile Include="Vec3Builders.fsi" />
+    <Compile Include="Vec3Builders.fs" />
+    <Compile Include="CommandBuilders.fsi" />
+    <Compile Include="CommandBuilders.fs" />
+    <Compile Include="BatchOperations.fsi" />
+    <Compile Include="BatchOperations.fs" />
+    <Compile Include="SimulationLifecycle.fsi" />
+    <Compile Include="SimulationLifecycle.fs" />
+    <Compile Include="Prelude.fsi" />
+    <Compile Include="Prelude.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PhysicsClient\PhysicsClient.fsproj" />
+  </ItemGroup>
+
+</Project>

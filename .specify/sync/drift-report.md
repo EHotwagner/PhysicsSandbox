@@ -1,40 +1,45 @@
 # Spec Drift Report
 
-Generated: 2026-03-21
+Generated: 2026-03-22
 Project: PhysicsSandbox
 
 ## Summary
 
 | Category | Count |
 |----------|-------|
-| Specs Analyzed | 1 (003-stress-test-demos) |
-| Requirements Checked | 17 (10 FR + 7 SC) |
-| Aligned | 17 (100%) |
-| Drifted | 0 (0%) |
+| Specs Analyzed | 1 (004-fsharp-scripting-library) |
+| Requirements Checked | 14 (10 FR + 4 SC) |
+| Aligned | 13 (93%) |
+| Drifted | 1 (7%) |
 | Not Implemented | 0 (0%) |
-| Unspecced Code | 0 |
+| Unspecced Code | 1 |
 
 ## Detailed Findings
 
-### Spec: 003-stress-test-demos — Stress Test Demos
+### Spec: 004-fsharp-scripting-library — F# Scripting Library
 
 #### Aligned ✓
 
-- FR-001: 5+ new stress demos → 5 demos (Demo 11–15) in demos/AllDemos.fsx
-- FR-002: Follow conventions → All demos use resetSimulation, batchAdd, nextId, timed
-- FR-003: Progressive tiers → Demo 11: [50, 100, 200, 500] with per-tier timed markers
-- FR-004: Collision density → Demo 12: 120 spheres in 4x4m walled pit
-- FR-005: Bulk forces on 100+ → Demo 13: 100 bodies, 3 rounds impulses/torques/gravity
-- FR-006: Combined axes → Demo 15: 200+ bodies + forces + gravity + camera + wireframe
-- FR-007: Timing markers → All demos use timed helper, print [TIME] format
-- FR-008: Integrated → AllDemos (15), RunAll (dynamic), AutoRun (15 inline + timed)
-- FR-009: Graceful failure → resetSimulation try/catch, batchAdd [BATCH FAIL] reporting
-- FR-010: MCP invocation → quickstart.md documents Demo 11 + Demo 15 via MCP tools
-- SC-001 through SC-007: All success criteria met by implementation
+- FR-001: Library bundles all 12 Prelude.fsx functions → `src/PhysicsSandbox.Scripting/Prelude.fsi` (all 12 present)
+- FR-002: Single #r directive reference → `scripts/Prelude.fsx` (one `#r` line, no nuget directives)
+- FR-003: Project reference by MCP server → `src/PhysicsSandbox.Mcp/PhysicsSandbox.Mcp.fsproj` (ProjectReference added)
+- FR-004: scratch/ folder gitignored → `scratch/.gitkeep` exists, `.gitignore` has `scratch/*` and `!scratch/.gitkeep`
+- FR-005: scripts/ folder at repo root → `scripts/Prelude.fsx` and `scripts/HelloDrop.fsx` present
+- FR-006: Logical module organization → 6 modules: Helpers, Vec3Builders, CommandBuilders, BatchOperations, SimulationLifecycle, Prelude
+- FR-007: .fsi signature files for all modules → All 6 modules have matching .fsi files
+- FR-008: Dependencies re-exported → `scripts/Prelude.fsx` has zero nuget directives; all flow through the DLL
+- FR-009: scratch/scripts portability → `scratch/Prelude.fsx` and `scripts/Prelude.fsx` are identical
+- FR-010: Library in solution → `PhysicsSandbox.slnx` has both library and test project entries
+- SC-001: All 12 Prelude functions available → Verified via Prelude.fsi and SurfaceAreaTests (19 tests pass)
+- SC-002: Under 5 lines boilerplate → `scripts/Prelude.fsx` has exactly 5 executable lines (1 #r + 4 opens)
+- SC-003: MCP uses shared function → `ClientAdapter.fs` delegates `toVec3` to `PhysicsSandbox.Scripting.Vec3Builders.toVec3`
 
 #### Drifted ⚠️
 
-(none)
+- SC-004: Spec says "at most 2 files" but `toTuple` extensibility proof required 4 files (Vec3Builders.fsi + .fs + Prelude.fsi + .fs)
+  - Location: `src/PhysicsSandbox.Scripting/Prelude.fsi:11`, `src/PhysicsSandbox.Scripting/Prelude.fs:11`
+  - Severity: minor
+  - Note: The 2-file claim holds for module-level access. Re-exporting via Prelude is an optional convenience step that adds 2 more files.
 
 #### Not Implemented ✗
 
@@ -42,7 +47,9 @@ Project: PhysicsSandbox
 
 ### Unspecced Code 🆕
 
-(none)
+| Feature | Location | Lines | Suggested Spec |
+|---------|----------|-------|----------------|
+| `toTuple` function | `src/PhysicsSandbox.Scripting/Vec3Builders.fs:10` | 1 | 004 (extensibility proof from US4) |
 
 ## Inter-Spec Conflicts
 
@@ -50,5 +57,5 @@ None.
 
 ## Recommendations
 
-1. Run full suite against live server to validate runtime behavior
-2. Update quickstart.md with observed degradation thresholds after runtime validation
+1. **SC-004 clarification (minor)**: Update to "at most 2 files per module, plus optionally 2 more if re-exporting via Prelude."
+2. **Spec status**: Update from "Draft" to "Implemented."

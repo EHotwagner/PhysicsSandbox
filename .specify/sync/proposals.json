@@ -1,9 +1,9 @@
 {
-  "generated": "2026-03-21T12:00:00Z",
-  "based_on": "drift-report from 2026-03-21T12:00:00Z",
+  "generated": "2026-03-22T00:00:00Z",
+  "based_on": "drift-report from 2026-03-22",
   "summary": {
-    "backfill": 0,
-    "align": 1,
+    "backfill": 2,
+    "align": 0,
     "human_decision": 0,
     "new_specs": 0,
     "remove_from_spec": 0
@@ -11,16 +11,29 @@
   "proposals": [
     {
       "id": 1,
-      "spec_id": "002-performance-diagnostics",
-      "requirement": "FR-011",
-      "direction": "ALIGN",
-      "spec_text": "System MUST provide pipeline diagnostics showing time breakdown across simulation, serialization, transfer, and rendering stages, accessible both via structured logs and on-demand MCP tools.",
-      "actual": "Simulation tick, serialization, and gRPC transfer times are measured correctly. viewer_render_ms field exists in PipelineTimings proto but is never populated (remains 0.0). The viewer has frame timing data but no mechanism to report it back to the server.",
-      "proposed_resolution": "Implement viewer render time reporting: add a ReportRenderTime RPC or piggyback on existing messages. Viewer already has frame timing via GameTime.Elapsed; needs to send smoothed average back to server periodically. Server caches and includes in PipelineTimings response.",
-      "rationale": "Spec explicitly requires all four pipeline stages. Proto field already exists, MCP tools already display it, and diagnostics bottleneck detection depends on it. This was a known gap deferred during implementation (T065 noted 'or 0 if not available'), not a deliberate design change.",
+      "spec_id": "004-fsharp-scripting-library",
+      "requirement": "SC-004",
+      "direction": "BACKFILL",
+      "spec_text": "Adding a new public function to the library requires changes to at most 2 files (implementation + signature file) and no changes to existing consumers.",
+      "actual": "Adding toTuple required 4 file changes: Vec3Builders.fsi, Vec3Builders.fs (module-level), plus Prelude.fsi, Prelude.fs (re-export). Module-level access works with 2 files; Prelude re-export is optional.",
+      "proposed_resolution": "Update SC-004 to: 'Adding a new public function to the library requires changes to at most 2 files per module (implementation + signature file) and no changes to existing consumers. Optionally, 2 additional files (Prelude.fsi + Prelude.fs) may be updated to re-export the function for script convenience.'",
+      "rationale": "Code is correct and well-designed. Prelude re-export is intentional convenience. Spec should reflect 2-tier pattern.",
       "confidence": "HIGH",
-      "estimated_tasks": 4,
-      "status": "approved"
+      "status": "applied",
+      "applied_at": "2026-03-22"
+    },
+    {
+      "id": 2,
+      "spec_id": "004-fsharp-scripting-library",
+      "requirement": "FR-001",
+      "direction": "BACKFILL",
+      "spec_text": "Library bundles 12 Prelude.fsx functions",
+      "actual": "Library has 13 functions (12 original + toTuple extensibility proof)",
+      "proposed_resolution": "No spec change needed. FR-001 defines a minimum set, not a maximum. toTuple validates US4 extensibility.",
+      "rationale": "Spec defines a floor, not a ceiling. Assumptions section explicitly allows additional functions over time.",
+      "confidence": "HIGH",
+      "status": "applied",
+      "applied_at": "2026-03-22"
     }
   ]
 }

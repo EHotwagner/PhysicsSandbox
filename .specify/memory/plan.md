@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
-**Last Updated**: 2026-03-21
-**Revision**: Updated with 004-python-demo-scripts archival
+**Last Updated**: 2026-03-22
+**Revision**: Updated with 004-fsharp-scripting-library archival
 
 ## Technical Context
 
@@ -74,6 +74,14 @@ src/
     ├── Program.fs                       # Aspire entry point
     └── PhysicsClient.fsx                # FSI convenience script
 │
+├── PhysicsSandbox.Scripting/           # F# — scripting convenience library (wraps PhysicsClient)
+│   ├── Helpers.fsi/.fs                # ok, sleep, timed
+│   ├── Vec3Builders.fsi/.fs           # toVec3, toTuple
+│   ├── CommandBuilders.fsi/.fs        # makeSphereCmd, makeBoxCmd, makeImpulseCmd, makeTorqueCmd
+│   ├── BatchOperations.fsi/.fs        # batchAdd (auto-chunking at 100)
+│   ├── SimulationLifecycle.fsi/.fs    # resetSimulation, runFor, nextId
+│   └── Prelude.fsi/.fs               # [<AutoOpen>] re-export of all functions
+│
 └── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 38 tools)
     ├── GrpcConnection.fsi/.fs          # gRPC channel + 3 background streams (state, view, audit) + batch/metrics RPCs
     ├── SimulationTools.fsi/.fs         # 11 simulation command MCP tools (incl. restart_simulation)
@@ -125,6 +133,12 @@ tests/
 │   ├── FpsCounterTests.fs               # FPS calculation, logging interval, threshold tests
 │   ├── SurfaceAreaTests.fs              # Public API baseline verification
 │   └── PublicApiBaseline.txt            # Surface-area baseline
+├── PhysicsSandbox.Scripting.Tests/     # F# — unit + surface area tests (19 tests)
+│   ├── HelpersTests.fs
+│   ├── Vec3BuildersTests.fs
+│   ├── CommandBuildersTests.fs
+│   ├── SurfaceAreaTests.fs
+│   └── SurfaceAreaBaseline.txt
 └── PhysicsClient.Tests/                 # F# — unit tests (52 tests)
     ├── IdGeneratorTests.fs              # Sequential IDs, reset, thread safety
     ├── SessionTests.fs                  # Connection lifecycle
@@ -134,6 +148,12 @@ tests/
     ├── SteeringTests.fs                 # Direction-to-Vec3 mapping
     ├── StateDisplayTests.fs             # Vec3 formatting, velocity magnitude, shapes
     └── SurfaceAreaTests.fs              # Public API baseline for all 9 modules
+
+scratch/                                     # Gitignored experimentation folder (.gitkeep only)
+
+scripts/                                     # Curated F# scripts using PhysicsSandbox.Scripting library
+├── Prelude.fsx                              # Single #r to Scripting DLL + opens
+└── HelloDrop.fsx                            # Minimal validation script
 
 demos/                                     # F# scripts — demo suite (15 demos + runners)
 ├── Prelude.fsx                            # Shared helpers: resetSimulation, command builders, batchAdd, nextId, toVec3, timed

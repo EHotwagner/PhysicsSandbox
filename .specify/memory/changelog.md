@@ -1,5 +1,34 @@
 # Merged Features Log
 
+## F# Scripting Library — 2026-03-22
+**Branch:** 004-fsharp-scripting-library
+**Spec:** specs/004-fsharp-scripting-library
+
+**What was added:**
+- PhysicsSandbox.Scripting — F# class library bundling all Prelude.fsx convenience functions into 6 compiled modules with .fsi signatures
+- Modules: Helpers (ok, sleep, timed), Vec3Builders (toVec3, toTuple), CommandBuilders (makeSphereCmd, makeBoxCmd, makeImpulseCmd, makeTorqueCmd), BatchOperations (batchAdd), SimulationLifecycle (resetSimulation, runFor, nextId), Prelude (AutoOpen re-export)
+- scripts/ folder with Prelude.fsx (single #r reference) and HelloDrop.fsx validation script
+- scratch/ folder (gitignored with .gitkeep) for experimentation
+- MCP server integration — ClientAdapter.toVec3 now delegates to library
+- 19 unit tests + surface area baseline verification
+
+**New Components:**
+- `src/PhysicsSandbox.Scripting/` — 6 module pairs (.fsi + .fs) + .fsproj
+- `tests/PhysicsSandbox.Scripting.Tests/` — 4 test files + SurfaceAreaBaseline.txt
+- `scripts/Prelude.fsx` — single-reference script prelude
+- `scripts/HelloDrop.fsx` — validation script
+- `scratch/.gitkeep` — experimentation folder
+
+**Modified Components:**
+- `PhysicsSandbox.slnx` — added Scripting + Scripting.Tests projects
+- `src/PhysicsSandbox.Mcp/PhysicsSandbox.Mcp.fsproj` — added Scripting reference
+- `src/PhysicsSandbox.Mcp/ClientAdapter.fs` — toVec3 delegates to library
+- `.gitignore` — added scratch/* pattern
+
+**Tasks Completed:** 42/42 tasks
+
+---
+
 ## Python Demo Scripts — 2026-03-21
 **Branch:** 004-python-demo-scripts
 **Spec:** specs/004-python-demo-scripts

@@ -30,6 +30,10 @@ __pycache__/
 .venv/
 venv/
 
+# Scratch folder (developer-local experimentation)
+scratch/*
+!scratch/.gitkeep
+
 # FSharp.Formatting
 output/
 .fsdocs/

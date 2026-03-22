@@ -8,6 +8,7 @@
     <Project Path="src/PhysicsViewer/PhysicsViewer.fsproj" />
     <Project Path="src/PhysicsClient/PhysicsClient.fsproj" />
     <Project Path="src/PhysicsSandbox.Mcp/PhysicsSandbox.Mcp.fsproj" />
+    <Project Path="src/PhysicsSandbox.Scripting/PhysicsSandbox.Scripting.fsproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PhysicsSandbox.Integration.Tests/PhysicsSandbox.Integration.Tests.csproj" />
@@ -15,5 +16,6 @@
     <Project Path="tests/PhysicsSimulation.Tests/PhysicsSimulation.Tests.fsproj" />
     <Project Path="tests/PhysicsServer.Tests/PhysicsServer.Tests.fsproj" />
     <Project Path="tests/PhysicsViewer.Tests/PhysicsViewer.Tests.fsproj" />
+    <Project Path="tests/PhysicsSandbox.Scripting.Tests/PhysicsSandbox.Scripting.Tests.fsproj" />
   </Folder>
 </Solution>
