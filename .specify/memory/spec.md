@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
-**Last Updated**: 2026-03-21
-**Revision**: Updated with 004-python-demo-scripts archival
+**Last Updated**: 2026-03-22
+**Revision**: Updated with 004-fsharp-scripting-library archival
 
 ## Overview
 
@@ -160,6 +160,18 @@ A developer runs a single Python demo script (e.g., `python -m demos_py.demo01_h
 ### US-050: Interactive Python Demo Runner (P3)
 A developer uses `python -m demos_py.run_all` to step through demos one at a time with keypress advancement, observing each scenario in the 3D viewer before advancing. [Source: specs/004-python-demo-scripts]
 
+### US-051: Use Library Functions in Scripts (P1)
+A script author references the scripting library DLL in an .fsx file and immediately has access to all Prelude convenience functions (resetSimulation, makeSphereCmd, makeBoxCmd, makeImpulseCmd, makeTorqueCmd, batchAdd, nextId, toVec3, ok, sleep, runFor, timed) without additional gRPC or Protobuf package directives. [Source: specs/004-fsharp-scripting-library]
+
+### US-052: Experiment in Scratch Folder (P2)
+A developer creates .fsx scripts in the `scratch/` folder for rapid prototyping. Successful experiments are promoted to `scripts/` without code changes — both folders use identical library reference paths. Scratch is gitignored; scripts is tracked. [Source: specs/004-fsharp-scripting-library]
+
+### US-053: MCP Server Uses Scripting Library (P2)
+The MCP server references the scripting library as a project dependency, reusing shared helper functions (e.g., toVec3) instead of duplicating them in ClientAdapter. [Source: specs/004-fsharp-scripting-library]
+
+### US-054: Extend Library with New Functions (P3)
+A developer adds a new function to the scripting library by modifying at most 2 files per module (implementation + signature), with no changes to existing consumers. Optionally, 2 additional Prelude files are updated for script convenience re-export. [Source: specs/004-fsharp-scripting-library]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -295,6 +307,16 @@ A developer uses `python -m demos_py.run_all` to step through demos one at a tim
 - **FR-131**: Python demos MUST be runnable via `python` without requiring .NET tooling — only Python and pip dependencies. [Source: specs/004-python-demo-scripts]
 - **FR-132**: Python `batch_add` helper MUST automatically split command lists exceeding 100 items into multiple batches. [Source: specs/004-python-demo-scripts]
 - **FR-133**: System MUST provide a proto stub generation script (`generate_stubs.sh`) that generates Python stubs from the existing `physics_hub.proto`. [Source: specs/004-python-demo-scripts]
+- **FR-134**: System MUST provide a compiled F# library (`PhysicsSandbox.Scripting`) bundling all Prelude.fsx convenience functions as reusable modules. [Source: specs/004-fsharp-scripting-library]
+- **FR-135**: The scripting library MUST be referenceable from .fsx scripts via a single `#r` directive to the compiled DLL. [Source: specs/004-fsharp-scripting-library]
+- **FR-136**: The scripting library MUST be addable as a standard project reference by other solution projects (including PhysicsSandbox.Mcp). [Source: specs/004-fsharp-scripting-library]
+- **FR-137**: Project MUST include a gitignored `scratch/` folder at repo root for experimental scripts, excluded from CI. [Source: specs/004-fsharp-scripting-library]
+- **FR-138**: Project MUST include a git-tracked `scripts/` folder at repo root for curated scripts. [Source: specs/004-fsharp-scripting-library]
+- **FR-139**: The scripting library MUST be organized into logical modules (Helpers, Vec3Builders, CommandBuilders, BatchOperations, SimulationLifecycle, Prelude). [Source: specs/004-fsharp-scripting-library]
+- **FR-140**: The scripting library MUST include .fsi signature files for all public modules. [Source: specs/004-fsharp-scripting-library]
+- **FR-141**: The scripting library MUST re-export dependencies so scripts don't need separate gRPC/Protobuf package directives. [Source: specs/004-fsharp-scripting-library]
+- **FR-142**: Moving a script from `scratch/` to `scripts/` MUST NOT require code changes — both use identical library reference paths. [Source: specs/004-fsharp-scripting-library]
+- **FR-143**: The scripting library MUST be part of the solution file and buildable with standard `dotnet build`. [Source: specs/004-fsharp-scripting-library]
 
 ## Key Entities
 
@@ -322,6 +344,7 @@ A developer uses `python -m demos_py.run_all` to step through demos one at a tim
 - **MCP Tool**: A named operation exposed by the MCP server. 38 tools across 11 categories: simulation (10), view (3), query (2), audit (1), presets (7), generators (5), steering (4), batch (2), metrics (2), stress test (2), comparison (1). [Source: specs/005-mcp-server-testing, specs/001-mcp-persistent-service, specs/002-performance-diagnostics]
 - **GrpcConnection**: MCP server's gRPC bridge — holds PhysicsHubClient, 3 background stream subscriptions (state, view commands, command audit) with independent exponential backoff, cached SimulationState, LatestViewCommand, CommandLog (bounded 100-entry buffer). Registered as DI singleton. [Source: specs/005-mcp-server-testing, specs/001-mcp-persistent-service]
 - **CommandEvent**: Proto message wrapping SimulationCommand or ViewCommand in a oneof for the audit stream. Used by StreamCommands RPC. [Source: specs/001-mcp-persistent-service]
+- **ScriptingLibrary**: Compiled F# library (`PhysicsSandbox.Scripting`) with 6 modules (Helpers, Vec3Builders, CommandBuilders, BatchOperations, SimulationLifecycle, Prelude) wrapping PhysicsClient convenience functions. AutoOpen Prelude re-exports all functions for script use. [Source: specs/004-fsharp-scripting-library]
 - **ClientAdapter**: MCP-side adapter bridging GrpcConnection with convenience tool functions (addSphere, addBox, applyImpulse, applyTorque, clearForces). [Source: specs/001-mcp-persistent-service]
 - **ServiceMetrics (MetricsCounter)**: Per-service performance counters — messages sent/received, bytes sent/received. Thread-safe via Interlocked. Monotonically increasing, persist across simulation restarts. Logged periodically (default 10s). [Source: specs/002-performance-diagnostics]
 - **PipelineTimings**: Timing breakdown per pipeline stage — SimulationTickMs, StateSerializationMs, GrpcTransferMs, ViewerRenderMs, TotalPipelineMs. Point-in-time snapshots. [Source: specs/002-performance-diagnostics]
