@@ -1,5 +1,41 @@
 # Merged Features Log
 
+## Scripting Library NuGet Package — 2026-03-22
+**Branch:** 004-scripting-nuget-package
+**Spec:** specs/004-scripting-nuget-package
+
+**What was added:**
+- Published 4 projects as local NuGet packages (0.1.0): PhysicsSandbox.Shared.Contracts, PhysicsSandbox.ServiceDefaults, PhysicsClient, PhysicsSandbox.Scripting
+- Packaging follows BepuFSharp pattern: `dotnet pack -c Release -p:NoWarn=NU5104 -o ~/.local/share/nuget-local/`
+- Dependency chain: Contracts + ServiceDefaults → PhysicsClient → Scripting
+- Migrated MCP server and Scripting.Tests from ProjectReference to PackageReference
+- Converted all F# script/demo DLL `#r` paths to version-agnostic `#r "nuget: ..."` references
+- Eliminated `Scripting/scripts/Prelude.fsx` — scripts inline the NuGet reference directly
+- Fixed port consistency: replaced all `localhost:5000` with canonical `localhost:5180` (HTTP) across ~15 files
+
+**Modified Components:**
+- `src/PhysicsSandbox.Shared.Contracts/*.csproj` — Added IsPackable, PackageId, Version
+- `src/PhysicsSandbox.ServiceDefaults/*.csproj` — Added packaging metadata, set IsAspireSharedProject=false
+- `src/PhysicsClient/*.fsproj` — ProjectRef→PackageRef for Contracts/ServiceDefaults
+- `src/PhysicsSandbox.Scripting/*.fsproj` — ProjectRef→PackageRef for PhysicsClient
+- `src/PhysicsSandbox.Mcp/*.fsproj` — ProjectRef→PackageRef for Scripting (removed transitive refs)
+- `tests/PhysicsSandbox.Scripting.Tests/*.fsproj` — ProjectRef→PackageRef for Scripting
+- `Scripting/scripts/HelloDrop.fsx` — Direct `#r "nuget: PhysicsSandbox.Scripting"`
+- `Scripting/demos/Prelude.fsx` — DLL refs → `#r "nuget: PhysicsClient"`
+- `Scripting/demos/AutoRun.fsx` — DLL refs → NuGet + port fix
+- `Scripting/demos/Demo11-15*.fsx`, `RunAll.fsx` — Port fixes
+- `Scripting/demos_py/prelude.py`, `auto_run.py`, `run_all.py` — Port fixes
+- `src/PhysicsClient/Program.fs`, `src/PhysicsViewer/Program.fs` — Port fallback fixes
+- `.mcp.json` — Port fix
+- `reports/mcpReport.md` — Port fix
+
+**Deleted Components:**
+- `Scripting/scripts/Prelude.fsx` — No longer needed with NuGet packaging
+
+**Tasks Completed:** 38/38 tasks
+
+---
+
 ## F# Scripting Library — 2026-03-22
 **Branch:** 004-fsharp-scripting-library
 **Spec:** specs/004-fsharp-scripting-library

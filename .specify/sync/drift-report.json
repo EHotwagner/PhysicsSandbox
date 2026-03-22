@@ -4,34 +4,41 @@
   "summary": {
     "specs_analyzed": 1,
     "requirements_checked": 14,
-    "aligned": 13,
+    "aligned": 12,
     "drifted": 1,
-    "not_implemented": 0,
+    "not_implemented": 1,
     "unspecced_features": 1
   },
   "specs": [
     {
-      "id": "004-fsharp-scripting-library",
-      "title": "F# Scripting Library",
-      "aligned": ["FR-001","FR-002","FR-003","FR-004","FR-005","FR-006","FR-007","FR-008","FR-009","FR-010","SC-001","SC-002","SC-003"],
+      "id": "004-scripting-nuget-package",
+      "title": "Scripting Library NuGet Package",
+      "aligned": ["FR-001","FR-002","FR-003","FR-004","FR-005","FR-006","FR-008","SC-001","SC-002","SC-005","SC-006"],
       "drifted": [
         {
-          "requirement": "SC-004",
-          "spec_text": "Adding a new public function to the library requires changes to at most 2 files (implementation + signature file) and no changes to existing consumers.",
-          "actual": "Adding toTuple required 4 file changes: Vec3Builders.fsi, Vec3Builders.fs, Prelude.fsi, Prelude.fs. The 2-file claim holds for module-level access; Prelude re-export is optional but adds 2 more files.",
-          "location": "src/PhysicsSandbox.Scripting/Prelude.fsi:11",
+          "requirement": "US3-Scenario-2",
+          "spec_text": "Given the shared Prelude.fsx preamble has been updated, When any script that loads it runs, Then all scripting library modules are available",
+          "actual": "Scripting/scripts/Prelude.fsx was deleted. HelloDrop.fsx inlines #r nuget: PhysicsSandbox.Scripting directly. Preamble no longer needed.",
+          "location": "Scripting/scripts/Prelude.fsx (deleted)",
           "severity": "minor"
         }
       ],
-      "not_implemented": []
+      "not_implemented": [
+        {
+          "requirement": "SC-004",
+          "spec_text": "The pack-and-publish workflow completes in a single command sequence",
+          "actual": "No pack script exists. Commands run manually in dependency order.",
+          "severity": "minor"
+        }
+      ]
     }
   ],
   "unspecced": [
     {
-      "feature": "toTuple",
-      "location": "src/PhysicsSandbox.Scripting/Vec3Builders.fs",
+      "feature": "mcpReport port fix",
+      "location": "reports/mcpReport.md",
       "lines": 1,
-      "suggested_spec": "004-fsharp-scripting-library"
+      "suggested_spec": "004-scripting-nuget-package"
     }
   ],
   "conflicts": []

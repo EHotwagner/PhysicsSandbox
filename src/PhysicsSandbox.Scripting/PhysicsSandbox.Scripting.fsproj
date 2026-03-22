@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PhysicsClient\PhysicsClient.fsproj" />
+    <PackageReference Include="PhysicsClient" Version="0.1.0" />
   </ItemGroup>
 
 </Project>

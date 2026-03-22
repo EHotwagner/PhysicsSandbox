@@ -14,7 +14,7 @@ open PhysicsClient.StateDisplay
 let serverAddress =
     match fsi.CommandLineArgs |> Array.tryItem 1 with
     | Some addr -> addr
-    | None -> "http://localhost:5000"
+    | None -> "http://localhost:5180"
 
 printfn "Connecting to %s..." serverAddress
 let s = connect serverAddress |> ok

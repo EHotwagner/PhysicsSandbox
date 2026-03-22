@@ -2,60 +2,60 @@
 
 Generated: 2026-03-22
 Project: PhysicsSandbox
+Scope: 004-scripting-nuget-package
 
 ## Summary
 
 | Category | Count |
 |----------|-------|
-| Specs Analyzed | 1 (004-fsharp-scripting-library) |
-| Requirements Checked | 14 (10 FR + 4 SC) |
-| Aligned | 13 (93%) |
+| Specs Analyzed | 1 |
+| Requirements Checked | 14 (8 FR + 6 SC) |
+| Aligned | 12 (86%) |
 | Drifted | 1 (7%) |
-| Not Implemented | 0 (0%) |
+| Not Implemented | 1 (7%) |
 | Unspecced Code | 1 |
 
 ## Detailed Findings
 
-### Spec: 004-fsharp-scripting-library — F# Scripting Library
+### Spec: 004-scripting-nuget-package - Scripting Library NuGet Package
 
-#### Aligned ✓
+#### Aligned
 
-- FR-001: Library bundles all 12 Prelude.fsx functions → `src/PhysicsSandbox.Scripting/Prelude.fsi` (all 12 present)
-- FR-002: Single #r directive reference → `scripts/Prelude.fsx` (one `#r` line, no nuget directives)
-- FR-003: Project reference by MCP server → `src/PhysicsSandbox.Mcp/PhysicsSandbox.Mcp.fsproj` (ProjectReference added)
-- FR-004: scratch/ folder gitignored → `scratch/.gitkeep` exists, `.gitignore` has `scratch/*` and `!scratch/.gitkeep`
-- FR-005: scripts/ folder at repo root → `scripts/Prelude.fsx` and `scripts/HelloDrop.fsx` present
-- FR-006: Logical module organization → 6 modules: Helpers, Vec3Builders, CommandBuilders, BatchOperations, SimulationLifecycle, Prelude
-- FR-007: .fsi signature files for all modules → All 6 modules have matching .fsi files
-- FR-008: Dependencies re-exported → `scripts/Prelude.fsx` has zero nuget directives; all flow through the DLL
-- FR-009: scratch/scripts portability → `scratch/Prelude.fsx` and `scripts/Prelude.fsx` are identical
-- FR-010: Library in solution → `PhysicsSandbox.slnx` has both library and test project entries
-- SC-001: All 12 Prelude functions available → Verified via Prelude.fsi and SurfaceAreaTests (19 tests pass)
-- SC-002: Under 5 lines boilerplate → `scripts/Prelude.fsx` has exactly 5 executable lines (1 #r + 4 opens)
-- SC-003: MCP uses shared function → `ClientAdapter.fs` delegates `toVec3` to `PhysicsSandbox.Scripting.Vec3Builders.toVec3`
+- FR-001: All 4 projects packable with IsPackable, PackageId, Version → `src/*/.[cf]sproj`
+- FR-002: Packages publishable to local feed → All 4 .nupkg files in `~/.local/share/nuget-local/`
+- FR-003: ProjectReferences to Scripting replaced with PackageReferences → `PhysicsSandbox.Mcp.fsproj`, `PhysicsSandbox.Scripting.Tests.fsproj`
+- FR-004: Script #r directives use version-agnostic NuGet references → `Scripting/scripts/HelloDrop.fsx`, `Scripting/demos/Prelude.fsx`, `Scripting/demos/AutoRun.fsx`
+- FR-005: Scripting declares PhysicsClient as PackageReference → `PhysicsSandbox.Scripting.fsproj`
+- FR-006: Pack workflow follows BepuFSharp conventions → `-p:NoWarn=NU5104 -o ~/.local/share/nuget-local/`
+- FR-008: All localhost:5000 references corrected to 5180/7180 → Zero matches in `Scripting/`, `src/`, `.mcp.json`
+- SC-001: Zero ProjectReferences to Scripting/PhysicsClient from external consumers → Verified
+- SC-002: All existing tests pass → 19/19 scripting, 40/42 integration (2 pre-existing failures)
+- SC-005: Zero localhost:5000 references in scripts/docs → Verified
+- SC-006: Version increment on subsequent publishes → Documented in notes (process requirement)
 
-#### Drifted ⚠️
+#### Drifted
 
-- SC-004: Spec says "at most 2 files" but `toTuple` extensibility proof required 4 files (Vec3Builders.fsi + .fs + Prelude.fsi + .fs)
-  - Location: `src/PhysicsSandbox.Scripting/Prelude.fsi:11`, `src/PhysicsSandbox.Scripting/Prelude.fs:11`
-  - Severity: minor
-  - Note: The 2-file claim holds for module-level access. Re-exporting via Prelude is an optional convenience step that adds 2 more files.
+- US3-Scenario-2: Spec says "Given the shared Prelude.fsx preamble has been updated, When any script that loads it runs, Then all scripting library modules are available" but `Scripting/scripts/Prelude.fsx` was deleted post-implementation. `HelloDrop.fsx` now has `#r "nuget: PhysicsSandbox.Scripting"` inlined directly. The preamble is no longer needed since NuGet references are a single line.
+  - Location: `Scripting/scripts/Prelude.fsx` (deleted)
+  - Severity: minor — implementation is better than spec (simpler, fewer files), spec just needs updating
 
-#### Not Implemented ✗
+#### Not Implemented
 
-(none)
+- SC-004: "The pack-and-publish workflow completes in a single command sequence" — No pack script or documented single-command workflow exists. Pack commands were run manually in dependency order during implementation.
+  - Severity: minor — could be addressed with a simple shell script
 
-### Unspecced Code 🆕
+### Unspecced Code
 
 | Feature | Location | Lines | Suggested Spec |
 |---------|----------|-------|----------------|
-| `toTuple` function | `src/PhysicsSandbox.Scripting/Vec3Builders.fs:10` | 1 | 004 (extensibility proof from US4) |
+| mcpReport.md port fix | `reports/mcpReport.md` | 1 line | 004-scripting-nuget-package (FR-008 scope expansion) |
 
 ## Inter-Spec Conflicts
 
-None.
+None detected.
 
 ## Recommendations
 
-1. **SC-004 clarification (minor)**: Update to "at most 2 files per module, plus optionally 2 more if re-exporting via Prelude."
-2. **Spec status**: Update from "Draft" to "Implemented."
+1. **Update spec US3-Scenario-2**: Remove reference to `scripts/Prelude.fsx` preamble — scripts now inline the NuGet reference directly. This is a positive drift (simpler architecture).
+2. **Consider adding a pack script** (optional): A simple `pack.sh` that runs the 4 `dotnet pack` commands in dependency order would satisfy SC-004 and make the workflow reproducible.
+3. **Update spec status**: Change from "Draft" to "Implemented".

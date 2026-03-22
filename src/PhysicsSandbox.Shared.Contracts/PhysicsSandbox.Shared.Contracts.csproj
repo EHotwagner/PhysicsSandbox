@@ -4,6 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>PhysicsSandbox.Shared.Contracts</PackageId>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

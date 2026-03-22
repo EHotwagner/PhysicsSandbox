@@ -28,7 +28,7 @@ class Session:
     address: str
 
 
-def connect(address: str = "http://localhost:5000") -> Session:
+def connect(address: str = "http://localhost:5180") -> Session:
     target = address.replace("http://", "").replace("https://", "")
     channel = grpc.insecure_channel(target)
     stub = pb_grpc.PhysicsHubStub(channel)
@@ -477,7 +477,7 @@ def reset_simulation(session: Session) -> None:
 
 
 def run_standalone(run_fn, name: str = "Demo") -> None:
-    addr = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5000"
+    addr = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5180"
     print(f"Connecting to {addr}...")
     s = connect(addr)
     try:

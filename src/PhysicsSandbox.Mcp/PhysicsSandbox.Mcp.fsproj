@@ -50,10 +50,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PhysicsSandbox.Shared.Contracts\PhysicsSandbox.Shared.Contracts.csproj" />
-    <ProjectReference Include="..\PhysicsClient\PhysicsClient.fsproj" />
-    <ProjectReference Include="..\PhysicsSandbox.Scripting\PhysicsSandbox.Scripting.fsproj" />
-    <ProjectReference Include="..\PhysicsSandbox.ServiceDefaults\PhysicsSandbox.ServiceDefaults.csproj" />
+    <PackageReference Include="PhysicsSandbox.Scripting" Version="0.1.0" />
   </ItemGroup>
 
 </Project>

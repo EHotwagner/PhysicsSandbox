@@ -1,11 +1,6 @@
 // Shared preamble for all demo scripts
 
-#r "../../src/PhysicsClient/bin/Debug/net10.0/PhysicsClient.dll"
-#r "../../src/PhysicsSandbox.Shared.Contracts/bin/Debug/net10.0/PhysicsSandbox.Shared.Contracts.dll"
-#r "../../src/PhysicsSandbox.ServiceDefaults/bin/Debug/net10.0/PhysicsSandbox.ServiceDefaults.dll"
-#r "nuget: Grpc.Net.Client"
-#r "nuget: Google.Protobuf"
-#r "nuget: Grpc.Core.Api"
+#r "nuget: PhysicsClient"
 #r "nuget: Spectre.Console"
 
 [<AutoOpen>]

@@ -42,8 +42,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PhysicsSandbox.Shared.Contracts\PhysicsSandbox.Shared.Contracts.csproj" />
-    <ProjectReference Include="..\PhysicsSandbox.ServiceDefaults\PhysicsSandbox.ServiceDefaults.csproj" />
+    <PackageReference Include="PhysicsSandbox.Shared.Contracts" Version="0.1.0" />
+    <PackageReference Include="PhysicsSandbox.ServiceDefaults" Version="0.1.0" />
   </ItemGroup>
 
 </Project>

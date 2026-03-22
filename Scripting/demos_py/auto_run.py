@@ -10,7 +10,7 @@ from Scripting.demos_py.prelude import connect, disconnect, reset_simulation, sl
 
 
 def main():
-    addr = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5000"
+    addr = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5180"
 
     print()
     print("============================================")
