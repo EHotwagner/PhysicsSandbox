@@ -2,52 +2,85 @@
   "generated": "2026-03-22T00:00:00Z",
   "based_on": "drift-report from 2026-03-22",
   "summary": {
-    "backfill": 1,
-    "align": 0,
-    "human_decision": 0,
-    "new_specs": 0,
-    "remove_from_spec": 1,
-    "no_change": 1
+    "align": 1,
+    "backfill": 2,
+    "human_decision": 1,
+    "remove": 2,
+    "new_specs": 1
   },
   "proposals": [
     {
-      "id": "P1",
-      "spec": "004-scripting-nuget-package",
-      "requirement": "US3-Scenario-2",
+      "id": 1,
+      "requirement": "SC-001",
+      "direction": "ALIGN",
+      "severity": "critical",
+      "description": "Fix broken open Prelude.DemoHelpers in AllDemos.fsx and demos 06-15",
+      "change": "Replace 'open Prelude.DemoHelpers' with 'open Prelude'",
+      "confidence": "HIGH",
+      "status": "applied",
+      "applied_at": "2026-03-22"
+    },
+    {
+      "id": 2,
+      "requirement": "FR-001",
       "direction": "BACKFILL",
-      "spec_text": "Given the shared Prelude.fsx preamble has been updated, When any script that loads it runs, Then all scripting library modules are available",
-      "actual": "Prelude.fsx deleted. Scripts inline #r nuget: PhysicsSandbox.Scripting directly.",
-      "proposed_text": "Given a script includes #r \"nuget: PhysicsSandbox.Scripting\", When the script is executed, Then all scripting library modules and transitive dependencies are available without additional references.",
-      "rationale": "NuGet packaging makes shared preamble unnecessary. Single #r line is simpler.",
+      "severity": "major",
+      "description": "Update spec to acknowledge viewer rendering is out of scope for demo feature",
       "confidence": "HIGH",
       "status": "applied",
       "applied_at": "2026-03-22"
     },
     {
-      "id": "P2",
-      "spec": "004-scripting-nuget-package",
-      "requirement": "SC-004",
-      "direction": "REWORD",
-      "spec_text": "The pack-and-publish workflow completes in a single command sequence, following the established local NuGet pattern.",
-      "actual": "Commands run manually in dependency order. No automation script.",
-      "proposed_text": "The pack-and-publish workflow follows the established local NuGet pattern (dependency-ordered dotnet pack with -p:NoWarn=NU5104 -o ~/.local/share/nuget-local/).",
-      "rationale": "BepuFSharp pattern uses manual commands. Single command sequence was aspirational, not required.",
-      "confidence": "HIGH",
-      "status": "applied",
-      "applied_at": "2026-03-22"
-    },
-    {
-      "id": "P3",
-      "spec": "004-scripting-nuget-package",
+      "id": 3,
       "requirement": "FR-008",
-      "direction": "NO_CHANGE",
-      "spec_text": "All server port references across scripts and documentation MUST use the canonical ports",
-      "actual": "reports/mcpReport.md also fixed. Already covered by FR-008 wording.",
-      "proposed_text": null,
-      "rationale": "FR-008 says 'documentation' which includes reports/. No spec update needed.",
+      "direction": "BACKFILL",
+      "severity": "minor",
+      "description": "Update spec table to reflect Demo 04 evolved to wrecking ball + brick wall",
       "confidence": "HIGH",
       "status": "applied",
       "applied_at": "2026-03-22"
+    },
+    {
+      "id": 4,
+      "requirement": "SC-003",
+      "direction": "HUMAN_DECISION",
+      "severity": "moderate",
+      "description": "User chose: Accept current state. Demos 06-15 accepted without individual review.",
+      "confidence": "HIGH",
+      "status": "applied",
+      "applied_at": "2026-03-22",
+      "resolution": "accept_current_state"
+    },
+    {
+      "id": 5,
+      "requirement": "FR-006/SC-004",
+      "direction": "REMOVE",
+      "severity": "low",
+      "description": "Runtime constraint verified by code inspection — all demos under 25s.",
+      "confidence": "HIGH",
+      "status": "applied",
+      "applied_at": "2026-03-22"
+    },
+    {
+      "id": 6,
+      "requirement": "SC-002",
+      "direction": "REMOVE",
+      "severity": "low",
+      "description": "Superseded by SC-003 collaborative review.",
+      "confidence": "MEDIUM",
+      "status": "applied",
+      "applied_at": "2026-03-22"
+    },
+    {
+      "id": 7,
+      "requirement": "NEW",
+      "direction": "NEW_SPEC",
+      "severity": "major",
+      "description": "Viewer shape sizing fix — deferred to align-tasks.md rather than full spec",
+      "confidence": "MEDIUM",
+      "status": "applied",
+      "applied_at": "2026-03-22",
+      "resolution": "align_task_created"
     }
   ]
 }

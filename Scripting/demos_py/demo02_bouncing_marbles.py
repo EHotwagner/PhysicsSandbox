@@ -1,4 +1,6 @@
-"""Demo 02 — Bouncing Marbles: Five marbles dropped from different heights."""
+"""Demo 02 — Bouncing Marbles: Two waves of marbles in varied sizes."""
+
+from random import Random
 
 from Scripting.demos_py.prelude import (
     batch_add,
@@ -9,23 +11,52 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    sleep,
 )
 
 name = "Bouncing Marbles"
-description = "Five marbles dropped from different heights."
+description = "Two waves of marbles in varied sizes — bouncing, colliding, settling."
 
 
 def run(session):
     reset_simulation(session)
-    set_camera(session, (4.0, 5.0, 4.0), (0.0, 0.5, 0.0))
-    cmds = []
-    for i in range(5):
-        x = i * 0.3 - 0.6
-        y = 3.0 + i * 2.0
-        cmds.append(make_sphere_cmd(next_id("sphere"), (x, y, 0.0), 0.01, 0.005))
-    batch_add(session, cmds)
-    print("  Dropping 5 marbles from 3m to 11m...")
-    run_for(session, 4.0)
+
+    # Camera: elevated overview of the drop zone
+    set_camera(session, (5.0, 8.0, 5.0), (0.0, 1.0, 0.0))
+
+    # Wave 1: 15 marbles with varied sizes across a 2D spread
+    rng = Random(42)
+    wave1 = []
+    for i in range(15):
+        x = (i % 5) * 0.4 - 0.8
+        z = (i // 5) * 0.4 - 0.4
+        y = 5.0 + rng.random() * 5.0
+        radius = 0.05 + rng.random() * 0.15  # 5cm to 20cm
+        mass = radius * radius * 10.0  # heavier = bigger
+        wave1.append(make_sphere_cmd(next_id("sphere"), (x, y, z), radius, mass))
+    batch_add(session, wave1)
+
+    print("  Wave 1: 15 marbles raining down...")
+    run_for(session, 3.0)
+
+    # Wave 2: 10 more marbles dropped into the pile
+    set_camera(session, (3.0, 4.0, 3.0), (0.0, 0.5, 0.0))
+    wave2 = []
+    for i in range(10):
+        x = rng.random() * 1.6 - 0.8
+        z = rng.random() * 1.6 - 0.8
+        y = 8.0 + rng.random() * 3.0
+        radius = 0.08 + rng.random() * 0.12
+        mass = radius * radius * 10.0
+        wave2.append(make_sphere_cmd(next_id("sphere"), (x, y, z), radius, mass))
+    batch_add(session, wave2)
+
+    print("  Wave 2: 10 more marbles into the pile!")
+    run_for(session, 3.0)
+
+    print("  Settled.")
+    sleep(1000)
+
     list_bodies(session)
 
 

@@ -73,6 +73,20 @@ let private protoQuatToStride (v: Vec4) =
     if isNull v then Quaternion.Identity
     else Quaternion(float32 v.X, float32 v.Y, float32 v.Z, float32 v.W)
 
+/// Compute the visual size for a primitive based on the physics shape dimensions.
+/// For spheres: Size = diameter (Stride sphere primitive has diameter = Size.X).
+/// For boxes: Size = full extents (2 * half-extents).
+let private shapeSize (shape: Shape) =
+    if isNull shape then System.Nullable<Vector3>()
+    elif shape.ShapeCase = Shape.ShapeOneofCase.Sphere then
+        let d = float32 shape.Sphere.Radius * 2.0f
+        System.Nullable(Vector3(d, d, d))
+    elif shape.ShapeCase = Shape.ShapeOneofCase.Box then
+        let he = shape.Box.HalfExtents
+        if isNull he then System.Nullable<Vector3>()
+        else System.Nullable(Vector3(float32 he.X * 2.0f, float32 he.Y * 2.0f, float32 he.Z * 2.0f))
+    else System.Nullable<Vector3>()
+
 let private createEntity (game: Game) (scene: Scene) (body: Body) (wireframe: bool) =
     let kind = classifyShape body.Shape
     let color = shapeColor kind
@@ -82,7 +96,8 @@ let private createEntity (game: Game) (scene: Scene) (body: Body) (wireframe: bo
             game.CreateFlatMaterial(System.Nullable<Color>(color))
         else
             game.CreateMaterial(color)
-    let options = Bepu3DPhysicsOptions(Material = material, IncludeCollider = false)
+    let size = shapeSize body.Shape
+    let options = Bepu3DPhysicsOptions(Material = material, IncludeCollider = false, Size = size)
     let entity = game.Create3DPrimitive(primType, options)
     entity.Transform.Position <- protoVec3ToStride body.Position
     entity.Transform.Rotation <- protoQuatToStride body.Orientation

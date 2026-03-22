@@ -1,7 +1,12 @@
-"""Demo 05 — Marble Rain: 20 random spheres rain down from the sky."""
+"""Demo 05 — Marble Rain: 40 mixed objects rain from the sky."""
+
+from random import Random
 
 from Scripting.demos_py.prelude import (
+    batch_add,
     list_bodies,
+    make_box_cmd,
+    next_id,
     random_spheres,
     reset_simulation,
     run_for,
@@ -11,19 +16,49 @@ from Scripting.demos_py.prelude import (
 )
 
 name = "Marble Rain"
-description = "20 random spheres rain down from the sky."
+description = "40 mixed objects rain from the sky — spheres, crates, and dice piling up."
 
 
 def run(session):
     reset_simulation(session)
-    set_camera(session, (8.0, 12.0, 8.0), (0.0, 0.0, 0.0))
+
+    # Camera: overhead angle
+    set_camera(session, (6.0, 10.0, 6.0), (0.0, 0.0, 0.0))
+
+    # Generate random spheres as the base
     ids = random_spheres(session, 20, seed=42)
-    print(f"  Generated {len(ids)} random spheres")
-    print("  Let it rain...")
-    run_for(session, 5.0)
-    set_camera(session, (3.0, 1.0, 3.0), (0.0, 0.5, 0.0))
-    print("  Ground-level view")
-    sleep(1000)
+    print(f"  Wave 1: {len(ids)} random spheres raining down...")
+    run_for(session, 3.0)
+
+    # Wave 2: Add boxes and dice for mixed-shape pile
+    rng = Random(99)
+    wave2 = []
+
+    # 10 small crates
+    for _ in range(10):
+        x = rng.random() * 4.0 - 2.0
+        z = rng.random() * 4.0 - 2.0
+        y = 8.0 + rng.random() * 5.0
+        half = 0.1 + rng.random() * 0.15
+        wave2.append(make_box_cmd(next_id("box"), (x, y, z), (half, half, half), half * 80.0))
+
+    # 10 tiny dice
+    for _ in range(10):
+        x = rng.random() * 3.0 - 1.5
+        z = rng.random() * 3.0 - 1.5
+        y = 10.0 + rng.random() * 4.0
+        wave2.append(make_box_cmd(next_id("box"), (x, y, z), (0.05, 0.05, 0.05), 0.03))
+
+    batch_add(session, wave2)
+    print("  Wave 2: 10 crates + 10 dice joining the pile!")
+    set_camera(session, (4.0, 6.0, 4.0), (0.0, 1.0, 0.0))
+    run_for(session, 4.0)
+
+    # Ground-level closeup
+    set_camera(session, (2.5, 0.8, 2.5), (0.0, 0.5, 0.0))
+    print("  Close-up of the mixed-shape pile")
+    sleep(1500)
+
     list_bodies(session)
 
 

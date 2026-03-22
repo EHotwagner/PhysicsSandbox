@@ -45,11 +45,16 @@ def run(session):
         batch_add(session, cmds)
         run_for(session, 3.0)
     print("  200+ bodies active")
+    status(session)
     with timed("Act 3 — impulse storm"):
         set_camera(session, (0.0, 20.0, 15.0), (0.0, 2.0, 0.0))
+        wireframe(session, True)
         imp_cmds = [make_impulse_cmd(bid, (0.0, 10.0, 3.0)) for bid in pyramid_ids]
         batch_add(session, imp_cmds)
         run_for(session, 3.0)
+        wireframe(session, False)
+    print("  Bodies after impulse storm:")
+    status(session)
     with timed("Act 4 — gravity chaos"):
         set_camera(session, (12.0, 3.0, 12.0), (0.0, 4.0, 0.0))
         set_gravity(session, (0.0, 10.0, 0.0))

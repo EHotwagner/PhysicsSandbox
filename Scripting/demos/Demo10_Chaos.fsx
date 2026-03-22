@@ -1,12 +1,21 @@
 // Demo 10: Chaos Scene
 // Everything combined: presets, generators, steering, gravity changes,
 // camera animation — the full sandbox experience.
+// Usage: dotnet fsi Scripting/demos/Demo10_Chaos.fsx [server-address]
+
+#load "Prelude.fsx"
+open Prelude
+open PhysicsClient.Session
+open PhysicsClient.Presets
+open PhysicsClient.Generators
+open PhysicsClient.Steering
+open PhysicsClient.StateDisplay
 
 module Demo10 =
     let name = "Chaos Scene"
     let description = "The full sandbox: presets, generators, steering, gravity, camera sweeps."
 
-    let run (s: PhysicsClient.Session.Session) =
+    let run (s: Session) =
         resetSimulation s
 
         // Act 1: Build the stage
@@ -22,6 +31,9 @@ module Demo10 =
 
         runFor s 1.5
         printfn "  Stage built: pyramid + stack + row"
+
+        // Dramatic pause — let the audience take in the stage
+        sleep 800
 
         // Act 2: Bombardment from above
         setCamera s (0.0, 15.0, 10.0) (0.0, 2.0, 0.0) |> ignore
@@ -64,14 +76,16 @@ module Demo10 =
         runFor s 2.0
         wireframe s false |> ignore
 
-        // Final camera sweep
+        // Final camera sweep (tighter pacing)
         printfn "  Final: Camera sweep"
-        for angle in 0..8 do
-            let a = float angle * 0.7
+        for angle in 0..6 do
+            let a = float angle * 0.9
             let cx = 10.0 * cos a
             let cz = 10.0 * sin a
             setCamera s (cx, 5.0, cz) (0.0, 1.0, 0.0) |> ignore
-            sleep 400
+            sleep 300
 
         printfn "  Chaos complete!"
         status s
+
+runStandalone Demo10.name Demo10.run

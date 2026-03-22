@@ -1,26 +1,43 @@
-// Demo 03: Crate Stack
-// A tower of crates stacked using the scene builder.
+// Demo 03: Crate Stack — A tall tower hit by a bowling ball.
+// Usage: dotnet fsi Scripting/demos/Demo03_CrateStack.fsx [server-address]
 
-module Demo03 =
-    let name = "Crate Stack"
-    let description = "A tower of 8 crates built with the stack generator."
+#load "Prelude.fsx"
+open Prelude
+open PhysicsClient.Session
+open PhysicsClient.SimulationCommands
+open PhysicsClient.ViewCommands
+open PhysicsClient.Presets
+open PhysicsClient.Generators
+open PhysicsClient.Steering
+open PhysicsClient.StateDisplay
 
-    let run (s: PhysicsClient.Session.Session) =
-        resetSimulation s
+let name = "Crate Stack"
 
-        // Camera: front view, slightly elevated
-        setCamera s (6.0, 5.0, 0.0) (0.0, 4.0, 0.0) |> ignore
+let run s =
+    resetSimulation s
+    setCamera s (8.0, 7.0, 4.0) (0.0, 5.0, 0.0) |> ignore
+    // Build tower from lighter boxes (2kg each instead of 20kg default crates)
+    let ids =
+        [ for i in 0 .. 11 do
+            let id = nextId "box"
+            batchAdd s [ makeBoxCmd id (0.0, 0.5 + float i * 1.0, 0.0) (0.25, 0.25, 0.25) 2.0 ]
+            id ]
+    printfn "  Built tower of %d light crates" ids.Length
+    runFor s 2.0
+    let ball = boulder s (Some (-6.0, 1.0, 0.0)) None None |> ok
+    runFor s 0.5
+    printfn "  Boulder ready — aiming at tower..."
+    sleep 500
+    // Move camera to impact angle before the hit
+    setCamera s (5.0, 3.0, 5.0) (0.0, 2.0, 0.0) |> ignore
+    printfn "  SMASH!"
+    batchAdd s [ makeImpulseCmd ball (2000.0, 0.0, 0.0) ]
+    runFor s 2.0
+    printfn "  Watching debris settle..."
+    runFor s 2.5
+    setCamera s (0.0, 12.0, 0.1) (0.0, 0.0, 0.0) |> ignore
+    printfn "  Overhead view of destruction"
+    sleep 1500
+    listBodies s
 
-        // Build a stack of 8 crates
-        let ids = stack s 8 (Some (0.0, 0.0, 0.0)) |> ok
-        printfn "  Built stack of %d crates" ids.Length
-
-        // Let it settle
-        runFor s 2.0
-
-        // Now push the top crate sideways
-        let topId = ids |> List.last
-        printfn "  Pushing top crate east..."
-        push s topId East 15.0 |> ignore
-        runFor s 3.0
-        listBodies s
+runStandalone name run

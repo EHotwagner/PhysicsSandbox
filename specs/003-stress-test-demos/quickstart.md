@@ -18,7 +18,7 @@ dotnet fsi demos/RunAll.fsx
 dotnet fsi demos/AutoRun.fsx
 
 # Custom server address
-dotnet fsi demos/RunAll.fsx http://localhost:5000
+dotnet fsi demos/RunAll.fsx http://localhost:5180
 ```
 
 ## Run Individual Stress Demos
@@ -86,7 +86,7 @@ Degradation is visible when setup or simulation times increase disproportionatel
 
 ## Troubleshooting
 
-- **Connection refused**: Ensure Aspire is running and server is on http://localhost:5000
+- **Connection refused**: Ensure Aspire is running and server is on http://localhost:5180
 - **Batch failures**: Check `[BATCH FAIL]` messages — may indicate body ID conflicts (ensure resetSimulation runs)
 - **Timeout**: Stress demos with 500 bodies may take up to 5 minutes. Be patient.
 - **Viewer lag**: Expected at high body counts — the viewer's frame rate degradation is itself a useful observation

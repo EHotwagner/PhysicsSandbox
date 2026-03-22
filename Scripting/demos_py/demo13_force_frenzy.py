@@ -1,4 +1,4 @@
-"""Demo 13 — Force Frenzy: 100 bodies hit with 3 rounds of escalating forces."""
+"""Demo 13 — Force Frenzy: 80 tightly-packed bodies hit with 3 rounds of escalating forces."""
 
 from Scripting.demos_py.prelude import (
     batch_add,
@@ -16,41 +16,60 @@ from Scripting.demos_py.prelude import (
 )
 
 name = "Force Frenzy"
-description = "100 bodies hit with 3 rounds of escalating impulses, torques, and gravity shifts."
+description = "80 tightly-packed bodies hit with 3 rounds of escalating forces — collisions everywhere."
 
 
 def run(session):
     reset_simulation(session)
-    set_camera(session, (15.0, 10.0, 15.0), (0.0, 1.0, 0.0))
-    with timed("Create 100 bodies"):
-        ids = [next_id("sphere") for _ in range(100)]
+    set_camera(session, (10.0, 8.0, 10.0), (0.0, 1.0, 0.0))
+
+    # Tight 8x10 grid (0.7m spacing)
+    with timed("Create 80 bodies"):
+        ids = [next_id("sphere") for _ in range(80)]
         cmds = []
-        for idx in range(100):
-            x = (idx % 10) * 1.5 - 7.0
-            z = (idx // 10) * 1.5 - 7.0
-            cmds.append(make_sphere_cmd(ids[idx], (x, 0.5, z), 0.3, 1.0))
+        for idx in range(80):
+            x = (idx % 8) * 0.7 - 2.45
+            z = (idx // 8) * 0.7 - 3.15
+            mass = 0.5 if idx % 3 == 0 else 1.5
+            radius = 0.2 if idx % 3 == 0 else 0.25
+            cmds.append(make_sphere_cmd(ids[idx], (x, 0.5, z), radius, mass))
         batch_add(session, cmds)
-    print("  100 spheres in 10x10 grid")
-    with timed("Settle (2s)"):
-        run_for(session, 2.0)
-    with timed("Round 1 — impulses (3s)"):
-        imp_cmds = [make_impulse_cmd(bid, (0.0, 8.0, 0.0)) for bid in ids]
-        batch_add(session, imp_cmds)
+    print("  80 spheres in tight 8x10 grid")
+
+    with timed("Settle (1.5s)"):
+        run_for(session, 1.5)
+
+    # Round 1: upward impulses — tightly packed so they collide
+    with timed("Round 1 — upward impulses (3s)"):
+        batch_add(session, [make_impulse_cmd(id_, (0.0, 12.0, 0.0)) for id_ in ids])
+        print("  Launch! Bodies colliding on the way up...")
+        set_camera(session, (8.0, 2.0, 8.0), (0.0, 5.0, 0.0))
         run_for(session, 3.0)
+
+    # Round 2: torques + sideways gravity
     with timed("Round 2 — torques + sideways gravity (3s)"):
-        tor_cmds = [make_torque_cmd(bid, (0.0, 20.0, 10.0)) for bid in ids]
-        batch_add(session, tor_cmds)
-        set_gravity(session, (8.0, -2.0, 0.0))
-        set_camera(session, (-15.0, 5.0, 10.0), (0.0, 2.0, 0.0))
+        batch_add(session, [make_torque_cmd(id_, (0.0, 30.0, 15.0)) for id_ in ids])
+        set_gravity(session, (10.0, -3.0, 0.0))
+        set_camera(session, (-12.0, 5.0, 8.0), (0.0, 2.0, 0.0))
+        print("  Spinning + sliding sideways...")
         run_for(session, 3.0)
-    with timed("Round 3 — strong impulses + reversed gravity (3s)"):
-        imp_cmds2 = [make_impulse_cmd(bid, (5.0, 15.0, -5.0)) for bid in ids]
-        batch_add(session, imp_cmds2)
-        set_gravity(session, (0.0, 12.0, 0.0))
-        set_camera(session, (10.0, 2.0, 15.0), (0.0, 5.0, 0.0))
+
+    # Round 3: inward impulses + low gravity
+    with timed("Round 3 — inward impulses + low gravity (3s)"):
+        inward_cmds = []
+        for idx in range(80):
+            x = (idx % 8) * 0.7 - 2.45
+            z = (idx // 8) * 0.7 - 3.15
+            inward_cmds.append(make_impulse_cmd(ids[idx], (-x * 3.0, 8.0, -z * 3.0)))
+        batch_add(session, inward_cmds)
+        set_gravity(session, (0.0, -2.0, 0.0))
+        set_camera(session, (0.0, 12.0, 10.0), (0.0, 3.0, 0.0))
+        print("  Swarming inward under low gravity!")
         run_for(session, 3.0)
+
     set_gravity(session, (0.0, -9.81, 0.0))
-    print("  Gravity restored")
+    print("  Gravity restored — settling...")
+    set_camera(session, (8.0, 5.0, 8.0), (0.0, 1.0, 0.0))
     run_for(session, 2.0)
     status(session)
 

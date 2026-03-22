@@ -33,7 +33,7 @@
 ### Implementation for User Story 1
 
 - [x] T003 [US1] Add Demo 11 (Body Scaling) to demos/AllDemos.fsx — insert after the Demo 10 (Chaos Scene) entry at the end of the `demos` array (before the closing `|]`). New entry in the `demos` array. Implements tiered body creation: for each tier (50, 100, 200, 500), resetSimulation, create spheres in a grid via batchAdd, runFor 3 seconds, wrap each tier in `timed`. Camera pulls back at higher tiers. Print tier summary with body count and elapsed time. Handle batch failures gracefully with try/with around batchAdd and runFor.
-- [x] T004 [P] [US1] Create standalone demos/Demo11_BodyScaling.fsx — loads Prelude.fsx, defines Demo 11 as a standalone module, connects to server (default http://localhost:5000 or CLI arg), runs the demo, disconnects. Follow pattern of existing Demo01_HelloDrop.fsx through Demo10_Chaos.fsx.
+- [x] T004 [P] [US1] Create standalone demos/Demo11_BodyScaling.fsx — loads Prelude.fsx, defines Demo 11 as a standalone module, connects to server (default http://localhost:5180 or CLI arg), runs the demo, disconnects. Follow pattern of existing Demo01_HelloDrop.fsx through Demo10_Chaos.fsx.
 
 **Checkpoint**: Demo 11 runs end-to-end, reports timing per tier, identifies degradation point
 
