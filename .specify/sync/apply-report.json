@@ -1,13 +1,38 @@
 {
   "applied_at": "2026-03-22T00:00:00Z",
-  "proposals_applied": 7,
-  "proposals_total": 7,
-  "changes": {
-    "code_files_modified": 11,
-    "spec_sections_updated": 7,
-    "alignment_tasks_created": 1,
-    "new_specs_created": 0
-  },
-  "applied_proposals": [1, 2, 3, 4, 5, 6, 7],
-  "not_applied": []
+  "feature": "005-stride-bepu-integration",
+  "proposals_applied": 4,
+  "specs_updated": [
+    {
+      "spec": "005-stride-bepu-integration",
+      "requirement": "FR-006b",
+      "change_type": "modified",
+      "direction": "BACKFILL",
+      "before": "The server MUST cache registered shapes and include shape definitions in state streams only on first use, so all clients (including custom ones) can build and maintain a local shape cache.",
+      "after": "The server MUST cache registered shapes and include all registered shape definitions in every state stream update, so all clients (including late-joiners) receive the complete shape cache without per-subscriber tracking."
+    },
+    {
+      "spec": "005-stride-bepu-integration",
+      "requirement": "SC-008",
+      "change_type": "modified",
+      "direction": "BACKFILL",
+      "before": "All new features are accessible through the existing client interfaces (REPL commands, MCP tools, scripting library).",
+      "after": "All new features MUST be accessible through the REPL and MCP interfaces. The scripting library MUST provide convenience builders for the most commonly used constraint types (ball-socket, hinge, weld, distance limit) with the remaining types constructible via standard proto message builders."
+    }
+  ],
+  "align_tasks_generated": [
+    {
+      "task": 1,
+      "requirement": "FR-007",
+      "summary": "Custom MeshDraw rendering for Triangle, Compound, Mesh shapes",
+      "effort": "medium"
+    },
+    {
+      "task": 2,
+      "requirement": "FR-030",
+      "summary": "Add SetBodyPose command for kinematic runtime pose updates",
+      "effort": "medium"
+    }
+  ],
+  "backup": ".specify/sync/backups/spec.md.2026-03-22.bak"
 }

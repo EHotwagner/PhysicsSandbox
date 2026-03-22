@@ -13,8 +13,12 @@
   <ItemGroup>
     <Compile Include="Rendering/FpsCounter.fsi" />
     <Compile Include="Rendering/FpsCounter.fs" />
+    <Compile Include="Rendering/ShapeGeometry.fsi" />
+    <Compile Include="Rendering/ShapeGeometry.fs" />
     <Compile Include="Rendering/SceneManager.fsi" />
     <Compile Include="Rendering/SceneManager.fs" />
+    <Compile Include="Rendering/DebugRenderer.fsi" />
+    <Compile Include="Rendering/DebugRenderer.fs" />
     <Compile Include="Rendering/CameraController.fsi" />
     <Compile Include="Rendering/CameraController.fs" />
     <Compile Include="Streaming/ViewerClient.fsi" />

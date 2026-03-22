@@ -20,6 +20,10 @@
     <Compile Include="Vec3Builders.fs" />
     <Compile Include="CommandBuilders.fsi" />
     <Compile Include="CommandBuilders.fs" />
+    <Compile Include="ConstraintBuilders.fsi" />
+    <Compile Include="ConstraintBuilders.fs" />
+    <Compile Include="QueryBuilders.fsi" />
+    <Compile Include="QueryBuilders.fs" />
     <Compile Include="BatchOperations.fsi" />
     <Compile Include="BatchOperations.fs" />
     <Compile Include="SimulationLifecycle.fsi" />
@@ -29,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="PhysicsClient" Version="0.1.0" />
+    <ProjectReference Include="..\PhysicsClient\PhysicsClient.fsproj" />
   </ItemGroup>
 
 </Project>

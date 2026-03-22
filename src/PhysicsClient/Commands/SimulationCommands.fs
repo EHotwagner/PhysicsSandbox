@@ -13,14 +13,45 @@ let internal toVec3 (x: float, y: float, z: float) =
     v.Z <- z
     v
 
+/// <summary>Applies optional material, color, motion type, and collision parameters to an AddBody message.</summary>
+let private applyBodyOptions
+    (addBody: AddBody)
+    (material: MaterialProperties option)
+    (color: Color option)
+    (motionType: BodyMotionType option)
+    (collisionGroup: uint32 option)
+    (collisionMask: uint32 option)
+    =
+    material |> Option.iter (fun m -> addBody.Material <- m)
+    color |> Option.iter (fun c -> addBody.Color <- c)
+    motionType |> Option.iter (fun mt -> addBody.MotionType <- mt)
+    collisionGroup |> Option.iter (fun cg -> addBody.CollisionGroup <- cg)
+    collisionMask |> Option.iter (fun cm -> addBody.CollisionMask <- cm)
+
 /// <summary>Adds a sphere body to the simulation and registers it in the local body registry.</summary>
 /// <param name="session">The active server session.</param>
 /// <param name="position">World-space position as (x, y, z).</param>
 /// <param name="radius">Sphere radius in meters.</param>
 /// <param name="mass">Body mass in kilograms.</param>
 /// <param name="id">Optional custom body ID; auto-generated if None.</param>
+/// <param name="material">Optional material properties (friction, spring, etc.).</param>
+/// <param name="color">Optional RGBA color for the body.</param>
+/// <param name="motionType">Optional motion type (Dynamic, Kinematic, Static).</param>
+/// <param name="collisionGroup">Optional collision group bitmask.</param>
+/// <param name="collisionMask">Optional collision mask bitmask.</param>
 /// <returns>Ok with the assigned body ID, or Error with a failure message.</returns>
-let addSphere (session: Session) (position: float * float * float) (radius: float) (mass: float) (id: string option) : Result<string, string> =
+let addSphere
+    (session: Session)
+    (position: float * float * float)
+    (radius: float)
+    (mass: float)
+    (id: string option)
+    (material: MaterialProperties option)
+    (color: Color option)
+    (motionType: BodyMotionType option)
+    (collisionGroup: uint32 option)
+    (collisionMask: uint32 option)
+    : Result<string, string> =
     let bodyId = id |> Option.defaultWith (fun () -> nextId "sphere")
     let sphere = Sphere()
     sphere.Radius <- radius
@@ -31,6 +62,7 @@ let addSphere (session: Session) (position: float * float * float) (radius: floa
     addBody.Position <- toVec3 position
     addBody.Mass <- mass
     addBody.Shape <- shape
+    applyBodyOptions addBody material color motionType collisionGroup collisionMask
     let cmd = SimulationCommand()
     cmd.AddBody <- addBody
     match sendCommand session cmd with
@@ -45,8 +77,24 @@ let addSphere (session: Session) (position: float * float * float) (radius: floa
 /// <param name="halfExtents">Half-extents of the box as (hx, hy, hz).</param>
 /// <param name="mass">Body mass in kilograms.</param>
 /// <param name="id">Optional custom body ID; auto-generated if None.</param>
+/// <param name="material">Optional material properties (friction, spring, etc.).</param>
+/// <param name="color">Optional RGBA color for the body.</param>
+/// <param name="motionType">Optional motion type (Dynamic, Kinematic, Static).</param>
+/// <param name="collisionGroup">Optional collision group bitmask.</param>
+/// <param name="collisionMask">Optional collision mask bitmask.</param>
 /// <returns>Ok with the assigned body ID, or Error with a failure message.</returns>
-let addBox (session: Session) (position: float * float * float) (halfExtents: float * float * float) (mass: float) (id: string option) : Result<string, string> =
+let addBox
+    (session: Session)
+    (position: float * float * float)
+    (halfExtents: float * float * float)
+    (mass: float)
+    (id: string option)
+    (material: MaterialProperties option)
+    (color: Color option)
+    (motionType: BodyMotionType option)
+    (collisionGroup: uint32 option)
+    (collisionMask: uint32 option)
+    : Result<string, string> =
     let bodyId = id |> Option.defaultWith (fun () -> nextId "box")
     let box = Box()
     box.HalfExtents <- toVec3 halfExtents
@@ -57,6 +105,7 @@ let addBox (session: Session) (position: float * float * float) (halfExtents: fl
     addBody.Position <- toVec3 position
     addBody.Mass <- mass
     addBody.Shape <- shape
+    applyBodyOptions addBody material color motionType collisionGroup collisionMask
     let cmd = SimulationCommand()
     cmd.AddBody <- addBody
     match sendCommand session cmd with
@@ -64,6 +113,127 @@ let addBox (session: Session) (position: float * float * float) (halfExtents: fl
         (bodyRegistry session).TryAdd(bodyId, "box") |> ignore
         Ok bodyId
     | Error e -> Error e
+
+/// <summary>Adds a capsule body to the simulation and registers it in the local body registry.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="position">World-space position as (x, y, z).</param>
+/// <param name="radius">Capsule radius in meters.</param>
+/// <param name="length">Capsule length (between hemisphere centers) in meters.</param>
+/// <param name="mass">Body mass in kilograms.</param>
+/// <param name="id">Optional custom body ID; auto-generated if None.</param>
+/// <returns>Ok with the assigned body ID, or Error with a failure message.</returns>
+let addCapsule (session: Session) (position: float * float * float) (radius: float) (length: float) (mass: float) (id: string option) : Result<string, string> =
+    let bodyId = id |> Option.defaultWith (fun () -> nextId "capsule")
+    let capsule = Capsule()
+    capsule.Radius <- radius
+    capsule.Length <- length
+    let shape = Shape()
+    shape.Capsule <- capsule
+    let addBody = AddBody()
+    addBody.Id <- bodyId
+    addBody.Position <- toVec3 position
+    addBody.Mass <- mass
+    addBody.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- addBody
+    match sendCommand session cmd with
+    | Ok () ->
+        (bodyRegistry session).TryAdd(bodyId, "capsule") |> ignore
+        Ok bodyId
+    | Error e -> Error e
+
+/// <summary>Adds a cylinder body to the simulation and registers it in the local body registry.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="position">World-space position as (x, y, z).</param>
+/// <param name="radius">Cylinder radius in meters.</param>
+/// <param name="length">Cylinder length in meters.</param>
+/// <param name="mass">Body mass in kilograms.</param>
+/// <param name="id">Optional custom body ID; auto-generated if None.</param>
+/// <returns>Ok with the assigned body ID, or Error with a failure message.</returns>
+let addCylinder (session: Session) (position: float * float * float) (radius: float) (length: float) (mass: float) (id: string option) : Result<string, string> =
+    let bodyId = id |> Option.defaultWith (fun () -> nextId "cylinder")
+    let cylinder = Cylinder()
+    cylinder.Radius <- radius
+    cylinder.Length <- length
+    let shape = Shape()
+    shape.Cylinder <- cylinder
+    let addBody = AddBody()
+    addBody.Id <- bodyId
+    addBody.Position <- toVec3 position
+    addBody.Mass <- mass
+    addBody.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- addBody
+    match sendCommand session cmd with
+    | Ok () ->
+        (bodyRegistry session).TryAdd(bodyId, "cylinder") |> ignore
+        Ok bodyId
+    | Error e -> Error e
+
+/// <summary>Adds a constraint between two bodies in the simulation.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="id">Unique constraint identifier.</param>
+/// <param name="bodyA">ID of the first body.</param>
+/// <param name="bodyB">ID of the second body.</param>
+/// <param name="constraintType">The constraint type configuration (ball-socket, hinge, weld, etc.).</param>
+/// <returns>Ok with the constraint ID, or Error with a failure message.</returns>
+let addConstraint (session: Session) (id: string) (bodyA: string) (bodyB: string) (constraintType: ConstraintType) : Result<string, string> =
+    let ac = AddConstraint()
+    ac.Id <- id
+    ac.BodyA <- bodyA
+    ac.BodyB <- bodyB
+    ac.Type <- constraintType
+    let cmd = SimulationCommand()
+    cmd.AddConstraint <- ac
+    match sendCommand session cmd with
+    | Ok () -> Ok id
+    | Error e -> Error e
+
+/// <summary>Removes a constraint from the simulation by its ID.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="constraintId">The ID of the constraint to remove.</param>
+let removeConstraint (session: Session) (constraintId: string) : Result<unit, string> =
+    let rc = RemoveConstraint()
+    rc.ConstraintId <- constraintId
+    let cmd = SimulationCommand()
+    cmd.RemoveConstraint <- rc
+    sendCommand session cmd
+
+/// <summary>Registers a reusable shape with the simulation under a given handle.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="handle">Unique handle to identify the registered shape.</param>
+/// <param name="shape">The shape definition to register.</param>
+let registerShape (session: Session) (handle: string) (shape: Shape) : Result<unit, string> =
+    let rs = RegisterShape()
+    rs.ShapeHandle <- handle
+    rs.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.RegisterShape <- rs
+    sendCommand session cmd
+
+/// <summary>Unregisters a previously registered shape by its handle.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="handle">The handle of the shape to unregister.</param>
+let unregisterShape (session: Session) (handle: string) : Result<unit, string> =
+    let us = UnregisterShape()
+    us.ShapeHandle <- handle
+    let cmd = SimulationCommand()
+    cmd.UnregisterShape <- us
+    sendCommand session cmd
+
+/// <summary>Sets the collision filter for a body, controlling which groups it collides with.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="bodyId">The ID of the body to configure.</param>
+/// <param name="collisionGroup">The collision group bitmask for this body.</param>
+/// <param name="collisionMask">The collision mask bitmask (which groups this body collides with).</param>
+let setCollisionFilter (session: Session) (bodyId: string) (collisionGroup: uint32) (collisionMask: uint32) : Result<unit, string> =
+    let scf = SetCollisionFilter()
+    scf.BodyId <- bodyId
+    scf.CollisionGroup <- collisionGroup
+    scf.CollisionMask <- collisionMask
+    let cmd = SimulationCommand()
+    cmd.SetCollisionFilter <- scf
+    sendCommand session cmd
 
 /// <summary>Adds a static ground plane to the simulation. Planes are approximated as large static boxes.</summary>
 /// <param name="session">The active server session.</param>
@@ -223,6 +393,148 @@ let batchCommands (session: Session) (commands: SimulationCommand list) : Result
         Ok response
     with ex ->
         Error $"Batch command failed: {ex.Message}"
+
+/// <summary>Sets the position, orientation, and/or velocity of a body at runtime.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="bodyId">The ID of the body to update.</param>
+/// <param name="position">New world-space position as (x, y, z).</param>
+/// <param name="orientation">Optional new orientation quaternion as (x, y, z, w).</param>
+/// <param name="velocity">Optional new linear velocity as (x, y, z).</param>
+/// <param name="angularVelocity">Optional new angular velocity as (x, y, z).</param>
+let setBodyPose
+    (session: Session)
+    (bodyId: string)
+    (position: float * float * float)
+    (orientation: (float * float * float * float) option)
+    (velocity: (float * float * float) option)
+    (angularVelocity: (float * float * float) option)
+    : Result<unit, string> =
+    let sbp = SetBodyPose()
+    sbp.BodyId <- bodyId
+    sbp.Position <- toVec3 position
+    orientation |> Option.iter (fun (x, y, z, w) ->
+        let q = Vec4()
+        q.X <- x; q.Y <- y; q.Z <- z; q.W <- w
+        sbp.Orientation <- q)
+    velocity |> Option.iter (fun v -> sbp.Velocity <- toVec3 v)
+    angularVelocity |> Option.iter (fun v -> sbp.AngularVelocity <- toVec3 v)
+    let cmd = SimulationCommand()
+    cmd.SetBodyPose <- sbp
+    sendCommand session cmd
+
+/// <summary>Casts a ray into the simulation and returns hit results.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="origin">Ray origin as (x, y, z).</param>
+/// <param name="direction">Ray direction as (x, y, z).</param>
+/// <param name="maxDistance">Maximum ray distance.</param>
+/// <param name="allHits">If true, return all hits; otherwise, closest only.</param>
+/// <param name="collisionMask">Optional collision mask filter.</param>
+/// <returns>Ok with the raycast response, or Error with a failure message.</returns>
+let raycast
+    (session: Session)
+    (origin: float * float * float)
+    (direction: float * float * float)
+    (maxDistance: float)
+    (allHits: bool)
+    (collisionMask: uint32 option)
+    : Result<RaycastResponse, string> =
+    if not (isConnected session) then
+        Error "Not connected to server"
+    else
+        try
+            let request = RaycastRequest()
+            request.Origin <- toVec3 origin
+            request.Direction <- toVec3 direction
+            request.MaxDistance <- maxDistance
+            request.AllHits <- allHits
+            collisionMask |> Option.iter (fun cm -> request.CollisionMask <- cm)
+            let response = (client session).Raycast(request)
+            Ok response
+        with
+        | :? Grpc.Core.RpcException as ex ->
+            Error $"gRPC error ({ex.StatusCode}): {ex.Status.Detail}"
+        | ex ->
+            Error $"Raycast failed: {ex.Message}"
+
+/// <summary>Performs a sweep cast (shape cast) into the simulation.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="shape">The shape to sweep.</param>
+/// <param name="startPosition">Starting position as (x, y, z).</param>
+/// <param name="direction">Sweep direction as (x, y, z).</param>
+/// <param name="maxDistance">Maximum sweep distance.</param>
+/// <param name="orientation">Optional orientation quaternion as (x, y, z, w). Defaults to identity.</param>
+/// <param name="collisionMask">Optional collision mask filter.</param>
+/// <returns>Ok with the sweep cast response, or Error with a failure message.</returns>
+let sweepCast
+    (session: Session)
+    (shape: Shape)
+    (startPosition: float * float * float)
+    (direction: float * float * float)
+    (maxDistance: float)
+    (orientation: (float * float * float * float) option)
+    (collisionMask: uint32 option)
+    : Result<SweepCastResponse, string> =
+    if not (isConnected session) then
+        Error "Not connected to server"
+    else
+        try
+            let request = SweepCastRequest()
+            request.Shape <- shape
+            request.StartPosition <- toVec3 startPosition
+            request.Direction <- toVec3 direction
+            request.MaxDistance <- maxDistance
+            orientation |> Option.iter (fun (x, y, z, w) ->
+                let q = Vec4()
+                q.X <- x
+                q.Y <- y
+                q.Z <- z
+                q.W <- w
+                request.Orientation <- q)
+            collisionMask |> Option.iter (fun cm -> request.CollisionMask <- cm)
+            let response = (client session).SweepCast(request)
+            Ok response
+        with
+        | :? Grpc.Core.RpcException as ex ->
+            Error $"gRPC error ({ex.StatusCode}): {ex.Status.Detail}"
+        | ex ->
+            Error $"SweepCast failed: {ex.Message}"
+
+/// <summary>Tests for shape overlap at a given position.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="shape">The shape to test for overlap.</param>
+/// <param name="position">Test position as (x, y, z).</param>
+/// <param name="orientation">Optional orientation quaternion as (x, y, z, w). Defaults to identity.</param>
+/// <param name="collisionMask">Optional collision mask filter.</param>
+/// <returns>Ok with the overlap response containing overlapping body IDs, or Error with a failure message.</returns>
+let overlap
+    (session: Session)
+    (shape: Shape)
+    (position: float * float * float)
+    (orientation: (float * float * float * float) option)
+    (collisionMask: uint32 option)
+    : Result<OverlapResponse, string> =
+    if not (isConnected session) then
+        Error "Not connected to server"
+    else
+        try
+            let request = OverlapRequest()
+            request.Shape <- shape
+            request.Position <- toVec3 position
+            orientation |> Option.iter (fun (x, y, z, w) ->
+                let q = Vec4()
+                q.X <- x
+                q.Y <- y
+                q.Z <- z
+                q.W <- w
+                request.Orientation <- q)
+            collisionMask |> Option.iter (fun cm -> request.CollisionMask <- cm)
+            let response = (client session).Overlap(request)
+            Ok response
+        with
+        | :? Grpc.Core.RpcException as ex ->
+            Error $"gRPC error ({ex.StatusCode}): {ex.Status.Detail}"
+        | ex ->
+            Error $"Overlap failed: {ex.Message}"
 
 /// <summary>Sends multiple view commands in a single batch request for better performance.</summary>
 /// <param name="session">The active server session.</param>

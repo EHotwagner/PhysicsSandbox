@@ -8,6 +8,8 @@
   <ItemGroup>
     <Compile Include="World/SimulationWorld.fsi" />
     <Compile Include="World/SimulationWorld.fs" />
+    <Compile Include="Queries/QueryHandler.fsi" />
+    <Compile Include="Queries/QueryHandler.fs" />
     <Compile Include="Commands/CommandHandler.fsi" />
     <Compile Include="Commands/CommandHandler.fs" />
     <Compile Include="Client/SimulationClient.fsi" />
@@ -16,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BepuFSharp" Version="0.1.0" />
+    <PackageReference Include="BepuFSharp" Version="0.2.0-beta.1" />
     <PackageReference Include="Grpc.Net.Client" Version="2.*" />
   </ItemGroup>
 

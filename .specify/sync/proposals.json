@@ -2,85 +2,63 @@
   "generated": "2026-03-22T00:00:00Z",
   "based_on": "drift-report from 2026-03-22",
   "summary": {
-    "align": 1,
     "backfill": 2,
-    "human_decision": 1,
-    "remove": 2,
-    "new_specs": 1
+    "align": 2,
+    "human_decision": 0,
+    "new_specs": 0,
+    "remove_from_spec": 0
   },
   "proposals": [
     {
       "id": 1,
-      "requirement": "SC-001",
-      "direction": "ALIGN",
-      "severity": "critical",
-      "description": "Fix broken open Prelude.DemoHelpers in AllDemos.fsx and demos 06-15",
-      "change": "Replace 'open Prelude.DemoHelpers' with 'open Prelude'",
+      "spec": "005-stride-bepu-integration",
+      "requirement": "FR-006b",
+      "direction": "BACKFILL",
+      "spec_text": "Include shape definitions in state streams only on first use",
+      "actual": "All registered shapes included in every state stream update",
+      "proposed_text": "FR-006b: The server MUST cache registered shapes and include all registered shape definitions in every state stream update, so all clients (including late-joiners) receive the complete shape cache without per-subscriber tracking.",
+      "rationale": "Deliberate simplification. Per-subscriber cache tracking adds complexity with minimal benefit at current scale. Implementation is functionally correct.",
       "confidence": "HIGH",
-      "status": "applied",
-      "applied_at": "2026-03-22"
+      "status": "approved"
     },
     {
       "id": 2,
-      "requirement": "FR-001",
-      "direction": "BACKFILL",
-      "severity": "major",
-      "description": "Update spec to acknowledge viewer rendering is out of scope for demo feature",
+      "spec": "005-stride-bepu-integration",
+      "requirement": "FR-007",
+      "direction": "ALIGN",
+      "spec_text": "Render each shape type with geometry that visually matches the physics collider dimensions",
+      "actual": "Triangle, Compound, and Mesh shapes render as placeholder spheres",
+      "proposed_change": "Implement custom MeshDraw generation in ShapeGeometry.fs for Triangle (3-vertex face), Compound (child entities with local transforms), and Mesh (triangle list vertex data)",
+      "rationale": "Placeholder spheres are misleading for debug/development. The spec requirement for visual accuracy is fundamental to the viewer's purpose.",
       "confidence": "HIGH",
-      "status": "applied",
-      "applied_at": "2026-03-22"
+      "estimated_effort": "medium",
+      "status": "approved"
     },
     {
       "id": 3,
-      "requirement": "FR-008",
-      "direction": "BACKFILL",
-      "severity": "minor",
-      "description": "Update spec table to reflect Demo 04 evolved to wrecking ball + brick wall",
+      "spec": "005-stride-bepu-integration",
+      "requirement": "FR-030",
+      "direction": "ALIGN",
+      "spec_text": "Users MUST be able to set the position and velocity of kinematic bodies directly",
+      "actual": "Position/velocity only settable at creation time; no runtime update RPC",
+      "proposed_change": "Add SetBodyPose proto message and command (body_id, position, orientation, velocity, angular_velocity) with SimulationWorld.setBodyPose handler and client interface wrappers",
+      "rationale": "Kinematic bodies are designed for script-driven motion. Without runtime pose updates, they are limited to constant-velocity motion from creation, severely limiting utility.",
       "confidence": "HIGH",
-      "status": "applied",
-      "applied_at": "2026-03-22"
+      "estimated_effort": "medium",
+      "status": "approved"
     },
     {
       "id": 4,
-      "requirement": "SC-003",
-      "direction": "HUMAN_DECISION",
-      "severity": "moderate",
-      "description": "User chose: Accept current state. Demos 06-15 accepted without individual review.",
-      "confidence": "HIGH",
-      "status": "applied",
-      "applied_at": "2026-03-22",
-      "resolution": "accept_current_state"
-    },
-    {
-      "id": 5,
-      "requirement": "FR-006/SC-004",
-      "direction": "REMOVE",
-      "severity": "low",
-      "description": "Runtime constraint verified by code inspection — all demos under 25s.",
-      "confidence": "HIGH",
-      "status": "applied",
-      "applied_at": "2026-03-22"
-    },
-    {
-      "id": 6,
-      "requirement": "SC-002",
-      "direction": "REMOVE",
-      "severity": "low",
-      "description": "Superseded by SC-003 collaborative review.",
+      "spec": "005-stride-bepu-integration",
+      "requirement": "SC-008",
+      "direction": "BACKFILL",
+      "spec_text": "All new features accessible through REPL commands, MCP tools, scripting library",
+      "actual": "Core features accessible; scripting library has 4/10 constraint convenience builders",
+      "proposed_text": "SC-008: All new features MUST be accessible through the REPL and MCP interfaces. The scripting library MUST provide convenience builders for the most commonly used constraint types (ball-socket, hinge, weld, distance limit) with the remaining types constructible via standard proto message builders.",
+      "follow_up": "Add 6 remaining constraint convenience builders as enhancement",
+      "rationale": "Core accessibility met via REPL and MCP. Scripting convenience builders cover the 4 most common types. Remaining types accessible via proto API.",
       "confidence": "MEDIUM",
-      "status": "applied",
-      "applied_at": "2026-03-22"
-    },
-    {
-      "id": 7,
-      "requirement": "NEW",
-      "direction": "NEW_SPEC",
-      "severity": "major",
-      "description": "Viewer shape sizing fix — deferred to align-tasks.md rather than full spec",
-      "confidence": "MEDIUM",
-      "status": "applied",
-      "applied_at": "2026-03-22",
-      "resolution": "align_task_created"
+      "status": "approved"
     }
   ]
 }

@@ -1,5 +1,48 @@
 # Merged Features Log
 
+## Stride BepuPhysics Integration — 2026-03-22
+**Branch:** 005-stride-bepu-integration
+**Spec:** specs/005-stride-bepu-integration
+
+**What was added:**
+- Extended physics sandbox from 3 to 10 shape types (capsule, cylinder, triangle, convex hull, compound, mesh, shape reference + existing sphere/box/plane)
+- 10 constraint types (ball socket, hinge, weld, distance limit/spring, swing/twist limits, linear/angular motors, point-on-line) with auto-cleanup on body removal
+- Per-body RGBA color with default palette by shape type
+- Per-body material properties (friction, bounciness, spring settings) with presets (bouncy, sticky, slippery)
+- Physics queries via dedicated RPCs: raycast (single/all hits), sweep cast, overlap — each with batch variant
+- Collision layer filtering via 32-bit group/mask bitmask with runtime SetCollisionFilter
+- Kinematic body support (unaffected by gravity, push dynamic bodies) with SetBodyPose runtime updates
+- Debug wireframe visualization (F3 toggle) showing collider outlines and constraint connections
+- Shape registration/caching mechanism for vertex-heavy shapes
+- BepuFSharp 0.2.0-beta.1 wrapper with full constraint, material, query, and collision filter API
+- 6 new query RPCs on PhysicsHub service
+- Client interfaces: REPL commands (raycast, sweepCast, overlap, setBodyPose), MCP tools (sweep_cast, overlap, set_body_pose, add_constraint, register_shape, etc.), Scripting library (QueryBuilders, ConstraintBuilders modules)
+
+**New Components:**
+- `src/PhysicsSimulation/Queries/QueryHandler.fsi/.fs` — Query dispatch
+- `src/PhysicsViewer/Rendering/ShapeGeometry.fsi/.fs` — Shape primitive selection, sizing, color palette
+- `src/PhysicsViewer/Rendering/DebugRenderer.fsi/.fs` — Wireframe debug overlay
+- `src/PhysicsSandbox.Scripting/ConstraintBuilders.fsi/.fs` — Constraint convenience builders
+- `src/PhysicsSandbox.Scripting/QueryBuilders.fsi/.fs` — Query convenience wrappers
+- `tests/PhysicsSimulation.Tests/ExtendedFeatureTests.fs` — 46 new unit tests
+
+**Modified Components:**
+- `src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto` — ~50 new messages, 6 query RPCs, SetBodyPose
+- `src/PhysicsSimulation/World/SimulationWorld.fs` — 10 shape types, constraints, materials, colors, collision filters, kinematic dispatch, setBodyPose
+- `src/PhysicsSimulation/Commands/CommandHandler.fs` — 7 new command dispatches
+- `src/PhysicsServer/Hub/MessageRouter.fs` — Query channel and correlation
+- `src/PhysicsServer/Services/PhysicsHubService.fs` — Query RPC implementations
+- `src/PhysicsViewer/Rendering/SceneManager.fs` — Per-body color, shape geometry dispatch
+- `src/PhysicsViewer/Program.fs` — F3 debug toggle integration
+- `src/PhysicsClient/Commands/SimulationCommands.fs` — Query commands, setBodyPose, constraint/shape commands
+- `src/PhysicsSandbox.Mcp/SimulationTools.fs` — 6 new MCP tools
+- `Scripting/demos/Prelude.fsx` — Capsule/cylinder/color/material/constraint helpers
+- `Scripting/demos_py/prelude.py` — Capsule/cylinder/color/material helpers
+
+**Tasks Completed:** 86/86 tasks
+
+---
+
 ## Improve Physics Demos — 2026-03-22
 **Branch:** 004-improve-demos
 **Spec:** specs/004-improve-demos

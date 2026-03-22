@@ -117,3 +117,71 @@ let makeTorqueCmd (bodyId: string) (torque: float * float * float) =
     let cmd = SimulationCommand()
     cmd.ApplyTorque <- at
     cmd
+
+/// <summary>Builds an <c>AddBody</c> command for a capsule (cylinder with hemispherical caps).</summary>
+let makeCapsuleCmd (id: string) (pos: float * float * float) (radius: float) (length: float) (mass: float) =
+    let capsule = Capsule()
+    capsule.Radius <- radius
+    capsule.Length <- length
+    let shape = Shape()
+    shape.Capsule <- capsule
+    let body = AddBody()
+    body.Id <- id
+    body.Position <- toVec3 pos
+    body.Mass <- mass
+    body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
+
+/// <summary>Builds an <c>AddBody</c> command for a cylinder.</summary>
+let makeCylinderCmd (id: string) (pos: float * float * float) (radius: float) (length: float) (mass: float) =
+    let cylinder = Cylinder()
+    cylinder.Radius <- radius
+    cylinder.Length <- length
+    let shape = Shape()
+    shape.Cylinder <- cylinder
+    let body = AddBody()
+    body.Id <- id
+    body.Position <- toVec3 pos
+    body.Mass <- mass
+    body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
+
+/// <summary>Creates a <c>MaterialProperties</c> proto message from physical parameters.</summary>
+let makeMaterialProperties (friction: float) (maxRecovery: float) (springFreq: float) (springDamping: float) =
+    let m = MaterialProperties()
+    m.Friction <- friction
+    m.MaxRecoveryVelocity <- maxRecovery
+    m.SpringFrequency <- springFreq
+    m.SpringDampingRatio <- springDamping
+    m
+
+/// <summary>Creates a <c>Color</c> proto message from RGBA components (each 0.0–1.0).</summary>
+let makeColor (r: float) (g: float) (b: float) (a: float) =
+    let c = Color()
+    c.R <- r
+    c.G <- g
+    c.B <- b
+    c.A <- a
+    c
+
+/// <summary>Bouncy material preset: moderate friction (0.4), high recovery (8.0), stiff spring (60 Hz, 0.5 damping).</summary>
+let bouncyMaterial = makeMaterialProperties 0.4 8.0 60.0 0.5
+
+/// <summary>Sticky/high-friction material preset: friction 2.0, low recovery (0.5), stiff spring (30 Hz, 1.0 damping).</summary>
+let stickyMaterial = makeMaterialProperties 2.0 0.5 30.0 1.0
+
+/// <summary>Slippery/ice-like material preset: near-zero friction (0.01), moderate recovery (2.0), standard spring (30 Hz, 1.0 damping).</summary>
+let slipperyMaterial = makeMaterialProperties 0.01 2.0 30.0 1.0
+
+/// <summary>Builds a <c>SetBodyPose</c> command to update a body's position at runtime.</summary>
+let makeSetBodyPoseCmd (bodyId: string) (pos: float * float * float) =
+    let sbp = SetBodyPose()
+    sbp.BodyId <- bodyId
+    sbp.Position <- toVec3 pos
+    let cmd = SimulationCommand()
+    cmd.SetBodyPose <- sbp
+    cmd

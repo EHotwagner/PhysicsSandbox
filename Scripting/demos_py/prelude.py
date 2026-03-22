@@ -151,6 +151,70 @@ def add_plane(session: Session, normal: tuple[float, float, float] | None = None
     return bid
 
 
+def add_capsule(session: Session, pos: tuple[float, float, float],
+                radius: float, length: float, mass: float,
+                body_id: str | None = None,
+                color: pb.Color | None = None,
+                material: pb.MaterialProperties | None = None) -> str:
+    bid = body_id or next_id("capsule")
+    body = pb.AddBody(
+        id=bid, position=to_vec3(*pos), mass=mass,
+        shape=pb.Shape(capsule=pb.Capsule(radius=radius, length=length)))
+    if color:
+        body.color.CopyFrom(color)
+    if material:
+        body.material.CopyFrom(material)
+    _send(session, pb.SimulationCommand(add_body=body))
+    return bid
+
+
+def add_cylinder(session: Session, pos: tuple[float, float, float],
+                 radius: float, length: float, mass: float,
+                 body_id: str | None = None,
+                 color: pb.Color | None = None,
+                 material: pb.MaterialProperties | None = None) -> str:
+    bid = body_id or next_id("cylinder")
+    body = pb.AddBody(
+        id=bid, position=to_vec3(*pos), mass=mass,
+        shape=pb.Shape(cylinder=pb.Cylinder(radius=radius, length=length)))
+    if color:
+        body.color.CopyFrom(color)
+    if material:
+        body.material.CopyFrom(material)
+    _send(session, pb.SimulationCommand(add_body=body))
+    return bid
+
+
+def make_color(r: float, g: float, b: float, a: float = 1.0) -> pb.Color:
+    return pb.Color(r=r, g=g, b=b, a=a)
+
+
+def make_material(friction: float = 1.0, max_recovery: float = 2.0,
+                  spring_freq: float = 30.0, spring_damping: float = 1.0) -> pb.MaterialProperties:
+    return pb.MaterialProperties(
+        friction=friction, max_recovery_velocity=max_recovery,
+        spring_frequency=spring_freq, spring_damping_ratio=spring_damping)
+
+
+BOUNCY_MATERIAL = make_material(0.4, 8.0, 60.0, 0.5)
+STICKY_MATERIAL = make_material(2.0, 0.5, 30.0, 1.0)
+SLIPPERY_MATERIAL = make_material(0.01, 2.0, 30.0, 1.0)
+
+
+def make_capsule_cmd(body_id: str, pos: tuple[float, float, float],
+                     radius: float, length: float, mass: float) -> pb.SimulationCommand:
+    return pb.SimulationCommand(add_body=pb.AddBody(
+        id=body_id, position=to_vec3(*pos), mass=mass,
+        shape=pb.Shape(capsule=pb.Capsule(radius=radius, length=length))))
+
+
+def make_cylinder_cmd(body_id: str, pos: tuple[float, float, float],
+                      radius: float, length: float, mass: float) -> pb.SimulationCommand:
+    return pb.SimulationCommand(add_body=pb.AddBody(
+        id=body_id, position=to_vec3(*pos), mass=mass,
+        shape=pb.Shape(cylinder=pb.Cylinder(radius=radius, length=length))))
+
+
 def remove_body(session: Session, body_id: str) -> pb.CommandAck:
     return _send(session, pb.SimulationCommand(
         remove_body=pb.RemoveBody(body_id=body_id)))

@@ -88,6 +88,69 @@ type PhysicsHubService(router: MessageRouter) =
         response.Pipeline <- timings
         Task.FromResult(response)
 
+    /// <summary>Execute a raycast query by forwarding to the simulation.</summary>
+    override _.Raycast(request: RaycastRequest, context: ServerCallContext) =
+        task {
+            let qr = QueryRequest(CorrelationId = System.Guid.NewGuid().ToString("N"))
+            qr.Raycast <- request
+            let! response = submitQuery router qr context.CancellationToken
+            return response.Raycast
+        }
+
+    /// <summary>Execute a batch of raycast queries.</summary>
+    override _.RaycastBatch(request: RaycastBatchRequest, context: ServerCallContext) =
+        task {
+            let response = RaycastBatchResponse()
+            for ray in request.Rays do
+                let qr = QueryRequest(CorrelationId = System.Guid.NewGuid().ToString("N"))
+                qr.Raycast <- ray
+                let! r = submitQuery router qr context.CancellationToken
+                response.Results.Add(r.Raycast)
+            return response
+        }
+
+    /// <summary>Execute a sweep cast query.</summary>
+    override _.SweepCast(request: SweepCastRequest, context: ServerCallContext) =
+        task {
+            let qr = QueryRequest(CorrelationId = System.Guid.NewGuid().ToString("N"))
+            qr.SweepCast <- request
+            let! response = submitQuery router qr context.CancellationToken
+            return response.SweepCast
+        }
+
+    /// <summary>Execute a batch of sweep cast queries.</summary>
+    override _.SweepCastBatch(request: SweepCastBatchRequest, context: ServerCallContext) =
+        task {
+            let response = SweepCastBatchResponse()
+            for sweep in request.Sweeps do
+                let qr = QueryRequest(CorrelationId = System.Guid.NewGuid().ToString("N"))
+                qr.SweepCast <- sweep
+                let! r = submitQuery router qr context.CancellationToken
+                response.Results.Add(r.SweepCast)
+            return response
+        }
+
+    /// <summary>Execute an overlap query.</summary>
+    override _.Overlap(request: OverlapRequest, context: ServerCallContext) =
+        task {
+            let qr = QueryRequest(CorrelationId = System.Guid.NewGuid().ToString("N"))
+            qr.Overlap <- request
+            let! response = submitQuery router qr context.CancellationToken
+            return response.Overlap
+        }
+
+    /// <summary>Execute a batch of overlap queries.</summary>
+    override _.OverlapBatch(request: OverlapBatchRequest, context: ServerCallContext) =
+        task {
+            let response = OverlapBatchResponse()
+            for overlap in request.Overlaps do
+                let qr = QueryRequest(CorrelationId = System.Guid.NewGuid().ToString("N"))
+                qr.Overlap <- overlap
+                let! r = submitQuery router qr context.CancellationToken
+                response.Results.Add(r.Overlap)
+            return response
+        }
+
     /// <summary>Stream command audit events to the client. Subscribes to all command events and forwards them until the client disconnects.</summary>
     override _.StreamCommands
         (request: StateRequest, responseStream: IServerStreamWriter<CommandEvent>, context: ServerCallContext)

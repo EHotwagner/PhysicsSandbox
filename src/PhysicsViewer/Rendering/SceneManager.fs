@@ -5,65 +5,24 @@ open Stride.Engine
 open Stride.Games
 open Stride.CommunityToolkit.Engine
 open Stride.CommunityToolkit.Bepu
-open Stride.CommunityToolkit.Rendering.ProceduralModels
 open PhysicsSandbox.Shared.Contracts
 
-/// <summary>
-/// Discriminated union classifying proto Shape messages into known geometry kinds for color and primitive mapping.
-/// </summary>
-type ShapeKind =
-    /// <summary>A spherical body.</summary>
-    | Sphere
-    /// <summary>A box-shaped body.</summary>
-    | Box
-    /// <summary>An unrecognized or null shape.</summary>
-    | Unknown
+type StrideColor = Stride.Core.Mathematics.Color
+type ProtoColor = PhysicsSandbox.Shared.Contracts.Color
 
-/// <summary>
-/// Tracks the 3D scene state, mapping simulation body IDs to Stride entities and storing simulation metadata.
-/// </summary>
+/// Tracks the 3D scene state, mapping simulation body IDs to Stride entities.
 type SceneState =
-    { /// <summary>Map from body ID to the corresponding Stride Entity in the scene.</summary>
-      Bodies: Map<string, Entity>
-      /// <summary>The simulation time from the last applied state snapshot.</summary>
+    { Bodies: Map<string, Entity>
       SimTime: float
-      /// <summary>Whether the simulation was running in the last applied state snapshot.</summary>
       SimRunning: bool
-      /// <summary>Whether wireframe rendering mode is currently enabled.</summary>
       Wireframe: bool }
 
-/// <summary>
-/// Creates an empty scene state with no bodies, zero simulation time, and wireframe disabled.
-/// </summary>
-/// <returns>A new SceneState ready to receive simulation snapshots.</returns>
+/// Creates an empty scene state.
 let create () =
     { Bodies = Map.empty
       SimTime = 0.0
       SimRunning = false
       Wireframe = false }
-
-/// <summary>
-/// Classifies a proto Shape message into a ShapeKind discriminated union value.
-/// </summary>
-/// <param name="shape">The proto Shape to classify; null shapes return Unknown.</param>
-/// <returns>The corresponding ShapeKind.</returns>
-let classifyShape (shape: Shape) =
-    if isNull shape then Unknown
-    elif shape.ShapeCase = Shape.ShapeOneofCase.Sphere then Sphere
-    elif shape.ShapeCase = Shape.ShapeOneofCase.Box then Box
-    else Unknown
-
-let private shapeColor kind =
-    match kind with
-    | Sphere -> Color.Blue
-    | Box -> Color.Orange
-    | Unknown -> Color.Red
-
-let private shapePrimitive kind =
-    match kind with
-    | Sphere -> PrimitiveModelType.Sphere
-    | Box -> PrimitiveModelType.Cube
-    | Unknown -> PrimitiveModelType.Sphere
 
 let private protoVec3ToStride (v: Vec3) =
     if isNull v then Vector3.Zero
@@ -73,30 +32,27 @@ let private protoQuatToStride (v: Vec4) =
     if isNull v then Quaternion.Identity
     else Quaternion(float32 v.X, float32 v.Y, float32 v.Z, float32 v.W)
 
-/// Compute the visual size for a primitive based on the physics shape dimensions.
-/// For spheres: Size = diameter (Stride sphere primitive has diameter = Size.X).
-/// For boxes: Size = full extents (2 * half-extents).
-let private shapeSize (shape: Shape) =
-    if isNull shape then System.Nullable<Vector3>()
-    elif shape.ShapeCase = Shape.ShapeOneofCase.Sphere then
-        let d = float32 shape.Sphere.Radius * 2.0f
-        System.Nullable(Vector3(d, d, d))
-    elif shape.ShapeCase = Shape.ShapeOneofCase.Box then
-        let he = shape.Box.HalfExtents
-        if isNull he then System.Nullable<Vector3>()
-        else System.Nullable(Vector3(float32 he.X * 2.0f, float32 he.Y * 2.0f, float32 he.Z * 2.0f))
-    else System.Nullable<Vector3>()
+/// Convert proto Color to Stride Color.
+let private protoColorToStride (c: ProtoColor) =
+    if isNull c then None
+    else
+        Some (StrideColor(byte (c.R * 255.0), byte (c.G * 255.0), byte (c.B * 255.0), byte (c.A * 255.0)))
+
+/// Determine the visual color for a body: use body color if set, otherwise default by shape type.
+let private bodyColor (body: Body) : StrideColor =
+    match protoColorToStride body.Color with
+    | Some c -> c
+    | None -> ShapeGeometry.defaultColor body.Shape
 
 let private createEntity (game: Game) (scene: Scene) (body: Body) (wireframe: bool) =
-    let kind = classifyShape body.Shape
-    let color = shapeColor kind
-    let primType = shapePrimitive kind
+    let color = bodyColor body
+    let primType = ShapeGeometry.primitiveType body.Shape
     let material =
         if wireframe then
-            game.CreateFlatMaterial(System.Nullable<Color>(color))
+            game.CreateFlatMaterial(System.Nullable<StrideColor>(color))
         else
             game.CreateMaterial(color)
-    let size = shapeSize body.Shape
+    let size = ShapeGeometry.shapeSize body.Shape
     let options = Bepu3DPhysicsOptions(Material = material, IncludeCollider = false, Size = size)
     let entity = game.Create3DPrimitive(primType, options)
     entity.Transform.Position <- protoVec3ToStride body.Position
@@ -108,16 +64,7 @@ let private updateEntity (entity: Entity) (body: Body) =
     entity.Transform.Position <- protoVec3ToStride body.Position
     entity.Transform.Rotation <- protoQuatToStride body.Orientation
 
-/// <summary>
-/// Applies a simulation state snapshot to the 3D scene, adding new entities for new bodies,
-/// updating positions and orientations for existing bodies, and removing entities for bodies
-/// no longer present in the snapshot.
-/// </summary>
-/// <param name="game">The Stride Game instance used to create materials and primitives.</param>
-/// <param name="scene">The Stride Scene to add or remove entities from.</param>
-/// <param name="state">The current scene state to update.</param>
-/// <param name="simState">The simulation state snapshot from the server.</param>
-/// <returns>An updated SceneState reflecting the new simulation snapshot.</returns>
+/// Applies a simulation state snapshot to the 3D scene.
 let applyState (game: Game) (scene: Scene) (state: SceneState) (simState: SimulationState) =
     if isNull simState || isNull simState.Bodies then state
     else
@@ -150,14 +97,7 @@ let applyState (game: Game) (scene: Scene) (state: SceneState) (simState: Simula
         SimTime = simState.Time
         SimRunning = simState.Running }
 
-/// <summary>
-/// Toggles wireframe rendering mode. When the mode changes, all existing entities are removed
-/// so that applyState can recreate them with the appropriate material (flat for wireframe, lit otherwise).
-/// </summary>
-/// <param name="game">The Stride Game instance (unused directly but part of the public API for consistency).</param>
-/// <param name="cmd">The ToggleWireframe command specifying the desired wireframe state.</param>
-/// <param name="state">The current scene state.</param>
-/// <returns>An updated SceneState with the new wireframe mode; bodies are cleared if the mode changed.</returns>
+/// Toggles wireframe rendering mode.
 let applyWireframe (game: Game) (cmd: ToggleWireframe) (state: SceneState) =
     if cmd.Enabled = state.Wireframe then state
     else
@@ -166,11 +106,11 @@ let applyWireframe (game: Game) (cmd: ToggleWireframe) (state: SceneState) =
             kvp.Value.Scene <- null
         { state with Bodies = Map.empty; Wireframe = cmd.Enabled }
 
-/// <summary>Gets whether wireframe rendering mode is currently enabled.</summary>
+/// Gets whether wireframe rendering mode is currently enabled.
 let isWireframe (state: SceneState) = state.Wireframe
 
-/// <summary>Gets the simulation time from the last applied state snapshot.</summary>
+/// Gets the simulation time from the last applied state snapshot.
 let simulationTime (state: SceneState) = state.SimTime
 
-/// <summary>Gets whether the simulation was running in the last applied state snapshot.</summary>
+/// Gets whether the simulation was running in the last applied state snapshot.
 let isRunning (state: SceneState) = state.SimRunning

@@ -1,0 +1,269 @@
+# Feature Specification: Stride BepuPhysics Integration
+
+**Feature Branch**: `005-stride-bepu-integration`
+**Created**: 2026-03-22
+**Status**: Completed
+**Input**: User description: "Stride3D has various capabilities for BepuPhysics. Incorporate as many as possible into the viewer, simulation, and BepuFSharp wrapper."
+
+## Clarifications
+
+### Session 2026-03-22
+
+- Q: Should bodies support per-body user-specified colors or only auto-assigned colors by shape type? → A: Per-body user-specified color (RGBA), with auto-assigned defaults when no color is specified.
+- Q: How many constraint types should this feature include? → A: Curated ~8-10 types: hinge, ball-socket, distance, weld, angular motor, linear motor, swing limit, twist limit, point-on-line servo. Remaining types added incrementally.
+- Q: Where does mesh/convex hull vertex data come from? → A: Raw vertex arrays in commands, with server-side shape caching. Once a mesh/hull is registered, bodies reference it by ID without retransmitting vertex data. The server assumes all clients (including custom ones) cache shapes they've seen.
+- Q: Should BepuFSharp wrapper remain Stride-independent or gain Stride.BepuPhysics integration? → A: Full Stride integration. The wrapper directly references Stride.BepuPhysics types, enabling shared type conversions, constraint definitions, and collider interop between the wrapper and Stride-based consumers.
+- Q: How should physics query results be returned? → A: New dedicated RPC methods on PhysicsHub (Raycast, SweepCast, Overlap) returning typed results, each with a batch variant for issuing multiple queries in a single call.
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Extended Shape Support (Priority: P1)
+
+A developer creates physics simulations using the full range of body shapes beyond the current sphere, box, and plane. They can add capsules, cylinders, triangles, convex hulls, compound shapes, and meshes through any client (REPL, MCP, scripts). The viewer renders each shape type with a visually distinct and geometrically accurate 3D model.
+
+**Why this priority**: The current system only supports 3 of the 8 shape types that BepuFSharp already handles. Unlocking all shapes is foundational for every other feature and immediately expands simulation expressiveness.
+
+**Independent Test**: Can be fully tested by sending AddBody commands with each new shape type and verifying the viewer renders the correct geometry at the correct position.
+
+**Acceptance Scenarios**:
+
+1. **Given** a running simulation, **When** a user adds a body with a capsule shape (radius + length), **Then** the simulation tracks it and the viewer renders a capsule-shaped 3D model at the correct position and orientation.
+2. **Given** a running simulation, **When** a user adds a body with a cylinder shape, **Then** the viewer renders a cylinder model that matches the specified dimensions.
+3. **Given** a running simulation with mixed shape types, **When** the state is streamed to subscribers, **Then** each body reports its full shape parameters so any viewer can reconstruct the geometry.
+4. **Given** a user adds a compound shape (multiple sub-shapes), **Then** the viewer renders all sub-shapes as a single combined entity.
+
+---
+
+### User Story 2 - Physics Debug Visualization (Priority: P2)
+
+A developer investigating physics behavior can toggle a debug overlay in the viewer that renders wireframe outlines of all colliders and constraint connections. This helps diagnose collision issues, see bounding volumes, and understand joint configurations without guessing from rendered geometry alone.
+
+**Why this priority**: Debug visualization is essential for development productivity and directly leverages Stride.BepuPhysics.Debug. It makes every other physics feature easier to develop and test.
+
+**Independent Test**: Can be fully tested by toggling debug mode in the viewer and verifying wireframe outlines appear over physics bodies and constraints.
+
+**Acceptance Scenarios**:
+
+1. **Given** the viewer is running with physics bodies visible, **When** a user enables debug visualization, **Then** wireframe outlines of all colliders are rendered overlaying the solid geometry.
+2. **Given** constraints exist between bodies, **When** debug visualization is active, **Then** constraint connections are rendered as lines or shapes indicating the joint type and anchor points.
+3. **Given** debug visualization is active, **When** it is toggled off, **Then** wireframe overlays disappear and normal rendering resumes.
+
+---
+
+### User Story 3 - Constraints and Joints (Priority: P3)
+
+A developer builds complex articulated structures by connecting bodies with physics constraints. They can create hinges (doors, levers), ball sockets (ragdoll joints), distance limits (chains, ropes), welds (rigid connections), angular and linear motors (powered joints), swing and twist limits (joint range restrictions), and point-on-line servos (sliding joints) between any two bodies. Constraints are visible in debug mode and respond to forces realistically.
+
+**Why this priority**: Constraints transform the sandbox from isolated falling objects into connected mechanical systems. This is the highest-impact feature after shapes.
+
+**Independent Test**: Can be fully tested by creating two bodies, adding a constraint between them, applying a force, and observing the constrained motion behavior.
+
+**Acceptance Scenarios**:
+
+1. **Given** two dynamic bodies exist, **When** a user adds a hinge constraint between them, **Then** one body can rotate relative to the other only around the hinge axis.
+2. **Given** a ball-socket constraint connects two bodies, **When** a force is applied to one body, **Then** it swings freely around the attachment point while staying connected.
+3. **Given** a distance constraint with min/max limits connects two bodies, **When** they are pushed apart beyond the maximum distance, **Then** the constraint pulls them back within range.
+4. **Given** a weld constraint connects two bodies, **When** forces act on them, **Then** they move as a single rigid unit.
+5. **Given** constraints exist, **When** a user removes a constraint, **Then** the connected bodies become independent.
+
+---
+
+### User Story 4 - Material Properties (Priority: P4)
+
+A developer controls how bodies interact on contact by specifying material properties: friction (how much surfaces grip), bounciness (how much energy is preserved on impact), and damping (how quickly motion decays). These properties make simulations physically realistic and visually interesting.
+
+**Why this priority**: Material properties add physical realism to collisions which are already happening. This builds on the existing shape/body infrastructure with minimal architectural change.
+
+**Independent Test**: Can be fully tested by dropping a body onto a surface with different material settings and observing bounce height and sliding behavior.
+
+**Acceptance Scenarios**:
+
+1. **Given** a body with high bounciness is dropped onto a static surface, **When** it impacts, **Then** it rebounds to a significant fraction of its original height.
+2. **Given** a body with zero friction on a tilted surface, **When** released, **Then** it slides freely without deceleration from surface contact.
+3. **Given** a body with high friction on a tilted surface, **When** released, **Then** it resists sliding and may remain stationary on shallow inclines.
+4. **Given** default material properties are not specified, **When** a body is created, **Then** reasonable defaults are applied (moderate friction, low bounciness).
+
+---
+
+### User Story 5 - Physics Queries (Priority: P5)
+
+A developer queries the physics world without modifying it: casting rays to find what a line hits, sweep-testing a shape along a path to check for obstacles, or testing what overlaps a volume. Results identify the hit body, contact point, and distance. Queries are available through commands and the MCP server.
+
+**Why this priority**: Queries enable interactive tools (click-to-select in viewer, AI-driven scene analysis via MCP) and are required for advanced scenarios like character controllers and sensors.
+
+**Independent Test**: Can be fully tested by populating a scene with known bodies, issuing raycast/sweep/overlap queries, and verifying the returned hits match expected intersections.
+
+**Acceptance Scenarios**:
+
+1. **Given** a scene with multiple bodies, **When** a raycast is issued from an origin along a direction, **Then** the first body intersected is returned with hit point, normal, and distance.
+2. **Given** a scene with bodies, **When** a penetrating raycast is issued, **Then** all bodies along the ray are returned in distance order.
+3. **Given** a scene with bodies, **When** a sphere sweep is issued along a path, **Then** the first body the swept sphere would contact is returned.
+4. **Given** a scene with bodies, **When** an overlap query is issued for a volume, **Then** all bodies intersecting that volume are returned.
+
+---
+
+### User Story 6 - Collision Layers and Filtering (Priority: P6)
+
+A developer organizes bodies into collision layers so that certain groups of objects pass through each other. For example, projectiles can ignore friendly units, or ghost objects can overlap with everything without generating collision responses. Filtering is configured per-body and applies to both collision detection and physics queries.
+
+**Why this priority**: Collision filtering is important for complex simulations but requires the foundational shape and constraint work to be most useful.
+
+**Independent Test**: Can be fully tested by creating bodies on different layers and verifying that bodies on non-interacting layers pass through each other.
+
+**Acceptance Scenarios**:
+
+1. **Given** body A is on layer 1 and body B is on layer 2, **When** the collision matrix disables layer 1 vs layer 2 interactions, **Then** the bodies pass through each other without collision response.
+2. **Given** body A is on layer 1 and body C is also on layer 1, **When** they move toward each other, **Then** they collide normally.
+3. **Given** a raycast specifies a collision mask, **When** cast through the scene, **Then** only bodies on matching layers are returned as hits.
+
+---
+
+### User Story 7 - Kinematic Bodies (Priority: P7)
+
+A developer creates kinematic bodies that move according to explicit position/velocity commands rather than physics forces. Kinematic bodies collide with and push dynamic bodies but are not affected by gravity or impacts. This enables moving platforms, animated obstacles, and scripted motion.
+
+**Why this priority**: Kinematic bodies are a distinct body type already supported by BepuFSharp but not exposed through the command protocol. They fill a gap between static and dynamic bodies.
+
+**Independent Test**: Can be fully tested by creating a kinematic body, setting its velocity, and verifying it moves at that velocity while pushing dynamic bodies it contacts.
+
+**Acceptance Scenarios**:
+
+1. **Given** a kinematic body exists, **When** gravity is active, **Then** the kinematic body is unaffected and remains at its set position or velocity.
+2. **Given** a kinematic body moves through the scene, **When** it contacts a dynamic body, **Then** the dynamic body is pushed away while the kinematic body continues unimpeded.
+3. **Given** a kinematic body exists, **When** a user sets its position directly, **Then** it teleports to the new position and the viewer reflects the change.
+
+---
+
+### User Story 8 - Per-Body Color (Priority: P1)
+
+A developer specifies a custom color for each body when creating it, using RGBA values. Bodies without a specified color receive an auto-assigned default based on their shape type. The viewer renders each body in its assigned color. This enables visually rich scenes where color conveys meaning (teams, categories, temperature, mass, etc.).
+
+**Why this priority**: Color is a fundamental visual property that enhances every other feature. It is low-effort to implement alongside shape extensions and dramatically improves the usefulness of the viewer.
+
+**Independent Test**: Can be fully tested by creating two bodies of the same shape with different specified colors and verifying the viewer renders them in those distinct colors.
+
+**Acceptance Scenarios**:
+
+1. **Given** a running simulation, **When** a user adds a body with a specified RGBA color, **Then** the viewer renders that body in the specified color.
+2. **Given** a user adds a body without specifying a color, **When** it appears in the viewer, **Then** it is rendered with a default color based on its shape type.
+3. **Given** a body exists with a color, **When** the state is streamed to subscribers, **Then** the body's color is included in the state data so any viewer can render it correctly.
+4. **Given** a body with a semi-transparent color (alpha < 1.0), **When** rendered in the viewer, **Then** it appears with the corresponding transparency.
+
+---
+
+### Edge Cases
+
+- What happens when a constraint references a body that has been removed? The constraint must be automatically removed or the removal must be rejected.
+- How does the system handle a convex hull with degenerate geometry (coplanar points, too few points)? Validation must reject invalid shapes with a clear error message.
+- What happens when a compound shape contains zero sub-shapes? The command must be rejected.
+- How does debug visualization perform with 1000+ bodies? Performance must remain acceptable (viewer frame rate above 30 FPS).
+- What happens when a raycast originates inside a body? The behavior must be well-defined (either skip that body or report it at distance zero).
+- How does the system handle conflicting material properties on two contacting bodies? Standard physics practice: use the combined/averaged properties.
+- What happens when a body references a shape ID that hasn't been registered? The command must be rejected with a clear error.
+- What happens when a client connects mid-session and hasn't seen prior shape registrations? The state stream must include shape definitions for any shapes the client hasn't yet received (server tracks per-subscriber cache state, or re-sends all registered shapes on new subscriber connection).
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+**Shapes**:
+- **FR-001**: System MUST support capsule shapes with configurable radius and length.
+- **FR-002**: System MUST support cylinder shapes with configurable radius and length.
+- **FR-003**: System MUST support triangle shapes defined by three vertex positions.
+- **FR-004**: System MUST support convex hull shapes defined by a set of vertex positions.
+- **FR-005**: System MUST support compound shapes composed of multiple sub-shapes with relative transforms.
+- **FR-006**: System MUST support mesh shapes defined by triangle vertex data.
+- **FR-006a**: System MUST support a shape registration mechanism where vertex-heavy shapes (meshes, convex hulls) are registered once with a unique identifier, and subsequent bodies reference the shape by ID without retransmitting vertex data.
+- **FR-006b**: The server MUST cache registered shapes and include all registered shape definitions in every state stream update, so all clients (including late-joiners) receive the complete shape cache without per-subscriber tracking.
+- **FR-006c**: When a simulation is reset, the shape cache MUST be cleared, and shapes MUST be re-registered as needed.
+- **FR-007**: The viewer MUST render each shape type with geometry that visually matches the physics collider dimensions.
+
+**Debug Visualization**:
+- **FR-008**: The viewer MUST support a debug overlay mode that renders wireframe outlines of all physics colliders.
+- **FR-009**: The viewer MUST render constraint connections in debug mode showing joint type and anchor points.
+- **FR-010**: Debug visualization MUST be togglable at runtime without restarting the viewer.
+
+**Constraints** (curated set of ~8-10 types; remaining Stride.BepuPhysics constraint types may be added incrementally):
+- **FR-011**: System MUST support hinge constraints that restrict relative rotation to a single axis.
+- **FR-012**: System MUST support ball-socket constraints that allow free rotation around an attachment point.
+- **FR-013**: System MUST support distance constraints with configurable minimum and maximum distance.
+- **FR-014**: System MUST support weld constraints that rigidly connect two bodies.
+- **FR-011a**: System MUST support angular motor constraints that drive rotation around an axis with configurable target speed and force limit.
+- **FR-011b**: System MUST support linear motor constraints that drive translation along an axis with configurable target speed and force limit.
+- **FR-011c**: System MUST support swing limit constraints that restrict angular deviation from an axis up to a configurable maximum angle.
+- **FR-011d**: System MUST support twist limit constraints that restrict rotation around a shared axis to a configurable angular range.
+- **FR-011e**: System MUST support point-on-line servo constraints that restrict a body's attachment point to slide along a defined line on another body.
+- **FR-015**: System MUST support removing individual constraints by identifier.
+- **FR-016**: System MUST automatically remove constraints when a referenced body is removed.
+
+**Material Properties**:
+- **FR-017**: System MUST allow specifying friction coefficient per body (default: moderate friction).
+- **FR-018**: System MUST allow specifying bounciness/restitution per body (default: low bounciness).
+- **FR-019**: System MUST allow specifying linear and angular damping per body.
+
+**Physics Queries**:
+- **FR-020**: System MUST support single-hit raycasts returning the first intersected body, hit point, normal, and distance via a dedicated request-response interface.
+- **FR-021**: System MUST support penetrating raycasts returning all intersected bodies in distance order.
+- **FR-022**: System MUST support sweep casts testing a shape along a linear path via a dedicated request-response interface.
+- **FR-023**: System MUST support overlap queries testing which bodies intersect a given volume via a dedicated request-response interface.
+- **FR-024**: Physics queries MUST respect collision layer filtering when a mask is specified.
+- **FR-024a**: Each query type (raycast, sweep cast, overlap) MUST have a batch variant that accepts multiple queries in a single request and returns results for each query, enabling efficient bulk scene interrogation.
+
+**Collision Layers**:
+- **FR-025**: System MUST support assigning bodies to one of at least 16 collision layers.
+- **FR-026**: System MUST support a configurable collision matrix defining which layer pairs interact.
+- **FR-027**: Bodies on non-interacting layers MUST pass through each other without collision response.
+
+**Kinematic Bodies**:
+- **FR-028**: System MUST support creating kinematic bodies that are unaffected by forces and gravity.
+- **FR-029**: Kinematic bodies MUST collide with and displace dynamic bodies.
+- **FR-030**: Users MUST be able to set the position and velocity of kinematic bodies directly.
+
+**Per-Body Color**:
+- **FR-035**: System MUST allow specifying an RGBA color per body at creation time, with each channel as a value from 0.0 to 1.0.
+- **FR-036**: Bodies created without a specified color MUST receive a default color based on their shape type.
+- **FR-037**: The viewer MUST render each body using its assigned color, including transparency for alpha values less than 1.0.
+- **FR-038**: Body color MUST be included in the streamed simulation state so all subscribers can render it.
+
+**BepuFSharp Wrapper**:
+- **FR-031**: The wrapper MUST expose constraint creation and removal for the supported constraint types.
+- **FR-032**: The wrapper MUST expose material property configuration per body.
+- **FR-033**: The wrapper MUST expose raycast, sweep cast, and overlap query operations.
+- **FR-034**: The wrapper MUST expose collision layer/group assignment and collision matrix configuration.
+- **FR-035a**: The wrapper MUST directly reference Stride.BepuPhysics types, enabling shared type conversions between BepuFSharp and Stride.BepuPhysics components (e.g., collider types, constraint definitions, material properties).
+- **FR-035b**: The wrapper MUST provide interop for converting between its internal physics types and Stride.BepuPhysics component types (BodyComponent, StaticComponent, collider types, constraint components).
+
+### Key Entities
+
+- **Shape**: A geometry definition used for collision detection. Extended from 3 types (sphere, box, plane) to 9 types (adding capsule, cylinder, triangle, convex hull, compound, mesh).
+- **Constraint**: A physics relationship between two bodies that restricts their relative motion. Has a type (hinge, ball-socket, distance, weld), anchor points on each body, and type-specific parameters (axis, limits, stiffness).
+- **Material**: A set of surface interaction properties (friction, bounciness, damping) assigned per body that control collision response behavior.
+- **Collision Layer**: A categorization assigned to each body that determines which other bodies it can collide with, governed by a global collision matrix.
+- **Registered Shape**: A vertex-heavy shape definition (mesh, convex hull) that has been sent once and cached by the server and all connected clients. Referenced by a unique identifier to avoid retransmitting vertex data. Cleared on simulation reset.
+- **Color**: An RGBA value (4 channels, 0.0–1.0 each) assigned per body that controls its visual appearance in the viewer. Defaults are auto-assigned by shape type when not specified.
+- **Physics Query**: A non-mutating spatial interrogation of the physics world (raycast, sweep, overlap) that returns intersection results.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: All 9 shape types can be created, simulated, and visualized correctly in the viewer within a single session.
+- **SC-002**: Debug wireframe visualization can be toggled on and off while the simulation runs, displaying accurate collider outlines for all shape types.
+- **SC-003**: At least 9 constraint types (hinge, ball-socket, distance, weld, angular motor, linear motor, swing limit, twist limit, point-on-line servo) can connect bodies that exhibit correct constrained motion under applied forces.
+- **SC-004**: Bodies with different material properties (high bounce vs. low bounce, high friction vs. low friction) produce visibly different collision behaviors in the same scene.
+- **SC-005**: Raycasts correctly identify the first hit body in a scene with 50+ bodies within one simulation step.
+- **SC-006**: Bodies on non-interacting collision layers pass through each other while same-layer bodies collide normally.
+- **SC-007**: Kinematic bodies move at their set velocity, push dynamic bodies on contact, and are unaffected by gravity.
+- **SC-008**: All new features MUST be accessible through the REPL and MCP interfaces. The scripting library MUST provide convenience builders for the most commonly used constraint types (ball-socket, hinge, weld, distance limit) with the remaining types constructible via standard proto message builders.
+- **SC-009**: Viewer maintains above 30 FPS with debug visualization active in a scene with 200 bodies and 50 constraints.
+- **SC-010**: Existing demos and tests continue to pass without modification (backward compatibility).
+- **SC-011**: Two bodies of the same shape type but with different user-specified colors render in their respective colors in the viewer.
+
+## Assumptions
+
+- The BepuFSharp wrapper (external to this solution at `~/projects/BPEWrapper/`) will be updated as a **separate speckit feature** in the BPEWrapper project to expose sweep casts, overlap queries, constraint readback, filtered raycasting, runtime filter/material modification, and Stride.BepuPhysics type interop. BepuFSharp 0.2.0 must be published to the local NuGet feed before this feature's simulation/query work can begin. Spec provided at `~/projects/BPEWrapper/stride-bepu-integration-spec.md`.
+- Stride.BepuPhysics v4.3.x and Stride.BepuPhysics.Debug v4.3.x packages are compatible with the project's current Stride.CommunityToolkit v1.0.0-preview.62 dependencies and .NET 10.0 target.
+- The proto contract (`physics_hub.proto`) will be extended with new message types for the additional shapes, constraints, material properties, and queries. This is a backward-compatible additive change.
+- Mesh and convex hull shapes will have a practical vertex count limit to avoid excessive proto message sizes and simulation performance degradation.
+- The viewer's debug visualization will use Stride.BepuPhysics.Debug's lower-level WireFrameRenderObject and SinglePassWireframeRenderFeature for custom wireframe rendering. The higher-level DebugRenderProcessor is incompatible with the gRPC-driven viewer architecture (it requires native CollidableComponent entities).
+- The curated set of ~9 constraint types covers the most common mechanical systems. The remaining ~19 Stride.BepuPhysics constraint types (e.g., swivelHinge, centerDistance, area/volume constraints) may be added incrementally in follow-up work.

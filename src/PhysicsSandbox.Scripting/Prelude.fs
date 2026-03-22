@@ -105,6 +105,57 @@ let makeImpulseCmd bodyId impulse = PhysicsSandbox.Scripting.CommandBuilders.mak
 /// </example>
 let makeTorqueCmd bodyId torque = PhysicsSandbox.Scripting.CommandBuilders.makeTorqueCmd bodyId torque
 
+/// <summary>Builds an <c>AddBody</c> command for a capsule (cylinder with hemispherical caps).</summary>
+let makeCapsuleCmd id pos radius length mass = PhysicsSandbox.Scripting.CommandBuilders.makeCapsuleCmd id pos radius length mass
+
+/// <summary>Builds an <c>AddBody</c> command for a cylinder.</summary>
+let makeCylinderCmd id pos radius length mass = PhysicsSandbox.Scripting.CommandBuilders.makeCylinderCmd id pos radius length mass
+
+/// <summary>Creates a <c>MaterialProperties</c> proto message from physical parameters.</summary>
+let makeMaterialProperties friction maxRecovery springFreq springDamping = PhysicsSandbox.Scripting.CommandBuilders.makeMaterialProperties friction maxRecovery springFreq springDamping
+
+/// <summary>Creates a <c>Color</c> proto message from RGBA components (each 0.0–1.0).</summary>
+let makeColor r g b a = PhysicsSandbox.Scripting.CommandBuilders.makeColor r g b a
+
+/// <summary>Bouncy material preset.</summary>
+let bouncyMaterial = PhysicsSandbox.Scripting.CommandBuilders.bouncyMaterial
+
+/// <summary>Sticky/high-friction material preset.</summary>
+let stickyMaterial = PhysicsSandbox.Scripting.CommandBuilders.stickyMaterial
+
+/// <summary>Slippery/ice-like material preset.</summary>
+let slipperyMaterial = PhysicsSandbox.Scripting.CommandBuilders.slipperyMaterial
+
+/// <summary>Builds an <c>AddConstraint</c> command for a ball-socket joint.</summary>
+let makeBallSocketCmd id bodyA bodyB offsetA offsetB = PhysicsSandbox.Scripting.ConstraintBuilders.makeBallSocketCmd id bodyA bodyB offsetA offsetB
+
+/// <summary>Builds an <c>AddConstraint</c> command for a hinge joint.</summary>
+let makeHingeCmd id bodyA bodyB axis offsetA offsetB = PhysicsSandbox.Scripting.ConstraintBuilders.makeHingeCmd id bodyA bodyB axis offsetA offsetB
+
+/// <summary>Builds an <c>AddConstraint</c> command for a weld joint.</summary>
+let makeWeldCmd id bodyA bodyB = PhysicsSandbox.Scripting.ConstraintBuilders.makeWeldCmd id bodyA bodyB
+
+/// <summary>Builds an <c>AddConstraint</c> command for a distance limit.</summary>
+let makeDistanceLimitCmd id bodyA bodyB minDist maxDist = PhysicsSandbox.Scripting.ConstraintBuilders.makeDistanceLimitCmd id bodyA bodyB minDist maxDist
+
+/// <summary>Builds a <c>RemoveConstraint</c> command.</summary>
+let makeRemoveConstraintCmd constraintId = PhysicsSandbox.Scripting.ConstraintBuilders.makeRemoveConstraintCmd constraintId
+
+/// <summary>Builds a SetBodyPose command to update a body's position at runtime.</summary>
+let makeSetBodyPoseCmd bodyId pos = PhysicsSandbox.Scripting.CommandBuilders.makeSetBodyPoseCmd bodyId pos
+
+/// <summary>Casts a ray and returns hit results as (bodyId, position, normal, distance) tuples.</summary>
+let raycast session origin direction maxDistance = PhysicsSandbox.Scripting.QueryBuilders.raycast session origin direction maxDistance
+
+/// <summary>Casts a ray and returns all hits along the ray.</summary>
+let raycastAll session origin direction maxDistance = PhysicsSandbox.Scripting.QueryBuilders.raycastAll session origin direction maxDistance
+
+/// <summary>Performs a sphere sweep cast. Returns Some hit or None.</summary>
+let sweepSphere session radius startPosition direction maxDistance = PhysicsSandbox.Scripting.QueryBuilders.sweepSphere session radius startPosition direction maxDistance
+
+/// <summary>Tests for overlapping bodies at a position using a sphere shape. Returns body IDs.</summary>
+let overlapSphere session radius position = PhysicsSandbox.Scripting.QueryBuilders.overlapSphere session radius position
+
 /// <summary>Sends a list of simulation commands in batches of 100, logging any failures to the console.</summary>
 /// <param name="s">Active session connected to the physics server.</param>
 /// <param name="commands">List of SimulationCommands. Any length — auto-chunked at 100 (server maximum).

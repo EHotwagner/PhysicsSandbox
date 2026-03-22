@@ -11,6 +11,7 @@
     <Compile Include="ResetSimulationTests.fs" />
     <Compile Include="StaticBodyTrackingTests.fs" />
     <Compile Include="CommandHandlerTests.fs" />
+    <Compile Include="ExtendedFeatureTests.fs" />
     <Compile Include="SurfaceAreaTests.fs" />
   </ItemGroup>
 

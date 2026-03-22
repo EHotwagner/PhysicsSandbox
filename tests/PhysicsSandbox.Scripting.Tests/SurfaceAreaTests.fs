@@ -53,10 +53,17 @@ let ``SimulationLifecycle public API matches baseline`` () =
         assertContains members name
 
 [<Fact>]
+let ``QueryBuilders public API matches baseline`` () =
+    let members = getModule "PhysicsSandbox.Scripting.QueryBuilders" |> getPublicMembers
+    for name in [| "raycast"; "raycastAll"; "sweepSphere"; "overlapSphere" |] do
+        assertContains members name
+
+[<Fact>]
 let ``Prelude public API matches baseline`` () =
     let members = getModule "PhysicsSandbox.Scripting.Prelude" |> getPublicMembers
     for name in [| "ok"; "sleep"; "timed"; "toVec3"; "toTuple"
                    "makeSphereCmd"; "makeBoxCmd"; "makeImpulseCmd"; "makeTorqueCmd"
+                   "raycast"; "raycastAll"; "sweepSphere"; "overlapSphere"
                    "batchAdd"; "resetSimulation"; "runFor"; "nextId" |] do
         assertContains members name
 
@@ -67,6 +74,8 @@ let ``Surface area matches baseline file`` () =
         [| "PhysicsSandbox.Scripting.Helpers"
            "PhysicsSandbox.Scripting.Vec3Builders"
            "PhysicsSandbox.Scripting.CommandBuilders"
+           "PhysicsSandbox.Scripting.ConstraintBuilders"
+           "PhysicsSandbox.Scripting.QueryBuilders"
            "PhysicsSandbox.Scripting.BatchOperations"
            "PhysicsSandbox.Scripting.SimulationLifecycle"
            "PhysicsSandbox.Scripting.Prelude" |]
