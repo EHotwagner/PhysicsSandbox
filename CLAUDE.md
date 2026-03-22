@@ -40,8 +40,11 @@ tests/
   PhysicsClient.Tests/              # F# unit tests (52 tests)
   PhysicsSandbox.Scripting.Tests/   # F# unit + surface area tests (19 tests)
   PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (42 tests)
-scratch/                            # Gitignored experimentation folder
-scripts/                            # Curated F# scripts using Scripting library
+Scripting/
+  demos/                            # F# demo scripts (15 demos + runners)
+  demos_py/                         # Python demo scripts (15 demos + runners)
+  scripts/                          # Curated F# scripts using Scripting library
+  scratch/                          # Gitignored experimentation folder
 ```
 
 ## Commands

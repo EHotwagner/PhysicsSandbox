@@ -62,16 +62,16 @@ The Aspire dashboard opens at `https://localhost:15888`.
 
 **REPL Client** — starts automatically with the AppHost.
 
-**F# Scripts** — 15 demos in `demos/`:
+**F# Scripts** — 15 demos in `Scripting/demos/`:
 ```bash
-dotnet fsi demos/Demo01_HelloDrop.fsx    # single demo
-dotnet fsi demos/AutoRun.fsx             # run all automatically
+dotnet fsi Scripting/demos/Demo01_HelloDrop.fsx    # single demo
+dotnet fsi Scripting/demos/AutoRun.fsx             # run all automatically
 ```
 
-**Python Scripts** — equivalent demos in `demos_py/`:
+**Python Scripts** — equivalent demos in `Scripting/demos_py/`:
 ```bash
 pip install grpcio grpcio-tools protobuf
-python demos_py/demo01_hello_drop.py
+python -m Scripting.demos_py.demo01_hello_drop
 ```
 
 **MCP (AI Assistants)** — 38 tools for Claude Code, etc.:
@@ -145,8 +145,11 @@ tests/
   PhysicsViewer.Tests/              # 19 unit tests
   PhysicsClient.Tests/              # 52 unit tests
   PhysicsSandbox.Integration.Tests/ # 42 integration tests
-demos/                              # F# demo scripts (15 demos)
-demos_py/                           # Python demo scripts (15 demos)
+Scripting/
+  demos/                            # F# demo scripts (15 demos)
+  demos_py/                         # Python demo scripts (15 demos)
+  scripts/                          # Curated F# scripts (Scripting library)
+  scratch/                          # Experimentation (gitignored)
 ```
 
 ## Known Issues

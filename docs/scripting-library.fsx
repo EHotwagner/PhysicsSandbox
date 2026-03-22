@@ -60,7 +60,7 @@ disconnect s
 (**
 
 <div class="alert alert-info">
-<strong>Tip:</strong> Both <code>scratch/</code> and <code>scripts/</code> folders use the same
+<strong>Tip:</strong> Both <code>Scripting/scratch/</code> and <code>Scripting/scripts/</code> folders use the same
 relative path to the DLL, so moving a script between them requires no code changes.
 </div>
 
@@ -196,14 +196,17 @@ updating the baseline.
 
 ## Folder Layout
 
+All scripting folders live under `Scripting/` at the repo root:
+
 | Folder | Tracked | Purpose |
 |--------|---------|---------|
-| `scripts/` | Git | Curated, production-quality scripts |
-| `scratch/` | Gitignored | Developer-local experimentation |
-| `demos/` | Git | Original demo suite (uses Prelude.fsx directly) |
+| `Scripting/scripts/` | Git | Curated, production-quality scripts |
+| `Scripting/scratch/` | Gitignored | Developer-local experimentation |
+| `Scripting/demos/` | Git | F# demo suite (15 demos + runners) |
+| `Scripting/demos_py/` | Git | Python demo suite (15 demos + runners) |
 
-Both `scripts/` and `scratch/` sit at the repo root and use the same relative path to the
-library DLL, so moving a script between them requires no code changes.
+`scripts/` and `scratch/` use the same relative path to the library DLL,
+so moving a script between them requires no code changes.
 
 ## MCP Server Integration
 

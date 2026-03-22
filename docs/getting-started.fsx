@@ -88,13 +88,13 @@ Session.sendCommand session play
 (**
 ## Interact via F# Scripts
 
-15 demo scripts are available in the `demos/` directory:
+15 demo scripts are available in the `Scripting/demos/` directory:
 *)
 
 (*** do-not-eval ***)
-// dotnet fsi demos/Demo01_HelloDrop.fsx    -- single demo
-// dotnet fsi demos/AutoRun.fsx             -- run all demos automatically
-// dotnet fsi demos/RunAll.fsx              -- interactive runner
+// dotnet fsi Scripting/demos/Demo01_HelloDrop.fsx    -- single demo
+// dotnet fsi Scripting/demos/AutoRun.fsx             -- run all demos automatically
+// dotnet fsi Scripting/demos/RunAll.fsx              -- interactive runner
 
 (**
 ## Interact via Python Scripts
@@ -103,8 +103,8 @@ Equivalent demos in Python (requires `grpcio`, `protobuf`):
 *)
 
 (*** do-not-eval ***)
-// python demos_py/demo01_hello_drop.py     -- single demo
-// python demos_py/auto_run.py              -- run all demos automatically
+// python Scripting/demos_py/demo01_hello_drop.py     -- single demo
+// python Scripting/demos_py/auto_run.py              -- run all demos automatically
 
 (**
 ## Interact via MCP (AI Assistants)

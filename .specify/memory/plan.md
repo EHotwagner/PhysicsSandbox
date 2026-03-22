@@ -149,13 +149,12 @@ tests/
     ├── StateDisplayTests.fs             # Vec3 formatting, velocity magnitude, shapes
     └── SurfaceAreaTests.fs              # Public API baseline for all 9 modules
 
-scratch/                                     # Gitignored experimentation folder (.gitkeep only)
-
-scripts/                                     # Curated F# scripts using PhysicsSandbox.Scripting library
-├── Prelude.fsx                              # Single #r to Scripting DLL + opens
-└── HelloDrop.fsx                            # Minimal validation script
-
-demos/                                     # F# scripts — demo suite (15 demos + runners)
+Scripting/                                   # All scripting folders consolidated
+├── scratch/                                 # Gitignored experimentation folder (.gitkeep only)
+├── scripts/                                 # Curated F# scripts using PhysicsSandbox.Scripting library
+│   ├── Prelude.fsx                          # Single #r to Scripting DLL + opens
+│   └── HelloDrop.fsx                        # Minimal validation script
+├── demos/                                   # F# scripts — demo suite (15 demos + runners)
 ├── Prelude.fsx                            # Shared helpers: resetSimulation, command builders, batchAdd, nextId, toVec3, timed
 ├── Demo01_HelloDrop.fsx                   # Single bowling ball drop
 ├── Demo02_BouncingMarbles.fsx             # 5 marbles (batched)
@@ -176,7 +175,7 @@ demos/                                     # F# scripts — demo suite (15 demos
 ├── AutoRun.fsx                            # Self-contained non-interactive runner (duplicates Prelude + timed helpers)
 └── RunAll.fsx                             # Interactive runner (space/enter to advance)
 
-demos_py/                                    # Python scripts — demo suite (15 demos + runners)
+└── demos_py/                                # Python scripts — demo suite (15 demos + runners)
 ├── prelude.py                               # Shared helpers: session, commands, presets, generators, steering, display, batch, ID gen
 ├── demo01_hello_drop.py – demo15_overload.py # 15 demos mirroring F# suite
 ├── all_demos.py                             # Demo registry (name, description, run) tuples

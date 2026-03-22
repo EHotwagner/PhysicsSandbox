@@ -21,13 +21,13 @@ Each demo is available in both F# (`.fsx`) and Python, with identical behavior.
 
 (*** do-not-eval ***)
 // Run a single demo:
-// dotnet fsi demos/Demo01_HelloDrop.fsx
+// dotnet fsi Scripting/demos/Demo01_HelloDrop.fsx
 
 // Run all demos automatically (10s each):
-// dotnet fsi demos/AutoRun.fsx
+// dotnet fsi Scripting/demos/AutoRun.fsx
 
 // Interactive runner (prompts between demos):
-// dotnet fsi demos/RunAll.fsx
+// dotnet fsi Scripting/demos/RunAll.fsx
 
 (**
 ### Python Demos
@@ -37,13 +37,13 @@ Each demo is available in both F# (`.fsx`) and Python, with identical behavior.
 // Prerequisites: pip install grpcio grpcio-tools protobuf
 
 // Run a single demo:
-// python demos_py/demo01_hello_drop.py
+// python Scripting/demos_py/demo01_hello_drop.py
 
 // Run all demos automatically:
-// python demos_py/auto_run.py
+// python Scripting/demos_py/auto_run.py
 
 // Interactive runner:
-// python demos_py/run_all.py
+// python Scripting/demos_py/run_all.py
 
 (**
 ## Demo Catalog
@@ -70,7 +70,7 @@ Each demo is available in both F# (`.fsx`) and Python, with identical behavior.
 
 Both language suites share a prelude library with 40+ helper functions:
 
-### F# Prelude (`demos/Prelude.fsx`)
+### F# Prelude (`Scripting/demos/Prelude.fsx`)
 
 Key helpers:
 *)
@@ -94,7 +94,7 @@ Key helpers:
 // pause session
 
 (**
-### Python Prelude (`demos_py/prelude.py`)
+### Python Prelude (`Scripting/demos_py/prelude.py`)
 
 Mirrors the F# prelude with identical function names and behavior:
 *)
