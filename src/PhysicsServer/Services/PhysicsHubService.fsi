@@ -39,3 +39,27 @@ type PhysicsHubService =
     override GetMetrics:
         request: MetricsRequest * context: ServerCallContext ->
             System.Threading.Tasks.Task<MetricsResponse>
+
+    override Raycast:
+        request: RaycastRequest * context: ServerCallContext ->
+            System.Threading.Tasks.Task<RaycastResponse>
+
+    override RaycastBatch:
+        request: RaycastBatchRequest * context: ServerCallContext ->
+            System.Threading.Tasks.Task<RaycastBatchResponse>
+
+    override SweepCast:
+        request: SweepCastRequest * context: ServerCallContext ->
+            System.Threading.Tasks.Task<SweepCastResponse>
+
+    override SweepCastBatch:
+        request: SweepCastBatchRequest * context: ServerCallContext ->
+            System.Threading.Tasks.Task<SweepCastBatchResponse>
+
+    override Overlap:
+        request: OverlapRequest * context: ServerCallContext ->
+            System.Threading.Tasks.Task<OverlapResponse>
+
+    override OverlapBatch:
+        request: OverlapBatchRequest * context: ServerCallContext ->
+            System.Threading.Tasks.Task<OverlapBatchResponse>

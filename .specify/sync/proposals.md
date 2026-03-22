@@ -7,39 +7,29 @@ Based on: drift-report from 2026-03-22
 
 | Resolution Type | Count |
 |-----------------|-------|
-| Align (Spec → Code) | 1 |
-| Backfill (Code → Spec) | 2 |
-| Human Decision | 1 |
-| Remove from Spec | 2 |
-| New Specs | 1 |
+| Backfill (Code -> Spec) | 2 |
+| Align (Spec -> Code) | 2 |
+| Human Decision | 0 |
+| New Specs | 0 |
+| Remove from Spec | 0 |
 
 ## Proposals
 
-### Proposal 1: SC-001 — Broken `open Prelude.DemoHelpers`
+### Proposal 1: 005-stride-bepu-integration/FR-006b
 
-**Direction**: ALIGN (Spec → Code)
+**Direction**: BACKFILL
 
 **Current State**:
-- Spec says: "All 15 demos run successfully through both AllDemos runners"
-- Code does: AllDemos.fsx and demos 06-15 reference `Prelude.DemoHelpers` which no longer exists after Prelude was refactored to top-level bindings
+- Spec says: "The server MUST cache registered shapes and include shape definitions in state streams only on first use, so all clients can build and maintain a local shape cache."
+- Code does: All registered shapes are included in every state stream update. This is simpler, stateless, and ensures late-joining clients always receive the full shape cache.
 
 **Proposed Resolution**:
-Fix 11 F# files by changing `open Prelude.DemoHelpers` to `open Prelude`:
-- `Scripting/demos/AllDemos.fsx` line 6
-- `Scripting/demos/Demo06_DominoRow.fsx` line 6
-- `Scripting/demos/Demo07_SpinningTops.fsx` line 6
-- `Scripting/demos/Demo08_GravityFlip.fsx` line 6
-- `Scripting/demos/Demo09_Billiards.fsx` line 6
-- `Scripting/demos/Demo10_Chaos.fsx` line 6
-- `Scripting/demos/Demo11_BodyScaling.fsx` line 7
-- `Scripting/demos/Demo12_CollisionPit.fsx` line 7
-- `Scripting/demos/Demo13_ForceFrenzy.fsx` line 7
-- `Scripting/demos/Demo14_DominoCascade.fsx` line 7
-- `Scripting/demos/Demo15_Overload.fsx` line 7
 
-Additionally, demos 06-15 use a `module DemoNN` wrapper pattern while demos 01-05 use flat top-level bindings. Both patterns work, but the flat pattern (demos 01-05) is simpler and avoids needing `DemoNN.name` / `DemoNN.run` qualification.
+Update FR-006b to:
 
-**Rationale**: The spec is correct — demos must run. The code has a bug from incomplete refactoring. Simple find-replace fix.
+> **FR-006b**: The server MUST cache registered shapes and include all registered shape definitions in every state stream update, so all clients (including late-joiners) receive the complete shape cache without per-subscriber tracking.
+
+**Rationale**: The current implementation is a deliberate simplification. Per-subscriber cache tracking adds complexity (subscriber identity management, cache invalidation, reconnection handling) with minimal benefit given the small size of registered shape data. The implementation is functionally correct -- all clients get the data they need. The spec optimization was aspirational; the simpler approach is appropriate for the current scale.
 
 **Confidence**: HIGH
 
@@ -50,23 +40,26 @@ Additionally, demos 06-15 use a `module DemoNN` wrapper pattern while demos 01-0
 
 ---
 
-### Proposal 2: FR-001 / FR-008 — Viewer shape sizing
+### Proposal 2: 005-stride-bepu-integration/FR-007
 
-**Direction**: BACKFILL (Code → Spec)
+**Direction**: ALIGN
 
 **Current State**:
-- Spec says: "Each demo MUST produce visually distinct, interesting physics interactions"
-- Code does: Viewer was rendering all objects at unit size (1x1x1). Fix implemented to pass `Size` property to `Bepu3DPhysicsOptions`, but visual merging still observed during testing.
+- Spec says: "The viewer MUST render each shape type with geometry that visually matches the physics collider dimensions."
+- Code does: 7/10 shape types render accurately (Sphere, Box, Plane, Capsule, Cylinder, ConvexHull bounding box, ShapeReference). Triangle, Compound, and Mesh shapes render as placeholder spheres.
 
 **Proposed Resolution**:
-Update spec to acknowledge the viewer rendering issue is out of scope for this feature:
 
-> **FR-001** (updated): Each demo MUST produce physically correct, interesting interactions as measured by simulation state output. Visual rendering accuracy depends on the viewer, which is outside this feature's scope.
+Implement custom rendering for the 3 remaining shape types in `ShapeGeometry.fs`:
+- **Triangle**: Generate a `MeshDraw` from the 3 vertices (single face, double-sided).
+- **Compound**: Create child entities with local transforms, each rendered via recursive `primitiveType`/`shapeSize` dispatch.
+- **Mesh**: Generate a `MeshDraw` from the triangle list vertex data.
 
-Add a note to the spec's Assumptions section:
-> The 3D viewer may render touching objects as visually merged due to rendering precision. This is a viewer issue, not a demo issue. Physics correctness is verified via `listBodies`/`status` output.
+This requires adding custom `MeshDraw` generation functions to `ShapeGeometry.fs` and updating `SceneManager.applyState` to use them for non-primitive shapes.
 
-**Rationale**: The demos produce correct physics — the viewer rendering is a separate concern that should have its own spec/fix. Blocking demo work on viewer bugs would stall progress.
+**Estimated effort**: Medium (1-2 tasks). The vertex data is already available in the proto state stream.
+
+**Rationale**: The spec explicitly requires "visually matches the physics collider dimensions" for each shape type. Placeholder spheres are functionally misleading -- a mesh collider shaped like a ramp rendering as a sphere hides the actual collision geometry. This is especially important for debug/development use cases where developers need to see what they built. 7/10 is good but the remaining 3 are the most geometrically interesting shapes.
 
 **Confidence**: HIGH
 
@@ -77,20 +70,26 @@ Add a note to the spec's Assumptions section:
 
 ---
 
-### Proposal 3: FR-008 — Demo 04 evolved beyond spec
+### Proposal 3: 005-stride-bepu-integration/FR-030
 
-**Direction**: BACKFILL (Code → Spec)
+**Direction**: ALIGN
 
 **Current State**:
-- Spec says: Demo 04 "Good as-is, minor polish — camera angles, maybe second throw"
-- Code does: Demo 04 is now a wrecking ball smashing through a brick wall (significantly different from original bowling concept)
+- Spec says: "Users MUST be able to set the position and velocity of kinematic bodies directly."
+- Code does: Position and velocity can only be set at creation time via `AddBody`. No command exists to update kinematic body pose or velocity after creation.
 
 **Proposed Resolution**:
-Update the per-demo improvement table in spec.md:
 
-| 04 Bowling Alley | Good as-is | ~~Minor polish~~ Wrecking ball smashes through a brick wall — frontal camera, staged impact |
+Add a `SetBodyPose` command:
+1. **Proto**: Add `SetBodyPose` message with fields: `body_id`, `position` (Vec3), `orientation` (Vec4, optional), `velocity` (Vec3, optional), `angular_velocity` (Vec3, optional).
+2. **SimulationWorld**: Add `setBodyPose` function that updates position/velocity on the BepuFSharp body. For kinematic bodies, use `PhysicsWorld.setKinematicBodyPose`; for dynamic bodies, optionally allow teleporting.
+3. **SimulationCommand**: Add `set_body_pose` variant to the oneof.
+4. **CommandHandler**: Dispatch `SetBodyPose` to `SimulationWorld.setBodyPose`.
+5. **Client interfaces**: Add `setBodyPose` to PhysicsClient, MCP tool, and Scripting library.
 
-**Rationale**: The change was made collaboratively with the user during implementation. The spec table was "starting points for collaborative refinement, not rigid requirements." Code reflects the user's actual direction.
+**Estimated effort**: Medium (1 task across proto + simulation + server + clients).
+
+**Rationale**: Kinematic bodies are fundamentally designed to be script-driven -- their entire purpose is to move according to explicit commands rather than physics forces. Without runtime pose updates, kinematic bodies are limited to constant-velocity motion set at creation, which severely limits their utility (no moving platforms that change direction, no animated obstacles, no scripted waypoint motion). This is the most significant functional gap in the feature.
 
 **Confidence**: HIGH
 
@@ -101,105 +100,33 @@ Update the per-demo improvement table in spec.md:
 
 ---
 
-### Proposal 4: SC-003 — Collaborative review incomplete
+### Proposal 4: 005-stride-bepu-integration/SC-008
 
-**Direction**: HUMAN DECISION
-
-**Current State**:
-- Spec says: "User confirms each demo is satisfying during per-demo review"
-- Actual: Only demos 01-05 reviewed collaboratively; demos 06-15 have code changes but no user confirmation
-
-**Options**:
-
-| Option | Implication |
-|--------|-------------|
-| A: Continue collaborative review | Resume running demos 06-15 one at a time with user. Most thorough. |
-| B: Accept current state | Demos 06-15 have improvements but skip individual review. Faster. |
-| C: Batch review | Run all 15 demos via AutoRun, user watches and flags issues. Middle ground. |
-
-**Questions**:
-- Does the user want to continue the per-demo review process for demos 06-15?
-- Or are the current improvements (which follow the spec's improvement directions) sufficient?
-
-**Confidence**: LOW (depends on user preference)
-
-**Action**:
-- [ ] Approve option A/B/C
-- [ ] Reject
-- [ ] Modify
-
----
-
-### Proposal 5: FR-006 / SC-004 — Runtime not measured
-
-**Direction**: REMOVE FROM SPEC (or defer)
+**Direction**: BACKFILL
 
 **Current State**:
-- Spec says: "Individual demo runtime MUST remain under 30 seconds"
-- Actual: Not measured for any demo
+- Spec says: "All new features are accessible through the existing client interfaces (REPL commands, MCP tools, scripting library)."
+- Code does: All features are accessible via proto commands (REPL + MCP cover all command types). The Scripting library provides convenience builders for 4/10 constraint types (BallSocket, Hinge, Weld, DistanceLimit). The remaining 6 constraint types can be created via manual proto construction through the scripting library's `batchAdd` with hand-built `SimulationCommand` objects.
 
 **Proposed Resolution**:
-These are lightweight constraints that can be verified at any time. No demo exceeds ~15 seconds of simulation time based on code review (`runFor` calls sum to <20s for all demos). Rather than adding measurement infrastructure, mark as verified by code inspection:
 
-> FR-006: Verified by code inspection — all demos have total `runFor` + `sleep` durations under 25 seconds.
+Update SC-008 to acknowledge the tiered accessibility:
 
-**Rationale**: Adding timing measurement adds complexity without value — the constraint is clearly met.
+> **SC-008**: All new features MUST be accessible through the REPL and MCP interfaces. The scripting library MUST provide convenience builders for the most commonly used constraint types (ball-socket, hinge, weld, distance limit) with the remaining types constructible via standard proto message builders.
 
-**Confidence**: HIGH
+Additionally, add 6 missing constraint convenience builders as a follow-up enhancement (not blocking):
+- `makeDistanceSpringCmd`
+- `makeSwingLimitCmd`
+- `makeTwistLimitCmd`
+- `makeLinearAxisMotorCmd`
+- `makeAngularMotorCmd`
+- `makePointOnLineCmd`
 
-**Action**:
-- [ ] Approve
-- [ ] Reject
-- [ ] Modify
-
----
-
-### Proposal 6: SC-002 — Physics interactions not verified
-
-**Direction**: REMOVE FROM SPEC
-
-**Current State**:
-- Spec says: "Each demo produces at least 3 distinct visible physics interactions (not just gravity settling)"
-- Actual: Not systematically verified
-
-**Proposed Resolution**:
-This criterion was added as a proxy for "satisfying" but is redundant with SC-003 (user confirms satisfying). Each demo's code clearly exercises multiple physics features (impulses, gravity, collisions, etc.). Remove SC-002 or mark as superseded:
-
-> SC-002: Superseded by SC-003 (collaborative review). Each demo's physics interactions are evident from the code and scenario design.
-
-**Rationale**: Counting "distinct visible physics interactions" is subjective and not measurable in a meaningful automated way.
+**Rationale**: The core requirement (feature accessibility) is met -- every feature is reachable through REPL and MCP. The scripting library is a convenience layer; having builders for the 4 most common constraint types covers the majority of use cases. The SC-009 (30 FPS benchmark) is a runtime validation that requires a live system test, not a code-level verification.
 
 **Confidence**: MEDIUM
 
 **Action**:
 - [ ] Approve
-- [ ] Reject
-- [ ] Modify
-
----
-
-### Proposal 7: Viewer shape sizing fix — New spec
-
-**Direction**: NEW_SPEC
-
-**Feature**: Viewer shape sizing fix
-**Location**: `src/PhysicsViewer/Rendering/SceneManager.fs:76-88`
-
-**Draft Spec**:
-
-> # Feature: Viewer Shape Rendering Accuracy
->
-> The 3D viewer MUST render physics bodies at their actual dimensions (sphere radius, box half-extents) rather than unit-size primitives. This ensures the visual representation matches the physics simulation, preventing objects from appearing to merge or overlap when they are physically separated.
->
-> - FR-001: Spheres MUST be rendered with diameter = 2 * radius
-> - FR-002: Boxes MUST be rendered with dimensions = 2 * half-extents
-> - FR-003: Visual body size MUST update when a body's shape changes
-
-**Note**: A fix has already been implemented (passing `Size` to `Bepu3DPhysicsOptions`) but needs validation. This may require investigation into how Stride's `Create3DPrimitive` interprets the `Size` parameter.
-
-**Confidence**: MEDIUM
-
-**Action**:
-- [ ] Approve and create spec
 - [ ] Reject
 - [ ] Modify

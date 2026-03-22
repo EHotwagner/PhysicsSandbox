@@ -4,20 +4,11 @@ open Stride.Engine
 open Stride.Games
 open PhysicsSandbox.Shared.Contracts
 
-/// Shape kind discriminated union for color mapping.
-type ShapeKind =
-    | Sphere
-    | Box
-    | Unknown
-
 /// Opaque handle to the scene manager's internal state.
 type SceneState
 
 /// Create initial scene state.
 val create: unit -> SceneState
-
-/// Classify a proto Shape into a ShapeKind.
-val classifyShape: Shape -> ShapeKind
 
 /// Apply a simulation state snapshot to the scene.
 /// Adds new entities, updates existing positions/orientations, removes absent bodies.

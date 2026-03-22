@@ -35,9 +35,14 @@ let ``SimulationCommands public API matches baseline`` () =
     let t = typeof<PhysicsClient.Session.Session>.Assembly.GetType("PhysicsClient.SimulationCommands")
     Assert.NotNull(t)
     let members = getPublicMembers t
-    for name in [| "addSphere"; "addBox"; "addPlane"; "removeBody"; "clearAll"
+    for name in [| "addSphere"; "addBox"; "addCapsule"; "addCylinder"; "addPlane"
+                   "addConstraint"; "removeConstraint"
+                   "registerShape"; "unregisterShape"; "setCollisionFilter"
+                   "removeBody"; "clearAll"
                    "applyForce"; "applyImpulse"; "applyTorque"; "clearForces"
-                   "setGravity"; "play"; "pause"; "step" |] do
+                   "setGravity"; "play"; "pause"; "step"
+                   "raycast"; "sweepCast"; "overlap"
+                   "batchCommands"; "batchViewCommands" |] do
         assertContains members name
 
 [<Fact>]

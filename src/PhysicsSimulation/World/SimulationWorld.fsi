@@ -29,7 +29,7 @@ val setRunning : World -> bool -> unit
 /// Add a rigid body to the world. Returns CommandAck with success/failure.
 val addBody : World -> AddBody -> CommandAck
 
-/// Remove a body by identifier. No-op if body does not exist.
+/// Remove a body by identifier. Auto-removes constraints referencing this body.
 val removeBody : World -> string -> CommandAck
 
 /// Add a persistent force to a body (accumulates, applied each step)
@@ -47,8 +47,55 @@ val clearForces : World -> string -> CommandAck
 /// Set the global gravity vector
 val setGravity : World -> Vec3 -> unit
 
-/// Reset the simulation: remove all bodies, clear forces, reset time to 0
+/// Register a named shape for later reference
+val registerShape : World -> RegisterShape -> CommandAck
+
+/// Unregister a named shape
+val unregisterShape : World -> string -> CommandAck
+
+/// Add a constraint between two bodies
+val addConstraint : World -> AddConstraint -> CommandAck
+
+/// Remove a constraint by identifier
+val removeConstraint : World -> string -> CommandAck
+
+/// Set collision filter on a body at runtime
+val setCollisionFilter : World -> SetCollisionFilter -> CommandAck
+
+/// Set position, orientation, and/or velocity of a body at runtime
+val setBodyPose : World -> SetBodyPose -> CommandAck
+
+/// Reset the simulation: remove all bodies, constraints, shapes, forces; reset time to 0
 val resetSimulation : World -> CommandAck
+
+/// Internal: body record for query handler ID resolution.
+type internal BodyRecord =
+    { Id: string
+      BepuBodyId: BepuFSharp.BodyId
+      BepuStaticId: BepuFSharp.StaticId
+      ShapeId: BepuFSharp.ShapeId
+      Mass: float32
+      ShapeProto: PhysicsSandbox.Shared.Contracts.Shape
+      IsStatic: bool
+      MotionType: PhysicsSandbox.Shared.Contracts.BodyMotionType
+      StaticPosition: System.Numerics.Vector3
+      StaticOrientation: System.Numerics.Quaternion
+      Color: PhysicsSandbox.Shared.Contracts.Color option
+      Material: PhysicsSandbox.Shared.Contracts.MaterialProperties option
+      CollisionGroup: uint32
+      CollisionMask: uint32 }
+
+/// Internal: enqueue a query response for the next state.
+val internal addQueryResponse : World -> PhysicsSandbox.Shared.Contracts.QueryResponse -> unit
+
+/// Internal: access the underlying physics world (for query handler).
+val internal physicsWorld : World -> BepuFSharp.PhysicsWorld
+
+/// Internal: access the bodies map (for query handler ID resolution).
+val internal bodies : World -> Map<string, BodyRecord>
+
+/// Internal: convert proto Shape to BepuFSharp PhysicsShape.
+val internal convertShape : World -> PhysicsSandbox.Shared.Contracts.Shape -> Result<BepuFSharp.PhysicsShape * PhysicsSandbox.Shared.Contracts.Shape, string>
 
 /// Latest physics tick time in milliseconds (updated each step)
 val latestTickMs : unit -> double

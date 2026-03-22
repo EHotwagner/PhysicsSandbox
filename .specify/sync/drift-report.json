@@ -1,66 +1,74 @@
 {
   "generated": "2026-03-22T00:00:00Z",
   "project": "PhysicsSandbox",
-  "feature": "004-improve-demos",
+  "feature": "005-stride-bepu-integration",
   "summary": {
     "specs_analyzed": 1,
-    "requirements_checked": 15,
-    "aligned": 7,
-    "drifted": 5,
-    "not_implemented": 3,
-    "unspecced_features": 2
+    "requirements_checked": 49,
+    "aligned": 45,
+    "drifted": 4,
+    "not_implemented": 0,
+    "unspecced_features": 0
   },
   "specs": [
     {
-      "id": "004-improve-demos",
-      "title": "Improve Physics Demos",
-      "aligned": ["FR-003", "FR-004", "FR-005", "FR-007", "FR-009", "SC-005", "SC-006"],
+      "id": "005-stride-bepu-integration",
+      "title": "Stride BepuPhysics Integration",
+      "aligned": [
+        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006",
+        "FR-006a", "FR-006c",
+        "FR-008", "FR-009", "FR-010",
+        "FR-011", "FR-012", "FR-013", "FR-014",
+        "FR-011a", "FR-011b", "FR-011c", "FR-011d", "FR-011e",
+        "FR-015", "FR-016",
+        "FR-017", "FR-018", "FR-019",
+        "FR-020", "FR-021", "FR-022", "FR-023", "FR-024", "FR-024a",
+        "FR-025", "FR-026", "FR-027",
+        "FR-028", "FR-029",
+        "FR-031", "FR-032", "FR-033", "FR-034", "FR-035a", "FR-035b",
+        "FR-035", "FR-036", "FR-037", "FR-038",
+        "SC-001", "SC-002", "SC-003", "SC-004", "SC-005", "SC-006",
+        "SC-007", "SC-010", "SC-011"
+      ],
       "drifted": [
         {
-          "requirement": "SC-001",
-          "spec_text": "All 15 demos run successfully through both AllDemos runners",
-          "actual": "AllDemos.fsx and demos 06-15 use broken 'open Prelude.DemoHelpers' — module does not exist after Prelude refactor",
-          "location": "Scripting/demos/AllDemos.fsx:6, Scripting/demos/Demo06-15",
-          "severity": "critical"
-        },
-        {
-          "requirement": "FR-001",
-          "spec_text": "Each demo MUST produce visually distinct, interesting physics interactions",
-          "actual": "Viewer renders all objects at default unit size instead of actual physics dimensions — causes visual merging",
-          "location": "src/PhysicsViewer/Rendering/SceneManager.fs:89-105",
-          "severity": "major"
-        },
-        {
-          "requirement": "FR-008",
-          "spec_text": "Camera positioning MUST support viewing key interactions",
-          "actual": "Demo 04 evolved from bowling ball + pyramid to wrecking ball + brick wall during collaborative iteration",
-          "location": "Scripting/demos/Demo04_BowlingAlley.fsx",
+          "requirement": "FR-006b",
+          "spec_text": "Include shape definitions in state streams only on first use",
+          "actual": "All registered shapes included in every state stream update",
+          "location": "src/PhysicsSimulation/World/SimulationWorld.fs:123-127",
           "severity": "minor"
         },
         {
-          "requirement": "SC-003",
-          "spec_text": "User confirms each demo is satisfying during per-demo review",
-          "actual": "Only demos 01-05 reviewed collaboratively; demos 06-15 pending",
-          "location": "N/A",
+          "requirement": "FR-007",
+          "spec_text": "Render each shape type with geometry that visually matches the physics collider dimensions",
+          "actual": "Triangle, Compound, and Mesh shapes render as placeholder spheres instead of accurate geometry",
+          "location": "src/PhysicsViewer/Rendering/ShapeGeometry.fs:50-52",
           "severity": "moderate"
+        },
+        {
+          "requirement": "FR-030",
+          "spec_text": "Users MUST be able to set the position and velocity of kinematic bodies directly",
+          "actual": "Position/velocity only settable at creation time via AddBody; no runtime update RPC exists",
+          "location": "src/PhysicsSimulation/World/SimulationWorld.fs",
+          "severity": "moderate"
+        },
+        {
+          "requirement": "SC-008",
+          "spec_text": "All new features accessible through REPL commands, MCP tools, scripting library",
+          "actual": "Core features accessible; scripting library has 4/10 constraint convenience builders; SC-009 (30 FPS benchmark) not validated",
+          "location": "src/PhysicsSandbox.Scripting/ConstraintBuilders.fs",
+          "severity": "minor"
         }
       ],
-      "not_implemented": ["FR-006", "SC-002", "SC-004"]
+      "not_implemented": []
     }
   ],
-  "unspecced": [
-    {
-      "feature": "runStandalone helper",
-      "location": "Scripting/demos/Prelude.fsx:104-116",
-      "lines": 13,
-      "suggested_spec": "004-improve-demos"
-    },
-    {
-      "feature": "Viewer shape sizing fix",
-      "location": "src/PhysicsViewer/Rendering/SceneManager.fs:76-88",
-      "lines": 13,
-      "suggested_spec": "new-viewer-rendering-fix"
-    }
-  ],
-  "conflicts": []
+  "unspecced": [],
+  "conflicts": [],
+  "recommendations": [
+    "Add SetBodyPose command for runtime kinematic body repositioning (FR-030)",
+    "Implement custom MeshDraw for Triangle, Compound, Mesh shapes in ShapeGeometry (FR-007)",
+    "Consider per-subscriber shape cache tracking for bandwidth optimization (FR-006b)",
+    "Add convenience builders for remaining 6 constraint types in Scripting library (SC-008)"
+  ]
 }

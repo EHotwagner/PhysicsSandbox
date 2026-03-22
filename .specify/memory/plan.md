@@ -1,12 +1,12 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-22
-**Revision**: Updated with 004-improve-demos archival
+**Revision**: Updated with 005-stride-bepu-integration archival
 
 ## Technical Context
 
 **Language/Version**: F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
-**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0 (local NuGet), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 + ModelContextProtocol.AspNetCore 1.1.* (MCP server — HTTP/SSE transport)
+**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1 (local NuGet, 10 shape types, 10 constraint types, sweep/overlap queries, collision filtering, material properties), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, includes Stride.BepuPhysics 4.3.0.2507 + Stride.BepuPhysics.Debug 4.3.0.2507 transitively), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 + ModelContextProtocol.AspNetCore 1.1.* (MCP server — HTTP/SSE transport)
 **Storage**: N/A (in-memory physics world, stateless message routing, in-memory metrics counters/stress test state/command logs)
 **Testing**: xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x
 **Target Platform**: Linux (rootless Podman for containers)
@@ -42,14 +42,18 @@ src/
 │   ├── World/
 │   │   ├── SimulationWorld.fsi/.fs      # BepuFSharp world wrapper, body/force management
 │   ├── Commands/
-│   │   ├── CommandHandler.fsi/.fs       # Command dispatch (9 command types)
+│   │   ├── CommandHandler.fsi/.fs       # Command dispatch (16 command types incl. constraints, shapes, queries, pose)
+│   ├── Queries/
+│   │   ├── QueryHandler.fsi/.fs         # Raycast, sweep cast, overlap query dispatch
 │   ├── Client/
 │   │   ├── SimulationClient.fsi/.fs     # Bidirectional streaming client, simulation loop
 │   └── Program.fs                       # Host setup, Aspire service defaults
 │
 ├── PhysicsViewer/                       # F# — 3D viewer (Stride3D + gRPC client)
 │   ├── Rendering/
-│   │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, wireframe
+│   │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, per-body color, wireframe
+│   │   ├── ShapeGeometry.fsi/.fs        # Primitive type selection, bounding size, default color palette
+│   │   ├── DebugRenderer.fsi/.fs        # Wireframe overlay, constraint line visualization, F3 toggle
 │   │   ├── CameraController.fsi/.fs     # Camera state, input, REPL commands
 │   │   └── FpsCounter.fsi/.fs           # Smoothed FPS calculation, logging, threshold warnings
 │   ├── Streaming/
@@ -77,14 +81,16 @@ src/
 ├── PhysicsSandbox.Scripting/           # F# — scripting convenience library (wraps PhysicsClient)
 │   ├── Helpers.fsi/.fs                # ok, sleep, timed
 │   ├── Vec3Builders.fsi/.fs           # toVec3, toTuple
-│   ├── CommandBuilders.fsi/.fs        # makeSphereCmd, makeBoxCmd, makeImpulseCmd, makeTorqueCmd
+│   ├── CommandBuilders.fsi/.fs        # makeSphereCmd, makeBoxCmd, makeCapsuleCmd, makeCylinderCmd, makeImpulseCmd, makeTorqueCmd, makeColor, makeMaterialProperties, makeSetBodyPoseCmd
+│   ├── ConstraintBuilders.fsi/.fs    # makeBallSocketCmd, makeHingeCmd, makeWeldCmd, makeDistanceLimitCmd, makeRemoveConstraintCmd
+│   ├── QueryBuilders.fsi/.fs         # raycast, raycastAll, sweepSphere, overlapSphere
 │   ├── BatchOperations.fsi/.fs        # batchAdd (auto-chunking at 100)
 │   ├── SimulationLifecycle.fsi/.fs    # resetSimulation, runFor, nextId
 │   └── Prelude.fsi/.fs               # [<AutoOpen>] re-export of all functions
 │
-└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 38 tools)
+└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 44 tools)
     ├── GrpcConnection.fsi/.fs          # gRPC channel + 3 background streams (state, view, audit) + batch/metrics RPCs
-    ├── SimulationTools.fsi/.fs         # 11 simulation command MCP tools (incl. restart_simulation)
+    ├── SimulationTools.fsi/.fs         # 17 simulation/query MCP tools (incl. constraints, shapes, queries, collision filter, body pose)
     ├── ViewTools.fsi/.fs               # 3 view command MCP tools
     ├── QueryTools.fsi/.fs              # get_state, get_status MCP tools
     ├── AuditTools.fsi/.fs              # Command audit log query tool
@@ -121,19 +127,19 @@ tests/
 │   ├── BatchRoutingTests.fs             # Batch command routing tests
 │   ├── MetricsCounterTests.fs           # MetricsCounter unit tests
 │   └── PublicApiBaseline.txt            # Surface-area baseline
-├── PhysicsSimulation.Tests/             # F# — unit tests (39 tests)
+├── PhysicsSimulation.Tests/             # F# — unit tests (85 tests)
 │   ├── SimulationWorldTests.fs          # Lifecycle, bodies, forces, gravity, stress
 │   ├── CommandHandlerTests.fs           # Command dispatch, edge cases
 │   ├── ResetSimulationTests.fs          # Reset/restart command tests
 │   ├── StaticBodyTrackingTests.fs       # Static body state tracking tests
 │   └── SurfaceAreaTests.fs              # Public API baseline verification
-├── PhysicsViewer.Tests/                 # F# — unit tests (19 tests)
+├── PhysicsViewer.Tests/                 # F# — unit tests (40 tests)
 │   ├── SceneManagerTests.fs             # Shape classification, state accessors
 │   ├── CameraControllerTests.fs         # Camera math, command application
 │   ├── FpsCounterTests.fs               # FPS calculation, logging interval, threshold tests
 │   ├── SurfaceAreaTests.fs              # Public API baseline verification
 │   └── PublicApiBaseline.txt            # Surface-area baseline
-├── PhysicsSandbox.Scripting.Tests/     # F# — unit + surface area tests (19 tests)
+├── PhysicsSandbox.Scripting.Tests/     # F# — unit + surface area tests (20 tests)
 │   ├── HelpersTests.fs
 │   ├── Vec3BuildersTests.fs
 │   ├── CommandBuildersTests.fs

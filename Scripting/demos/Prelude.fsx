@@ -101,6 +101,89 @@ let batchAdd (s: Session) (commands: SimulationCommand list) =
             for f in failures do
                 printfn "  [BATCH FAIL] command %d: %s" f.Index f.Message
 
+// ─── New Shape Commands ──────────────────────────────────────────────────
+
+let makeCapsuleCmd (id: string) (pos: float * float * float) (radius: float) (length: float) (mass: float) =
+    let capsule = Capsule()
+    capsule.Radius <- radius
+    capsule.Length <- length
+    let shape = Shape()
+    shape.Capsule <- capsule
+    let body = AddBody()
+    body.Id <- id
+    body.Position <- toVec3 pos
+    body.Mass <- mass
+    body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
+
+let makeCylinderCmd (id: string) (pos: float * float * float) (radius: float) (length: float) (mass: float) =
+    let cylinder = Cylinder()
+    cylinder.Radius <- radius
+    cylinder.Length <- length
+    let shape = Shape()
+    shape.Cylinder <- cylinder
+    let body = AddBody()
+    body.Id <- id
+    body.Position <- toVec3 pos
+    body.Mass <- mass
+    body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
+
+// ─── Color & Material Helpers ───────────────────────────────────────────
+
+let makeColor (r: float) (g: float) (b: float) (a: float) =
+    let c = Color()
+    c.R <- r; c.G <- g; c.B <- b; c.A <- a
+    c
+
+let makeMaterialProperties (friction: float) (maxRecovery: float) (springFreq: float) (springDamping: float) =
+    let m = MaterialProperties()
+    m.Friction <- friction
+    m.MaxRecoveryVelocity <- maxRecovery
+    m.SpringFrequency <- springFreq
+    m.SpringDampingRatio <- springDamping
+    m
+
+let bouncyMaterial = makeMaterialProperties 0.4 8.0 60.0 0.5
+let stickyMaterial = makeMaterialProperties 2.0 0.5 30.0 1.0
+let slipperyMaterial = makeMaterialProperties 0.01 2.0 30.0 1.0
+
+/// Apply color and/or material to an AddBody SimulationCommand
+let withColorAndMaterial (color: Color option) (material: MaterialProperties option) (cmd: SimulationCommand) =
+    color |> Option.iter (fun c -> cmd.AddBody.Color <- c)
+    material |> Option.iter (fun m -> cmd.AddBody.Material <- m)
+    cmd
+
+// ─── Constraint Helpers ─────────────────────────────────────────────────
+
+let makeBallSocketCmd (id: string) (bodyA: string) (bodyB: string) (offsetA: float * float * float) (offsetB: float * float * float) =
+    let ct = ConstraintType()
+    ct.BallSocket <- BallSocketConstraint()
+    ct.BallSocket.LocalOffsetA <- toVec3 offsetA
+    ct.BallSocket.LocalOffsetB <- toVec3 offsetB
+    let ac = AddConstraint()
+    ac.Id <- id; ac.BodyA <- bodyA; ac.BodyB <- bodyB; ac.Type <- ct
+    let cmd = SimulationCommand()
+    cmd.AddConstraint <- ac
+    cmd
+
+let makeHingeCmd (id: string) (bodyA: string) (bodyB: string) (axis: float * float * float) (offsetA: float * float * float) (offsetB: float * float * float) =
+    let ct = ConstraintType()
+    ct.Hinge <- HingeConstraint()
+    ct.Hinge.LocalHingeAxisA <- toVec3 axis
+    ct.Hinge.LocalHingeAxisB <- toVec3 axis
+    ct.Hinge.LocalOffsetA <- toVec3 offsetA
+    ct.Hinge.LocalOffsetB <- toVec3 offsetB
+    let ac = AddConstraint()
+    ac.Id <- id; ac.BodyA <- bodyA; ac.BodyB <- bodyB; ac.Type <- ct
+    let cmd = SimulationCommand()
+    cmd.AddConstraint <- ac
+    cmd
+
 let runStandalone (name: string) (run: Session -> unit) =
     let addr =
         match fsi.CommandLineArgs |> Array.tryItem 1 with

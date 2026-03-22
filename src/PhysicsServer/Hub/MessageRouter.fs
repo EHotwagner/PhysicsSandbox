@@ -30,6 +30,9 @@ type MessageRouter =
       SimulationLock: obj
       Metrics: MetricsCounter.MetricsState }
 
+/// <summary>Pending query completions, keyed by correlation ID.</summary>
+let internal pendingQueries = ConcurrentDictionary<string, TaskCompletionSource<QueryResponse>>()
+
 /// <summary>Create a new message router with empty subscriber lists, bounded command channels (1024), and fresh metrics.</summary>
 /// <returns>A fully initialized MessageRouter ready to accept connections.</returns>
 let create () =
@@ -142,12 +145,24 @@ let subscribe (router: MessageRouter) (callback: SimulationState -> Task) =
 let unsubscribe (router: MessageRouter) (SubscriptionId id) =
     router.Subscribers.TryRemove(id) |> ignore
 
+/// <summary>Process query responses from a simulation state update.</summary>
+/// <param name="state">The simulation state that may contain query responses.</param>
+let processQueryResponses (state: SimulationState) =
+    if not (isNull state) && state.QueryResponses.Count > 0 then
+        for qr in state.QueryResponses do
+            match pendingQueries.TryRemove(qr.CorrelationId) with
+            | true, tcs -> tcs.TrySetResult(qr) |> ignore
+            | _ -> ()
+
 /// <summary>Publish a simulation state to all subscribers and update the state cache. Errors in individual callbacks are silently ignored.</summary>
 /// <param name="router">The message router containing subscribers and the state cache.</param>
 /// <param name="state">The simulation state snapshot to broadcast.</param>
 let publishState (router: MessageRouter) (state: SimulationState) =
     task {
         MetricsCounter.incrementReceived 1 (int64 (state.CalculateSize())) router.Metrics
+
+        // Process query responses before caching/broadcasting
+        processQueryResponses state
         StateCache.update router.StateCache state
 
         for kvp in router.Subscribers do
@@ -248,6 +263,27 @@ let readCommand (router: MessageRouter) (ct: CancellationToken) =
         with
         | :? OperationCanceledException -> return None
         | :? ChannelClosedException -> return None
+    }
+
+/// <summary>Submit a query through the command channel and wait for the response.</summary>
+/// <param name="router">The message router to submit through.</param>
+/// <param name="queryRequest">The query request to forward.</param>
+/// <param name="ct">Cancellation token.</param>
+/// <returns>The query response from the simulation.</returns>
+let submitQuery (router: MessageRouter) (queryRequest: QueryRequest) (ct: CancellationToken) =
+    task {
+        let tcs = TaskCompletionSource<QueryResponse>(TaskCreationOptions.RunContinuationsAsynchronously)
+        use _reg = ct.Register(fun () -> tcs.TrySetCanceled() |> ignore)
+        pendingQueries.TryAdd(queryRequest.CorrelationId, tcs) |> ignore
+        try
+            // Send as a command
+            let cmd = SimulationCommand(QueryRequest = queryRequest)
+            let _ack = submitCommand router cmd
+            // Wait for the response (completed when state with matching correlation arrives)
+            let! response = tcs.Task
+            return response
+        finally
+            pendingQueries.TryRemove(queryRequest.CorrelationId) |> ignore
     }
 
 /// <summary>Read a pending view command from the channel. Blocks asynchronously until a command is available or cancellation occurs.</summary>

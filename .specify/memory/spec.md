@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-22
-**Revision**: Updated with 004-improve-demos archival
+**Revision**: Updated with 005-stride-bepu-integration archival
 
 ## Overview
 
@@ -193,6 +193,30 @@ All 15 demos run through the AllDemos runner (interactive or automated) without 
 ### US-061: F# and Python Demo Suite Parity (P3)
 All demo improvements are mirrored in both F# (.fsx) and Python (.py) suites. Both produce equivalent physics scenarios for all 15 demos. [Source: specs/004-improve-demos]
 
+### US-062: Extended Shape Support (P1)
+A developer creates physics simulations using the full range of body shapes: capsules, cylinders, triangles, convex hulls, compound shapes, and meshes, in addition to existing sphere/box/plane. The viewer renders each shape type with a visually distinct 3D model. [Source: specs/005-stride-bepu-integration]
+
+### US-063: Physics Debug Visualization (P2)
+A developer toggles a debug wireframe overlay in the viewer showing collider outlines and constraint connections for all physics bodies, aiding collision debugging and joint configuration inspection. [Source: specs/005-stride-bepu-integration]
+
+### US-064: Constraints and Joints (P3)
+A developer connects bodies with 10 constraint types (hinge, ball-socket, distance limit/spring, weld, swing/twist limits, linear/angular motors, point-on-line). Constraints auto-remove when referenced bodies are deleted. [Source: specs/005-stride-bepu-integration]
+
+### US-065: Material Properties (P4)
+A developer specifies per-body material properties (friction, bounciness, damping) that produce visibly different collision behaviors. [Source: specs/005-stride-bepu-integration]
+
+### US-066: Physics Queries (P5)
+A developer queries the physics world via dedicated RPCs: raycasts (single/all hits), sweep casts, and overlap tests, each with a batch variant. Results include hit body, contact point, normal, and distance. [Source: specs/005-stride-bepu-integration]
+
+### US-067: Collision Layers and Filtering (P6)
+A developer assigns bodies to collision layers (32 via bitmask) so non-interacting groups pass through each other. Filtering applies to both physics and queries. [Source: specs/005-stride-bepu-integration]
+
+### US-068: Kinematic Bodies (P7)
+A developer creates kinematic bodies that move by explicit position/velocity commands, push dynamic bodies on contact, and are unaffected by gravity. [Source: specs/005-stride-bepu-integration]
+
+### US-069: Per-Body Color (P1)
+A developer specifies RGBA color per body at creation. Bodies without specified color get auto-assigned defaults by shape type. The viewer renders each body in its assigned color including transparency. [Source: specs/005-stride-bepu-integration]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -354,6 +378,20 @@ All demo improvements are mirrored in both F# (.fsx) and Python (.py) suites. Bo
 - **FR-157**: Individual demo runtime MUST remain under 30 seconds. Body counts MUST stay within 500 per demo. [Source: specs/004-improve-demos]
 - **FR-158**: Demos MUST use existing Prelude capabilities — no new server-side features required. [Source: specs/004-improve-demos]
 - **FR-159**: F# Prelude.fsx MUST provide a `runStandalone` helper for direct demo execution via `dotnet fsi DemoNN.fsx`. [Source: specs/004-improve-demos]
+- **FR-160**: System MUST support capsule, cylinder, triangle, convex hull, compound, and mesh shapes (extending from 3 to 10 shape types). [Source: specs/005-stride-bepu-integration]
+- **FR-161**: Shape registration mechanism: register once with unique handle, reference by ID in AddBody. Cache cleared on reset. [Source: specs/005-stride-bepu-integration]
+- **FR-162**: Viewer MUST render each shape type with geometry matching physics collider dimensions (bounding box for complex shapes). [Source: specs/005-stride-bepu-integration]
+- **FR-163**: Debug wireframe overlay mode showing collider outlines and constraint connections, togglable at runtime (F3). [Source: specs/005-stride-bepu-integration]
+- **FR-164**: 10 constraint types: hinge, ball-socket, distance limit, distance spring, weld, swing limit, twist limit, linear motor, angular motor, point-on-line. [Source: specs/005-stride-bepu-integration]
+- **FR-165**: Auto-remove constraints when referenced body is removed. Remove individual constraints by ID. [Source: specs/005-stride-bepu-integration]
+- **FR-166**: Per-body material properties (friction, max_recovery_velocity, spring_frequency, spring_damping_ratio). [Source: specs/005-stride-bepu-integration]
+- **FR-167**: Dedicated RPCs for raycast (single/all hits), sweep cast, overlap queries — each with batch variant. [Source: specs/005-stride-bepu-integration]
+- **FR-168**: Queries respect collision mask filtering. [Source: specs/005-stride-bepu-integration]
+- **FR-169**: 32 collision layers via uint32 group/mask bitmask. SetCollisionFilter for runtime updates. [Source: specs/005-stride-bepu-integration]
+- **FR-170**: Kinematic bodies unaffected by gravity, collide with and displace dynamic bodies. [Source: specs/005-stride-bepu-integration]
+- **FR-171**: SetBodyPose command for runtime position/orientation/velocity updates on kinematic and dynamic bodies. [Source: specs/005-stride-bepu-integration]
+- **FR-172**: Per-body RGBA color at creation. Default color palette by shape type. Color in state stream. [Source: specs/005-stride-bepu-integration]
+- **FR-173**: BepuFSharp 0.2.0-beta.1 wrapper with constraints, materials, queries, collision filters, Stride interop. [Source: specs/005-stride-bepu-integration]
 
 ## Key Entities
 
@@ -391,6 +429,13 @@ All demo improvements are mirrored in both F# (.fsx) and Python (.py) suites. Bo
 - **ComparisonResult**: MCP-vs-scripting comparison data — ScriptTimeMs, McpTimeMs, BatchedMcpTimeMs, message counts, OverheadPercent. [Source: specs/002-performance-diagnostics]
 - **FpsState**: Viewer FPS tracking — SmoothedFps (EMA α=0.1), ElapsedSinceLog, WarningThreshold. [Source: specs/002-performance-diagnostics]
 - **Python Session**: Python gRPC connection handle — dataclass holding grpc.Channel, PhysicsHubStub, server address. Simplified vs F# Session (no background streaming, no body registry). [Source: specs/004-python-demo-scripts]
+- **Constraint**: Physics relationship between two bodies restricting relative motion. 10 types: BallSocket, Hinge, Weld, DistanceLimit, DistanceSpring, SwingLimit, TwistLimit, LinearAxisMotor, AngularMotor, PointOnLine. Auto-removed when either body is deleted. Cleared on reset. [Source: specs/005-stride-bepu-integration]
+- **MaterialProperties**: Per-body surface interaction properties — friction (float), max_recovery_velocity (float), spring_frequency (float), spring_damping_ratio (float). Defaults applied when absent. [Source: specs/005-stride-bepu-integration]
+- **RegisteredShape**: Server-side cached shape definition (mesh, convex hull) registered once by handle, referenced by ID in AddBody without retransmitting vertex data. Cleared on reset. [Source: specs/005-stride-bepu-integration]
+- **Color**: Per-body RGBA (0.0–1.0 each). Auto-assigned by shape type when not specified: Sphere=blue, Box=orange, Capsule=green, Cylinder=yellow, Plane=gray, Triangle=cyan, ConvexHull=purple, Compound=white, Mesh=teal. [Source: specs/005-stride-bepu-integration]
+- **DebugState**: Viewer debug visualization state — wireframe entity cache, constraint line cache, enabled toggle. Updated each frame from SimulationState. [Source: specs/005-stride-bepu-integration]
+- **QueryHandler**: Simulation-side query dispatch — converts proto RaycastRequest/SweepCastRequest/OverlapRequest to BepuFSharp calls, resolves BodyId→string IDs. [Source: specs/005-stride-bepu-integration]
+- **QueryBuilders (Scripting)**: Convenience wrappers returning typed F# results — raycast, raycastAll, sweepSphere, overlapSphere. [Source: specs/005-stride-bepu-integration]
 - **Python Prelude**: Shared Python module providing 40+ functions mirroring the F# PhysicsClient + Prelude: session management, all simulation/view commands, 7 body presets, 5 generators, steering (push/launch), display (list_bodies/status), timing (timed context manager), batch helpers, ID generation. [Source: specs/004-python-demo-scripts]
 
 ## Edge Cases
@@ -443,6 +488,15 @@ All demo improvements are mirrored in both F# (.fsx) and Python (.py) suites. Bo
 - Python demo Aspire stack not running: scripts fail at connection step with clear gRPC error. [Source: specs/004-python-demo-scripts]
 - Python proto stubs not generated: import error with clear message. [Source: specs/004-python-demo-scripts]
 - Python `launch()` called immediately after body creation: requires small sleep (200ms) for simulation state to include the new body. [Source: specs/004-python-demo-scripts]
+- Constraint references a removed body: auto-removed from constraint registry. [Source: specs/005-stride-bepu-integration]
+- Convex hull with fewer than 4 points: rejected with error. [Source: specs/005-stride-bepu-integration]
+- Compound shape with zero children: rejected with error. [Source: specs/005-stride-bepu-integration]
+- Mesh shape with zero triangles: rejected with error. [Source: specs/005-stride-bepu-integration]
+- Shape reference to unknown handle: rejected with error. [Source: specs/005-stride-bepu-integration]
+- SetBodyPose on static body: rejected (static bodies cannot be repositioned). [Source: specs/005-stride-bepu-integration]
+- Raycast originates inside a body: behavior defined by BepuPhysics2. [Source: specs/005-stride-bepu-integration]
+- Conflicting material properties on contact: BepuPhysics2 combined/averaged values. [Source: specs/005-stride-bepu-integration]
+- Late-joining client: registered shapes included in every state stream update. [Source: specs/005-stride-bepu-integration]
 
 ## Success Criteria
 
@@ -517,3 +571,13 @@ All demo improvements are mirrored in both F# (.fsx) and Python (.py) suites. Bo
 - **SC-069**: The pack-and-publish workflow follows the established local NuGet pattern (dependency-ordered `dotnet pack`). [Source: specs/004-scripting-nuget-package]
 - **SC-070**: Zero references to `localhost:5000` remain in script or documentation files. [Source: specs/004-scripting-nuget-package]
 - **SC-071**: Each subsequent package publish uses a higher version number than the previous. [Source: specs/004-scripting-nuget-package]
+- **SC-072**: All 10 shape types (sphere, box, plane, capsule, cylinder, triangle, convex hull, compound, mesh, shape reference) can be created, simulated, and visualized. [Source: specs/005-stride-bepu-integration]
+- **SC-073**: Debug wireframe togglable at runtime displaying collider outlines and constraint connections. [Source: specs/005-stride-bepu-integration]
+- **SC-074**: 10 constraint types connect bodies with correct constrained motion. [Source: specs/005-stride-bepu-integration]
+- **SC-075**: Different material properties produce visibly different collision behaviors. [Source: specs/005-stride-bepu-integration]
+- **SC-076**: Raycasts correctly identify hit bodies in scenes with 50+ bodies. [Source: specs/005-stride-bepu-integration]
+- **SC-077**: Non-interacting collision layers pass through, same-layer collide normally. [Source: specs/005-stride-bepu-integration]
+- **SC-078**: Kinematic bodies move at set velocity, push dynamic bodies, unaffected by gravity. [Source: specs/005-stride-bepu-integration]
+- **SC-079**: All new features accessible via REPL and MCP. Scripting has convenience builders for common constraint types. [Source: specs/005-stride-bepu-integration]
+- **SC-080**: Existing demos and tests pass without modification (backward compatibility). [Source: specs/005-stride-bepu-integration]
+- **SC-081**: Two bodies of same shape with different colors render in respective colors. [Source: specs/005-stride-bepu-integration]

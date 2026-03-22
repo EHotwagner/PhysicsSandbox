@@ -2,15 +2,9 @@ module PhysicsSimulation.CommandHandler
 
 open PhysicsSandbox.Shared.Contracts
 open PhysicsSimulation.SimulationWorld
+open PhysicsSimulation.QueryHandler
 
-/// <summary>
 /// Dispatches a protobuf SimulationCommand to the appropriate SimulationWorld function.
-/// Supports PlayPause, Step, AddBody, RemoveBody, ApplyForce, ApplyImpulse, ApplyTorque,
-/// ClearForces, SetGravity, and Reset commands. Unknown commands are treated as forward-compatible no-ops.
-/// </summary>
-/// <param name="world">The simulation world to apply the command against.</param>
-/// <param name="command">The protobuf command to process.</param>
-/// <returns>A CommandAck indicating success or failure with a descriptive message.</returns>
 let handle (world: World) (command: SimulationCommand) =
     match command.CommandCase with
     | SimulationCommand.CommandOneofCase.PlayPause ->
@@ -37,5 +31,30 @@ let handle (world: World) (command: SimulationCommand) =
         CommandAck(Success = true, Message = "Gravity updated")
     | SimulationCommand.CommandOneofCase.Reset ->
         resetSimulation world
+    | SimulationCommand.CommandOneofCase.AddConstraint ->
+        addConstraint world command.AddConstraint
+    | SimulationCommand.CommandOneofCase.RemoveConstraint ->
+        removeConstraint world command.RemoveConstraint.ConstraintId
+    | SimulationCommand.CommandOneofCase.RegisterShape ->
+        registerShape world command.RegisterShape
+    | SimulationCommand.CommandOneofCase.UnregisterShape ->
+        unregisterShape world command.UnregisterShape.ShapeHandle
+    | SimulationCommand.CommandOneofCase.SetCollisionFilter ->
+        setCollisionFilter world command.SetCollisionFilter
+    | SimulationCommand.CommandOneofCase.SetBodyPose ->
+        setBodyPose world command.SetBodyPose
+    | SimulationCommand.CommandOneofCase.QueryRequest ->
+        let req = command.QueryRequest
+        let response = QueryResponse(CorrelationId = req.CorrelationId)
+        match req.QueryCase with
+        | QueryRequest.QueryOneofCase.Raycast ->
+            response.Raycast <- handleRaycast world req.Raycast
+        | QueryRequest.QueryOneofCase.SweepCast ->
+            response.SweepCast <- handleSweepCast world req.SweepCast
+        | QueryRequest.QueryOneofCase.Overlap ->
+            response.Overlap <- handleOverlap world req.Overlap
+        | _ -> ()
+        addQueryResponse world response
+        CommandAck(Success = true, Message = "Query processed")
     | _ ->
         CommandAck(Success = true, Message = "Unknown command (forward-compatible no-op)")

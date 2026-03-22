@@ -67,3 +67,62 @@ val makeImpulseCmd : bodyId: string -> impulse: (float * float * float) -> Simul
 /// </code>
 /// </example>
 val makeTorqueCmd : bodyId: string -> torque: (float * float * float) -> SimulationCommand
+
+/// <summary>Builds an <c>AddBody</c> command for a capsule (cylinder with hemispherical caps).</summary>
+/// <param name="id">Unique body ID. Use <c>nextId "capsule"</c> for auto-generated IDs.</param>
+/// <param name="pos">World-space position <c>(x, y, z)</c>. Position is the capsule center.</param>
+/// <param name="radius">Capsule radius in meters. Reference: limb=0.05, pipe=0.1, barrel=0.25. Typical range: 0.01–0.5.</param>
+/// <param name="length">Capsule length (cylinder portion, excluding caps) in meters. Total height = length + 2×radius.
+/// Reference: finger=0.05, limb=0.3, pole=2.0. Typical range: 0.1–3.0.</param>
+/// <param name="mass">Mass in kg. Use 0 for static. Reference: limb=2, pipe=5, log=50.</param>
+/// <returns>A SimulationCommand ready for <c>batchAdd</c>.</returns>
+/// <example>
+/// <code>
+/// let capsule = makeCapsuleCmd "cap-1" (0.0, 5.0, 0.0) 0.2 1.0 5.0
+/// batchAdd session [capsule]
+/// </code>
+/// </example>
+val makeCapsuleCmd : id: string -> pos: (float * float * float) -> radius: float -> length: float -> mass: float -> SimulationCommand
+
+/// <summary>Builds an <c>AddBody</c> command for a cylinder.</summary>
+/// <param name="id">Unique body ID. Use <c>nextId "cylinder"</c> for auto-generated IDs.</param>
+/// <param name="pos">World-space position <c>(x, y, z)</c>. Position is the cylinder center.</param>
+/// <param name="radius">Cylinder radius in meters. Reference: coin=0.01, can=0.03, barrel=0.25. Typical range: 0.01–1.0.</param>
+/// <param name="length">Cylinder length (height) in meters. Reference: coin=0.002, can=0.12, barrel=0.9. Typical range: 0.01–3.0.</param>
+/// <param name="mass">Mass in kg. Use 0 for static. Reference: coin=0.01, can=0.35, barrel=50.</param>
+/// <returns>A SimulationCommand ready for <c>batchAdd</c>.</returns>
+/// <example>
+/// <code>
+/// let cyl = makeCylinderCmd "cyl-1" (0.0, 3.0, 0.0) 0.25 0.9 50.0
+/// batchAdd session [cyl]
+/// </code>
+/// </example>
+val makeCylinderCmd : id: string -> pos: (float * float * float) -> radius: float -> length: float -> mass: float -> SimulationCommand
+
+/// <summary>Creates a <c>MaterialProperties</c> proto message from physical parameters.</summary>
+/// <param name="friction">Coulomb friction coefficient. 0=frictionless ice, 0.5=wood, 1.0=rubber. Typical range: 0.0–2.0.</param>
+/// <param name="maxRecovery">Maximum recovery velocity in m/s. Higher = bouncier collisions. Typical: 1.0–10.0.</param>
+/// <param name="springFreq">Contact spring frequency in Hz. Higher = stiffer contact. Typical: 30–120.</param>
+/// <param name="springDamping">Contact spring damping ratio. 1.0 = critically damped. Typical: 0.5–2.0.</param>
+/// <returns>A MaterialProperties message to assign to a body's material field.</returns>
+val makeMaterialProperties : friction: float -> maxRecovery: float -> springFreq: float -> springDamping: float -> MaterialProperties
+
+/// <summary>Creates a <c>Color</c> proto message from RGBA components (each 0.0–1.0).</summary>
+/// <param name="r">Red channel 0.0–1.0.</param>
+/// <param name="g">Green channel 0.0–1.0.</param>
+/// <param name="b">Blue channel 0.0–1.0.</param>
+/// <param name="a">Alpha channel 0.0–1.0. 1.0 = fully opaque.</param>
+/// <returns>A Color message to assign to a body's color field.</returns>
+val makeColor : r: float -> g: float -> b: float -> a: float -> Color
+
+/// <summary>Bouncy material preset: moderate friction (0.4), high recovery (8.0), stiff spring (60 Hz, 0.5 damping).</summary>
+val bouncyMaterial : MaterialProperties
+
+/// <summary>Sticky/high-friction material preset: friction 2.0, low recovery (0.5), stiff spring (30 Hz, 1.0 damping).</summary>
+val stickyMaterial : MaterialProperties
+
+/// <summary>Slippery/ice-like material preset: near-zero friction (0.01), moderate recovery (2.0), standard spring (30 Hz, 1.0 damping).</summary>
+val slipperyMaterial : MaterialProperties
+
+/// <summary>Builds a <c>SetBodyPose</c> command to update a body's position at runtime.</summary>
+val makeSetBodyPoseCmd : bodyId: string -> pos: (float * float * float) -> SimulationCommand

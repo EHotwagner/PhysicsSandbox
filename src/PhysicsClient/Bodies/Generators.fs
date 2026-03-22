@@ -27,7 +27,7 @@ let randomSpheres (session: Session) (count: int) (seed: int option) : Result<st
                 let z = nextDouble rng -5.0 5.0
                 let radius = nextDouble rng 0.05 0.5
                 let mass = nextDouble rng 0.1 50.0
-                match addSphere session (x, y, z) radius mass None with
+                match addSphere session (x, y, z) radius mass None None None None None None with
                 | Ok id -> ids <- id :: ids
                 | Error e -> lastError <- Some e
         match lastError with
@@ -55,7 +55,7 @@ let randomBoxes (session: Session) (count: int) (seed: int option) : Result<stri
                 let hy = nextDouble rng 0.05 0.5
                 let hz = nextDouble rng 0.05 0.5
                 let mass = nextDouble rng 0.1 50.0
-                match addBox session (x, y, z) (hx, hy, hz) mass None with
+                match addBox session (x, y, z) (hx, hy, hz) mass None None None None None None with
                 | Ok id -> ids <- id :: ids
                 | Error e -> lastError <- Some e
         match lastError with
@@ -84,12 +84,12 @@ let randomBodies (session: Session) (count: int) (seed: int option) : Result<str
                 let result =
                     if isSphere then
                         let radius = nextDouble rng 0.05 0.5
-                        addSphere session (x, y, z) radius mass None
+                        addSphere session (x, y, z) radius mass None None None None None None
                     else
                         let hx = nextDouble rng 0.05 0.5
                         let hy = nextDouble rng 0.05 0.5
                         let hz = nextDouble rng 0.05 0.5
-                        addBox session (x, y, z) (hx, hy, hz) mass None
+                        addBox session (x, y, z) (hx, hy, hz) mass None None None None None None
                 match result with
                 | Ok id -> ids <- id :: ids
                 | Error e -> lastError <- Some e
@@ -112,7 +112,7 @@ let stack (session: Session) (count: int) (position: (float * float * float) opt
         for i in 0..(count - 1) do
             if lastError.IsNone then
                 let y = by + (float i) * 1.0 + 0.5
-                match addBox session (bx, y, bz) (0.5, 0.5, 0.5) 20.0 None with
+                match addBox session (bx, y, bz) (0.5, 0.5, 0.5) 20.0 None None None None None None with
                 | Ok id -> ids <- id :: ids
                 | Error e -> lastError <- Some e
         match lastError with
@@ -134,7 +134,7 @@ let row (session: Session) (count: int) (position: (float * float * float) optio
         for i in 0..(count - 1) do
             if lastError.IsNone then
                 let x = bx + (float i) * 0.5
-                match addSphere session (x, by, bz) 0.2 1.0 None with
+                match addSphere session (x, by, bz) 0.2 1.0 None None None None None None with
                 | Ok id -> ids <- id :: ids
                 | Error e -> lastError <- Some e
         match lastError with
@@ -159,7 +159,7 @@ let grid (session: Session) (rows: int) (cols: int) (position: (float * float * 
                 if lastError.IsNone then
                     let x = bx + (float c) * 1.0
                     let z = bz + (float r) * 1.0
-                    match addBox session (x, by + 0.5, z) (0.5, 0.5, 0.5) 20.0 None with
+                    match addBox session (x, by + 0.5, z) (0.5, 0.5, 0.5) 20.0 None None None None None None with
                     | Ok id -> ids <- id :: ids
                     | Error e -> lastError <- Some e
         match lastError with
@@ -185,7 +185,7 @@ let pyramid (session: Session) (layers: int) (position: (float * float * float) 
             for j in 0..(width - 1) do
                 if lastError.IsNone then
                     let x = bx + offsetX + (float j) * 1.0
-                    match addBox session (x, y, bz) (0.5, 0.5, 0.5) 20.0 None with
+                    match addBox session (x, y, bz) (0.5, 0.5, 0.5) 20.0 None None None None None None with
                     | Ok id -> ids <- id :: ids
                     | Error e -> lastError <- Some e
         match lastError with

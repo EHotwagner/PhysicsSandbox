@@ -22,6 +22,7 @@ let game = new Game()
 
 let fpsState = FpsCounter.create 30.0f
 let mutable sceneState = SceneManager.create ()
+let mutable debugState = DebugRenderer.create ()
 let mutable cameraState = CameraController.defaultCamera ()
 let mutable cameraEntity: Entity option = None
 
@@ -151,6 +152,8 @@ let update (scene: Scene) (time: GameTime) =
         let simState = Volatile.Read(&latestSimState)
         if not (isNull simState) then
             sceneState <- SceneManager.applyState game scene sceneState simState
+            debugState <- DebugRenderer.updateShapes game scene debugState simState
+            debugState <- DebugRenderer.updateConstraints game scene debugState simState
             lastAppliedVersion <- currentVersion
 
     // Check for view commands
@@ -164,6 +167,12 @@ let update (scene: Scene) (time: GameTime) =
         | ViewCommand.CommandOneofCase.ToggleWireframe ->
             sceneState <- SceneManager.applyWireframe game viewCmd.ToggleWireframe sceneState
         | _ -> ()
+
+    // Toggle debug visualization with F3
+    if game.Input.IsKeyPressed(Stride.Input.Keys.F3) then
+        let newEnabled = not (DebugRenderer.isEnabled debugState)
+        debugState <- DebugRenderer.setEnabled newEnabled debugState
+        logger.LogInformation("Debug visualization {State}", if newEnabled then "enabled" else "disabled")
 
     // Camera
     cameraState <- CameraController.applyInput game.Input dt cameraState

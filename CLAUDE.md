@@ -5,12 +5,12 @@ Last updated: 2026-03-22
 ## Active Technologies
 - F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts)
 - .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x
-- BepuFSharp 0.1.0 (local NuGet, physics engine wrapper), Grpc.Net.Client 2.x
+- BepuFSharp 0.2.0-beta.1 (local NuGet, physics engine wrapper — 10 shape types, 10 constraint types, sweep/overlap queries, collision filtering, material properties), Grpc.Net.Client 2.x
 - Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, 3D viewer)
 - Spectre.Console (client library TUI display)
 - ModelContextProtocol.AspNetCore 1.1.* (MCP server, persistent HTTP/SSE transport)
 - xUnit 2.x, Aspire.Hosting.Testing 10.x
-- In-memory storage (physics world, metrics counters, stress test state, command logs)
+- In-memory storage (physics world, shape cache, constraint registry, metrics counters, stress test state, command logs)
 - F# scripts (.fsx) on .NET 10.0 + PhysicsClient.dll, PhysicsSandbox.Shared.Contracts.dll (proto-generated types) (001-demo-script-modernization)
 - F# scripts (.fsx) on .NET 10.0 + PhysicsClient.dll (existing), PhysicsSandbox.Shared.Contracts.dll (existing), Grpc.Net.Client, Google.Protobuf (003-stress-test-demos)
 - N/A (in-memory physics simulation) (003-stress-test-demos)
@@ -22,6 +22,8 @@ Last updated: 2026-03-22
 - N/A (local NuGet feed at `~/.local/share/nuget-local/`) (004-scripting-nuget-package)
 - F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient (F# NuGet), prelude.py (Python), existing Prelude.fsx helpers (004-improve-demos)
 - N/A (stateless scripts communicating with running physics server) (004-improve-demos)
+- F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0→0.2.0 (local NuGet), Stride.CommunityToolkit.Bepu 1.0.0-preview.62 (already includes Stride.BepuPhysics 4.3.0.2507 + Stride.BepuPhysics.Debug 4.3.0.2507 transitively), Spectre.Console, ModelContextProtocol.AspNetCore 1.1.* (005-stride-bepu-integration)
+- In-memory (physics world, shape cache, constraint registry, metrics counters) (005-stride-bepu-integration)
 
 ## Project Structure
 
@@ -33,7 +35,7 @@ src/
   PhysicsSandbox.Shared.Contracts/  # Proto gRPC contracts
   PhysicsServer/                    # F# server hub (message router)
   PhysicsSimulation/                # F# physics simulation (gRPC client, BepuFSharp)
-  PhysicsViewer/                    # F# 3D viewer (Stride3D + gRPC client)
+  PhysicsViewer/                    # F# 3D viewer (Stride3D + gRPC client, debug wireframes)
   PhysicsClient/                    # F# REPL client library (gRPC client, Spectre.Console)
   PhysicsSandbox.Mcp/               # F# MCP server (38 tools, interactive debugging via AI assistants)
   PhysicsSandbox.Scripting/         # F# scripting convenience library (wraps PhysicsClient, 6 modules)
@@ -83,9 +85,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 005-stride-bepu-integration: Extended physics sandbox — 10 shape types (sphere, box, plane, capsule, cylinder, triangle, convex hull, compound, mesh, shape reference), 10 constraint types (ball socket, hinge, weld, distance limit/spring, swing/twist limits, linear/angular motors, point-on-line), per-body color + material properties, collision layer filtering, kinematic bodies, physics queries (raycast, sweep cast, overlap) via dedicated RPCs, debug wireframe visualization (F3 toggle). BepuFSharp 0.1.0→0.2.0-beta.1. New modules: QueryHandler, ShapeGeometry, DebugRenderer.
 - 004-improve-demos: Improved all 15 F# + Python demos for richer physics. AutoRun refactored to load AllDemos (no duplication). Prelude.fsx refactored to top-level bindings with runStandalone helper. Viewer shape sizing fix (Bepu3DPhysicsOptions.Size) — pending validation
 - 004-scripting-nuget-package: Published PhysicsSandbox.Shared.Contracts, PhysicsSandbox.ServiceDefaults, PhysicsClient, and PhysicsSandbox.Scripting as local NuGet packages (0.1.0) to ~/.local/share/nuget-local/. Migrated MCP server and Scripting.Tests from ProjectReference to PackageReference. Converted all F# script/demo DLL paths to version-agnostic `#r "nuget: ..."` references. Fixed port consistency: replaced all localhost:5000 with canonical 5180 (HTTP) / 7180 (HTTPS). 38 tasks completed.
-- 004-fsharp-scripting-library: F# scripting convenience library (PhysicsSandbox.Scripting) with 6 modules (Helpers, Vec3Builders, CommandBuilders, BatchOperations, SimulationLifecycle, Prelude). Wraps PhysicsClient for script-friendly API. Single #r reference replaces 3 DLLs + 4 nuget packages. scratch/ (gitignored) and scripts/ (tracked) folders at repo root. MCP server uses shared toVec3 from library. 19 unit tests + surface area baseline. 42 tasks completed.
 
 ## Environment
 
