@@ -5,7 +5,8 @@ Merge the current feature branch into main, archive its spec folder, and delete 
 1. **Detect the current feature branch.** If on `main`, stop and ask which branch to merge.
 
 2. **Pre-flight checks:**
-   - Run `git status` to verify the working tree is clean. If dirty, stop and ask the user to commit or stash first.
+   - Run `git status` to check the working tree.
+   - If dirty, commit all changes with a descriptive message summarizing the feature work. Stage specific files (not `git add -A`). Use the repo's conventional commit style.
    - Run `git log main..HEAD --oneline` to show what will be merged.
 
 3. **Confirm with the user** before proceeding. Show:
@@ -30,6 +31,11 @@ Merge the current feature branch into main, archive its spec folder, and delete 
    git branch -d <branch-name>
    ```
 
-7. **Report** what was done: merge commit, archived spec path, deleted branch.
+7. **Push to GitHub:**
+   ```bash
+   git push origin main
+   ```
 
-**Important:** Do NOT force-delete branches (`-D`). Use `-d` which only works if the branch is fully merged. Do NOT push to remote unless the user explicitly asks.
+8. **Report** what was done: merge commit, archived spec path, deleted branch, push status.
+
+**Important:** Do NOT force-delete branches (`-D`). Use `-d` which only works if the branch is fully merged.
