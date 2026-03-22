@@ -41,6 +41,10 @@ def run(session):
     batch_add(session, cmds)
     print("  Placed 15 balls in triangle + cue ball")
 
+    # Pause to admire the triangle formation
+    print("  Admiring the formation...")
+    sleep(1500)
+
     # Camera: dramatic low angle
     set_camera(session, (-3.0, 1.5, 2.0), (1.0, 0.0, 0.0))
 
@@ -49,7 +53,14 @@ def run(session):
     # BREAK!
     print("  BREAK!")
     launch(session, cue_id, (1.5, 0.0, 0.0), 15.0)
-    run_for(session, 4.0)
+
+    # Low angle during the break to see balls scatter
+    set_camera(session, (-1.0, 0.4, 1.5), (1.0, 0.1, 0.0))
+    run_for(session, 2.0)
+
+    # Pull back to see the spread
+    set_camera(session, (0.0, 5.0, 3.0), (0.0, 0.0, 0.0))
+    run_for(session, 2.0)
 
     # Top-down aftermath
     set_camera(session, (0.0, 8.0, 0.1), (0.0, 0.0, 0.0))

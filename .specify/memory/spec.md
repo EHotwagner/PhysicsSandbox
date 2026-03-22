@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-22
-**Revision**: Updated with 004-scripting-nuget-package archival
+**Revision**: Updated with 004-improve-demos archival
 
 ## Overview
 
@@ -184,6 +184,15 @@ All F# scripts and demos use `#r "nuget: PackageName"` (without version specifie
 ### US-058: Canonical Port Consistency (P4)
 All scripts, demos, and documentation use canonical server ports (5180 HTTP, 7180 HTTPS). Legacy `localhost:5000` references are eliminated. [Source: specs/004-scripting-nuget-package]
 
+### US-059: Satisfying Demo Experience (P1)
+A user runs any individual demo and sees a physically rich simulation that clearly demonstrates the demo's named concept — not a minimal smoke test but a satisfying showcase. Demos 01-05 collaboratively reviewed, 06-15 accepted based on implementation following spec improvement directions. [Source: specs/004-improve-demos]
+
+### US-060: Complete Demo Suite Integration (P2)
+All 15 demos run through the AllDemos runner (interactive or automated) without any demos being excluded. AutoRun.fsx reuses AllDemos definitions (no code duplication). Demos 11-15 use sensible defaults without command-line args. [Source: specs/004-improve-demos]
+
+### US-061: F# and Python Demo Suite Parity (P3)
+All demo improvements are mirrored in both F# (.fsx) and Python (.py) suites. Both produce equivalent physics scenarios for all 15 demos. [Source: specs/004-improve-demos]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -337,6 +346,14 @@ All scripts, demos, and documentation use canonical server ports (5180 HTTP, 718
 - **FR-149**: The packaging workflow MUST follow BepuFSharp conventions (local feed path, version scheme, `-p:NoWarn=NU5104` pack flag). [Source: specs/004-scripting-nuget-package]
 - **FR-150**: Each new package publish MUST use an incremented version number to prevent stale cached packages. [Source: specs/004-scripting-nuget-package]
 - **FR-151**: All server port references across scripts and documentation MUST use canonical ports: 5180 for HTTP, 7180 for HTTPS. [Source: specs/004-scripting-nuget-package]
+- **FR-152**: Each demo MUST produce physically correct, interesting interactions as verified by simulation state output. Visual rendering accuracy is a viewer concern outside demo scope. [Source: specs/004-improve-demos]
+- **FR-153**: Each demo MUST clearly demonstrate its named physics concept (e.g., "Spinning Tops" shows rotational collision dynamics, not just static spinning). [Source: specs/004-improve-demos]
+- **FR-154**: Demos 11-15 MUST be integrated into AllDemos.fsx and all_demos.py using the same function-record pattern as demos 1-10. [Source: specs/004-improve-demos]
+- **FR-155**: AutoRun.fsx MUST reuse AllDemos definitions instead of duplicating helper and demo code. [Source: specs/004-improve-demos]
+- **FR-156**: Each demo improvement MUST be applied to both F# and Python versions. [Source: specs/004-improve-demos]
+- **FR-157**: Individual demo runtime MUST remain under 30 seconds. Body counts MUST stay within 500 per demo. [Source: specs/004-improve-demos]
+- **FR-158**: Demos MUST use existing Prelude capabilities — no new server-side features required. [Source: specs/004-improve-demos]
+- **FR-159**: F# Prelude.fsx MUST provide a `runStandalone` helper for direct demo execution via `dotnet fsi DemoNN.fsx`. [Source: specs/004-improve-demos]
 
 ## Key Entities
 

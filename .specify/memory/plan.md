@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-22
-**Revision**: Updated with 004-scripting-nuget-package archival
+**Revision**: Updated with 004-improve-demos archival
 
 ## Technical Context
 
@@ -155,24 +155,24 @@ Scripting/                                   # All scripting folders consolidate
 │   ├── Prelude.fsx                          # Single #r to Scripting DLL + opens
 │   └── HelloDrop.fsx                        # Minimal validation script
 ├── demos/                                   # F# scripts — demo suite (15 demos + runners)
-├── Prelude.fsx                            # Shared helpers: resetSimulation, command builders, batchAdd, nextId, toVec3, timed
-├── Demo01_HelloDrop.fsx                   # Single bowling ball drop
-├── Demo02_BouncingMarbles.fsx             # 5 marbles (batched)
-├── Demo03_CrateStack.fsx                  # 8 crates via stack generator
-├── Demo04_BowlingAlley.fsx                # Pyramid + bowling ball
-├── Demo05_MarbleRain.fsx                  # 20 random spheres via generator
-├── Demo06_DominoRow.fsx                   # 12 dominoes (batched)
-├── Demo07_SpinningTops.fsx                # 4 bodies + torques (batched)
-├── Demo08_GravityFlip.fsx                 # Grid + 5 beach balls (batched) + gravity changes
-├── Demo09_Billiards.fsx                   # 16 spheres (batched) + cue ball break
-├── Demo10_Chaos.fsx                       # Full showcase: generators + impulses (batched) + gravity + camera sweep
-├── Demo11_BodyScaling.fsx                 # Stress: progressive tiers 50/100/200/500 bodies
-├── Demo12_CollisionPit.fsx                # Stress: 120 spheres in walled pit
-├── Demo13_ForceFrenzy.fsx                 # Stress: 3 rounds bulk impulses/torques on 100 bodies
-├── Demo14_DominoCascade.fsx               # Stress: 120 dominoes semicircular chain reaction
-├── Demo15_Overload.fsx                    # Stress: 200+ bodies combined (formations + forces + gravity + camera)
-├── AllDemos.fsx                           # All 15 demos as inline functions (loaded by RunAll)
-├── AutoRun.fsx                            # Self-contained non-interactive runner (duplicates Prelude + timed helpers)
+├── Prelude.fsx                            # Shared helpers: resetSimulation, command builders, batchAdd, nextId, toVec3, timed, runStandalone + all PhysicsClient opens
+├── Demo01_HelloDrop.fsx                   # 4 objects (bowling ball, beach ball, crate, die) — comparative fall + impulse
+├── Demo02_BouncingMarbles.fsx             # 25 marbles in 2 waves, varied sizes, 2D spread
+├── Demo03_CrateStack.fsx                  # 12 light crates — boulder smash
+├── Demo04_BowlingAlley.fsx                # 30-brick wall — wrecking ball frontal impact
+├── Demo05_MarbleRain.fsx                  # 20 random spheres + 20 crates — mixed shape pile
+├── Demo06_DominoRow.fsx                   # 20 dominoes with camera tracking cascade
+├── Demo07_SpinningTops.fsx                # 6 spinning objects in ring — pushed inward for collision
+├── Demo08_GravityFlip.fsx                 # 25 light objects (beach balls, dice, spheres) — 4 gravity directions
+├── Demo09_Billiards.fsx                   # 16 spheres (batched) + cue ball break + low-angle view
+├── Demo10_Chaos.fsx                       # Full showcase with dramatic pauses + tighter camera sweep
+├── Demo11_BodyScaling.fsx                 # Stress: tight packing, mixed shapes, 50/100/200/500 tiers
+├── Demo12_CollisionPit.fsx                # Stress: 3 waves (40 large + 60 small + 20 heavy) in walled pit
+├── Demo13_ForceFrenzy.fsx                 # Stress: 80 tight-packed bodies, 3 force rounds with inward swarming
+├── Demo14_DominoCascade.fsx               # Stress: 120 dominoes semicircular with overhead view + tighter sweep
+├── Demo15_Overload.fsx                    # Stress: 200+ bodies with wireframe during impulse storm + status reports
+├── AllDemos.fsx                           # All 15 demos as inline functions (loaded by RunAll + AutoRun)
+├── AutoRun.fsx                            # Non-interactive runner (loads AllDemos.fsx — no code duplication)
 └── RunAll.fsx                             # Interactive runner (space/enter to advance)
 
 └── demos_py/                                # Python scripts — demo suite (15 demos + runners)

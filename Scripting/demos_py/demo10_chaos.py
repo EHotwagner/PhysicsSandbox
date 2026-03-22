@@ -42,6 +42,9 @@ def run(session):
     run_for(session, 1.5)
     print("  Stage built: pyramid + stack + row")
 
+    # Dramatic pause — let the audience take in the stage
+    sleep(800)
+
     # Act 2: Bombardment from above
     set_camera(session, (0.0, 15.0, 10.0), (0.0, 2.0, 0.0))
     print("  Act 2: Bombardment!")
@@ -82,14 +85,14 @@ def run(session):
     run_for(session, 2.0)
     wireframe(session, False)
 
-    # Final camera sweep
+    # Final camera sweep (tighter pacing)
     print("  Final: Camera sweep")
-    for angle in range(9):
-        a = angle * 0.7
+    for angle in range(7):
+        a = angle * 0.9
         cx = 10.0 * math.cos(a)
         cz = 10.0 * math.sin(a)
         set_camera(session, (cx, 5.0, cz), (0.0, 1.0, 0.0))
-        sleep(400)
+        sleep(300)
 
     print("  Chaos complete!")
     status(session)

@@ -1,18 +1,13 @@
 {
   "applied_at": "2026-03-22T00:00:00Z",
-  "proposals_applied": 3,
-  "proposals_skipped": 0,
-  "specs_updated": [
-    {
-      "spec": "004-scripting-nuget-package",
-      "changes": [
-        {"field": "Status", "from": "Draft", "to": "Implemented"},
-        {"requirement": "US3-Scenario-2", "type": "modified", "from": "Prelude.fsx preamble reference", "to": "Direct #r nuget: reference"},
-        {"requirement": "SC-004", "type": "reworded", "from": "single command sequence", "to": "established local NuGet pattern"}
-      ]
-    }
-  ],
-  "new_specs_created": [],
-  "align_tasks_generated": null,
-  "backup": ".specify/sync/backups/004-scripting-nuget-package-spec.md.bak"
+  "proposals_applied": 7,
+  "proposals_total": 7,
+  "changes": {
+    "code_files_modified": 11,
+    "spec_sections_updated": 7,
+    "alignment_tasks_created": 1,
+    "new_specs_created": 0
+  },
+  "applied_proposals": [1, 2, 3, 4, 5, 6, 7],
+  "not_applied": []
 }

@@ -1,54 +1,63 @@
 # Spec Drift Report
 
 Generated: 2026-03-22
-Project: PhysicsSandbox
-Scope: 004-scripting-nuget-package
+Project: PhysicsSandbox (004-improve-demos)
 
 ## Summary
 
 | Category | Count |
 |----------|-------|
 | Specs Analyzed | 1 |
-| Requirements Checked | 14 (8 FR + 6 SC) |
-| Aligned | 12 (86%) |
-| Drifted | 1 (7%) |
-| Not Implemented | 1 (7%) |
-| Unspecced Code | 1 |
+| Requirements Checked | 15 (9 FR + 6 SC) |
+| ✓ Aligned | 7 (47%) |
+| ⚠️ Drifted | 5 (33%) |
+| ✗ Not Implemented | 3 (20%) |
+| 🆕 Unspecced Code | 2 |
 
 ## Detailed Findings
 
-### Spec: 004-scripting-nuget-package - Scripting Library NuGet Package
+### Spec: 004-improve-demos - Improve Physics Demos
 
-#### Aligned
+#### Aligned ✓
+- FR-003: Demos 11-15 integrated into AllDemos.fsx and all_demos.py → `Scripting/demos/AllDemos.fsx` (15 records), `Scripting/demos_py/all_demos.py` (15 imports)
+- FR-004: AutoRun.fsx reuses AllDemos definitions → `Scripting/demos/AutoRun.fsx` (loads AllDemos.fsx, no duplication)
+- FR-005: Demo improvements applied to both F# and Python → All 15 demos have both versions with equivalent scenarios
+- FR-007: Body counts within 500 limit → All demos checked, max is Demo 11 at 500 bodies
+- FR-009: Demos use existing Prelude capabilities only → `runStandalone` is client-side convenience, no new server features
+- SC-005: AutoRun code duplication eliminated → Single source of truth via AllDemos.fsx
+- SC-006: F# and Python suites produce equivalent scenarios → Spot-checked demos 01, 06, 11; all match
 
-- FR-001: All 4 projects packable with IsPackable, PackageId, Version → `src/*/.[cf]sproj`
-- FR-002: Packages publishable to local feed → All 4 .nupkg files in `~/.local/share/nuget-local/`
-- FR-003: ProjectReferences to Scripting replaced with PackageReferences → `PhysicsSandbox.Mcp.fsproj`, `PhysicsSandbox.Scripting.Tests.fsproj`
-- FR-004: Script #r directives use version-agnostic NuGet references → `Scripting/scripts/HelloDrop.fsx`, `Scripting/demos/Prelude.fsx`, `Scripting/demos/AutoRun.fsx`
-- FR-005: Scripting declares PhysicsClient as PackageReference → `PhysicsSandbox.Scripting.fsproj`
-- FR-006: Pack workflow follows BepuFSharp conventions → `-p:NoWarn=NU5104 -o ~/.local/share/nuget-local/`
-- FR-008: All localhost:5000 references corrected to 5180/7180 → Zero matches in `Scripting/`, `src/`, `.mcp.json`
-- SC-001: Zero ProjectReferences to Scripting/PhysicsClient from external consumers → Verified
-- SC-002: All existing tests pass → 19/19 scripting, 40/42 integration (2 pre-existing failures)
-- SC-005: Zero localhost:5000 references in scripts/docs → Verified
-- SC-006: Version increment on subsequent publishes → Documented in notes (process requirement)
+#### Drifted ⚠️
+- SC-001: Spec says "all 15 demos run successfully through AllDemos runners" but AllDemos.fsx line 6 uses `open Prelude.DemoHelpers` which doesn't exist (Prelude was refactored to top-level bindings)
+  - Location: `Scripting/demos/AllDemos.fsx:6`
+  - Severity: **critical** — blocks all F# runner execution
 
-#### Drifted
+- SC-001 (continued): F# standalone demos 06-15 use broken `open Prelude.DemoHelpers` pattern
+  - Location: `Scripting/demos/Demo06_DominoRow.fsx:6` through `Demo15_Overload.fsx:7`
+  - Severity: **critical** — 10 of 15 standalone demos cannot execute
 
-- US3-Scenario-2: Spec says "Given the shared Prelude.fsx preamble has been updated, When any script that loads it runs, Then all scripting library modules are available" but `Scripting/scripts/Prelude.fsx` was deleted post-implementation. `HelloDrop.fsx` now has `#r "nuget: PhysicsSandbox.Scripting"` inlined directly. The preamble is no longer needed since NuGet references are a single line.
-  - Location: `Scripting/scripts/Prelude.fsx` (deleted)
-  - Severity: minor — implementation is better than spec (simpler, fewer files), spec just needs updating
+- FR-001: Spec says "each demo MUST produce visually distinct interactions" but viewer renders objects at wrong sizes (missing shape-to-size mapping)
+  - Location: `src/PhysicsViewer/Rendering/SceneManager.fs:89-105`
+  - Severity: major (fix implemented via Size property but not yet validated)
 
-#### Not Implemented
+- FR-008: Demo 04 camera/scenario evolved significantly from spec direction during collaborative iteration (now wrecking ball + brick wall instead of bowling ball + pyramid)
+  - Location: `Scripting/demos/Demo04_BowlingAlley.fsx`
+  - Severity: minor (working as user directed)
 
-- SC-004: "The pack-and-publish workflow completes in a single command sequence" — No pack script or documented single-command workflow exists. Pack commands were run manually in dependency order during implementation.
-  - Severity: minor — could be addressed with a simple shell script
+- SC-003: User confirmed demos 01-05 only; demos 06-15 not yet collaboratively reviewed
+  - Severity: moderate (work in progress)
 
-### Unspecced Code
+#### Not Implemented ✗
+- FR-006: "Individual demo runtime MUST remain under 30 seconds" — not measured
+- SC-002: "Each demo produces at least 3 distinct visible physics interactions" — not systematically verified
+- SC-004: "No demo exceeds 30 seconds runtime" — not measured
+
+### Unspecced Code 🆕
 
 | Feature | Location | Lines | Suggested Spec |
 |---------|----------|-------|----------------|
-| mcpReport.md port fix | `reports/mcpReport.md` | 1 line | 004-scripting-nuget-package (FR-008 scope expansion) |
+| `runStandalone` helper in Prelude | `Scripting/demos/Prelude.fsx:104-116` | 13 | 004-improve-demos (convenience) |
+| Viewer shape sizing fix | `src/PhysicsViewer/Rendering/SceneManager.fs:76-88` | 13 | Separate viewer fix spec recommended |
 
 ## Inter-Spec Conflicts
 
@@ -56,6 +65,7 @@ None detected.
 
 ## Recommendations
 
-1. **Update spec US3-Scenario-2**: Remove reference to `scripts/Prelude.fsx` preamble — scripts now inline the NuGet reference directly. This is a positive drift (simpler architecture).
-2. **Consider adding a pack script** (optional): A simple `pack.sh` that runs the 4 `dotnet pack` commands in dependency order would satisfy SC-004 and make the workflow reproducible.
-3. **Update spec status**: Change from "Draft" to "Implemented".
+1. **CRITICAL**: Fix broken `open Prelude.DemoHelpers` in AllDemos.fsx and demos 06-15 → change to `open Prelude`
+2. **HIGH**: Complete collaborative review of demos 06-15 with user (SC-003)
+3. **MEDIUM**: Validate viewer shape sizing fix resolves visual merging (FR-001)
+4. **LOW**: Measure runtime for all 15 demos to confirm <30s (FR-006, SC-004)

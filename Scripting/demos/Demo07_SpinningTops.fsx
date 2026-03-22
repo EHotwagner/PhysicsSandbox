@@ -1,45 +1,82 @@
 // Demo 07: Spinning Tops
-// Several bodies with torque applied — spinning in place.
+// Six spinning objects in a ring — pushed inward for chaotic collisions.
+// Usage: dotnet fsi Scripting/demos/Demo07_SpinningTops.fsx [server-address]
+
+#load "Prelude.fsx"
+open Prelude
+open PhysicsClient.Session
+open PhysicsClient.StateDisplay
 
 module Demo07 =
     let name = "Spinning Tops"
-    let description = "Beach balls and crates spinning with applied torques."
+    let description = "Six spinning objects collide in the center — angular momentum chaos."
 
-    let run (s: PhysicsClient.Session.Session) =
+    let run (s: Session) =
         resetSimulation s
 
         // Camera: top-down angled view
-        setCamera s (0.0, 8.0, 6.0) (0.0, 0.5, 0.0) |> ignore
+        setCamera s (0.0, 10.0, 8.0) (0.0, 0.5, 0.0) |> ignore
 
-        // Batch-create 4 bodies: 2 beach balls (r=0.2, m=0.1) + 2 crates (half=0.5, m=20)
-        let b1id = nextId "sphere"
-        let b2id = nextId "sphere"
-        let b3id = nextId "box"
-        let b4id = nextId "box"
-        let bodyCmds = [
-            makeSphereCmd b1id (-2.0, 0.25, 0.0) 0.2 0.1
-            makeSphereCmd b2id (2.0, 0.25, 0.0) 0.2 0.1
-            makeBoxCmd b3id (0.0, 0.55, -2.0) (0.5, 0.5, 0.5) 20.0
-            makeBoxCmd b4id (0.0, 0.55, 2.0) (0.5, 0.5, 0.5) 20.0 ]
+        // Place 6 objects in a ring (radius 2m), alternating spheres and boxes
+        let radius = 2.0
+        let ids =
+            [ for i in 0 .. 5 do
+                let angle = float i * System.Math.PI / 3.0
+                let x = radius * cos angle
+                let z = radius * sin angle
+                let id = if i % 2 = 0 then nextId "sphere" else nextId "box"
+                id ]
+
+        let bodyCmds =
+            [ for i in 0 .. 5 do
+                let angle = float i * System.Math.PI / 3.0
+                let x = radius * cos angle
+                let z = radius * sin angle
+                if i % 2 = 0 then
+                    makeSphereCmd ids.[i] (x, 0.3, z) 0.25 2.0
+                else
+                    makeBoxCmd ids.[i] (x, 0.4, z) (0.3, 0.3, 0.3) 5.0 ]
         batchAdd s bodyCmds
-        printfn "  Placed 4 bodies in a circle"
+        printfn "  6 objects placed in a ring"
 
         runFor s 0.5
 
-        // Batch-apply torques: Up=Y+, North=Z-, East=X+
-        let torqueCmds = [
-            makeTorqueCmd b1id (0.0, 50.0, 0.0)
-            makeTorqueCmd b2id (0.0, 0.0, -30.0)
-            makeTorqueCmd b3id (0.0, 80.0, 0.0)
-            makeTorqueCmd b4id (40.0, 0.0, 0.0) ]
+        // Spin them all — varied torque axes for visual variety
+        let torqueCmds =
+            [ makeTorqueCmd ids.[0] (0.0, 80.0, 0.0)
+              makeTorqueCmd ids.[1] (0.0, -60.0, 30.0)
+              makeTorqueCmd ids.[2] (0.0, 70.0, 0.0)
+              makeTorqueCmd ids.[3] (40.0, 0.0, -50.0)
+              makeTorqueCmd ids.[4] (0.0, -90.0, 0.0)
+              makeTorqueCmd ids.[5] (-30.0, 60.0, 0.0) ]
         batchAdd s torqueCmds
-        printfn "  Applied torques — spinning..."
+        printfn "  All spinning..."
+        runFor s 2.0
 
-        runFor s 4.0
-
-        // Wireframe mode for visual effect
+        // Wireframe on to see rotation clearly
         wireframe s true |> ignore
-        printfn "  Wireframe view"
-        sleep 2000
+        printfn "  Wireframe on — watch the collisions!"
+
+        // Push all objects inward toward center
+        let impulseCmds =
+            [ for i in 0 .. 5 do
+                let angle = float i * System.Math.PI / 3.0
+                let ix = -cos angle * 8.0   // inward force
+                let iz = -sin angle * 8.0
+                makeImpulseCmd ids.[i] (ix, 0.5, iz) ]
+        batchAdd s impulseCmds
+        printfn "  Pushed inward — COLLISION!"
+
+        // Camera drops to side view for dramatic impact
+        setCamera s (5.0, 3.0, 5.0) (0.0, 0.5, 0.0) |> ignore
+        runFor s 3.0
+
+        // Let chaos settle
         wireframe s false |> ignore
+        setCamera s (4.0, 2.0, 4.0) (0.0, 0.3, 0.0) |> ignore
+        printfn "  Settling..."
+        runFor s 2.0
+
         listBodies s
+
+runStandalone Demo07.name Demo07.run

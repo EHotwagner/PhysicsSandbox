@@ -1,25 +1,36 @@
-// Demo 05: Marble Rain
-// Random spheres rain down from the sky using the random generator.
+// Demo 05: Marble Rain — Mixed shapes rain from the sky and pile up.
+// Usage: dotnet fsi Scripting/demos/Demo05_MarbleRain.fsx [server-address]
 
-module Demo05 =
-    let name = "Marble Rain"
-    let description = "20 random spheres rain down from the sky."
+#load "Prelude.fsx"
+open Prelude
+open PhysicsClient.Session
+open PhysicsClient.SimulationCommands
+open PhysicsClient.ViewCommands
+open PhysicsClient.Generators
+open PhysicsClient.StateDisplay
 
-    let run (s: PhysicsClient.Session.Session) =
-        resetSimulation s
+let name = "Marble Rain"
 
-        // Camera: overhead angle
-        setCamera s (8.0, 12.0, 8.0) (0.0, 0.0, 0.0) |> ignore
+let run s =
+    resetSimulation s
+    setCamera s (6.0, 10.0, 6.0) (0.0, 0.0, 0.0) |> ignore
+    let ids = randomSpheres s 20 (Some 42) |> ok
+    printfn "  Wave 1: %d random spheres raining down..." ids.Length
+    runFor s 3.0
+    let rng = System.Random(99)
+    let wave2 =
+        [ for i in 0 .. 19 do
+              let x = rng.NextDouble() * 6.0 - 3.0
+              let z = rng.NextDouble() * 6.0 - 3.0
+              let y = 8.0 + float i * 1.0
+              let half = 0.2 + rng.NextDouble() * 0.1
+              makeBoxCmd (nextId "box") (x, y, z) (half, half, half) 2.0 ]
+    batchAdd s wave2
+    printfn "  Wave 2: 20 crates joining the pile!"
+    setCamera s (4.0, 6.0, 4.0) (0.0, 1.0, 0.0) |> ignore
+    runFor s 4.0
+    printfn "  Settled."
+    sleep 1000
+    listBodies s
 
-        // Generate 20 random spheres (seed for reproducibility)
-        let ids = randomSpheres s 20 (Some 42) |> ok
-        printfn "  Generated %d random spheres" ids.Length
-
-        printfn "  Let it rain..."
-        runFor s 5.0
-
-        // Switch to ground-level camera to see the aftermath
-        setCamera s (3.0, 1.0, 3.0) (0.0, 0.5, 0.0) |> ignore
-        printfn "  Ground-level view of the aftermath"
-        sleep 1000
-        listBodies s
+runStandalone name run

@@ -1,5 +1,29 @@
 # Merged Features Log
 
+## Improve Physics Demos — 2026-03-22
+**Branch:** 004-improve-demos
+**Spec:** specs/004-improve-demos
+
+**What was added:**
+- Improved all 15 physics demos to be more visually interesting and physically rich (both F# and Python suites)
+- Unified demo suite: demos 11-15 integrated into AllDemos.fsx, AutoRun.fsx refactored to load AllDemos (eliminated code duplication)
+- Each F# demo is now standalone-runnable via `dotnet fsi DemoNN.fsx` using new `runStandalone` Prelude helper
+- Prelude.fsx refactored to top-level bindings with all PhysicsClient opens (no module wrapper)
+- Added `#r "nuget: Microsoft.Extensions.Logging.Abstractions"` to Prelude for transitive dependency resolution
+- Viewer shape sizing fix attempted (passing `Size` to `Bepu3DPhysicsOptions`) — visual merging still observed, deferred to separate spec
+
+**Modified Components:**
+- `Scripting/demos/Prelude.fsx` — top-level bindings, runStandalone, logging dependency
+- `Scripting/demos/Demo01-15*.fsx` — improved physics scenarios + standalone boilerplate
+- `Scripting/demos/AllDemos.fsx` — updated all 15 demo entries with new scenarios
+- `Scripting/demos/AutoRun.fsx` — loads AllDemos instead of duplicating code
+- `Scripting/demos_py/demo01-15*.py` — Python mirrors of all F# improvements
+- `src/PhysicsViewer/Rendering/SceneManager.fs` — shape sizing via Bepu3DPhysicsOptions.Size
+
+**Tasks Completed:** 45/45 tasks
+
+---
+
 ## Scripting Library NuGet Package — 2026-03-22
 **Branch:** 004-scripting-nuget-package
 **Spec:** specs/004-scripting-nuget-package

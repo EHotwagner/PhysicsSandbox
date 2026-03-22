@@ -1,9 +1,12 @@
-"""Demo 07 — Spinning Tops: Beach balls and crates spinning with applied torques."""
+"""Demo 07 — Spinning Tops: Six spinning objects collide in the center."""
+
+import math
 
 from Scripting.demos_py.prelude import (
     batch_add,
     list_bodies,
     make_box_cmd,
+    make_impulse_cmd,
     make_sphere_cmd,
     make_torque_cmd,
     next_id,
@@ -11,53 +14,77 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
-    sleep,
     wireframe,
 )
 
 name = "Spinning Tops"
-description = "Beach balls and crates spinning with applied torques."
+description = "Six spinning objects collide in the center — angular momentum chaos."
 
 
 def run(session):
     reset_simulation(session)
 
     # Camera: top-down angled view
-    set_camera(session, (0.0, 8.0, 6.0), (0.0, 0.5, 0.0))
+    set_camera(session, (0.0, 10.0, 8.0), (0.0, 0.5, 0.0))
 
-    # Batch-create 4 bodies: 2 beach balls (r=0.2, m=0.1) + 2 crates (half=0.5, m=20)
-    b1id = next_id("sphere")
-    b2id = next_id("sphere")
-    b3id = next_id("box")
-    b4id = next_id("box")
-    body_cmds = [
-        make_sphere_cmd(b1id, (-2.0, 0.25, 0.0), 0.2, 0.1),
-        make_sphere_cmd(b2id, (2.0, 0.25, 0.0), 0.2, 0.1),
-        make_box_cmd(b3id, (0.0, 0.55, -2.0), (0.5, 0.5, 0.5), 20.0),
-        make_box_cmd(b4id, (0.0, 0.55, 2.0), (0.5, 0.5, 0.5), 20.0),
-    ]
+    # Place 6 objects in a ring (radius 2m), alternating spheres and boxes
+    radius = 2.0
+    ids = []
+    body_cmds = []
+    for i in range(6):
+        angle = i * math.pi / 3.0
+        x = radius * math.cos(angle)
+        z = radius * math.sin(angle)
+        if i % 2 == 0:
+            id_ = next_id("sphere")
+            ids.append(id_)
+            body_cmds.append(make_sphere_cmd(id_, (x, 0.3, z), 0.25, 2.0))
+        else:
+            id_ = next_id("box")
+            ids.append(id_)
+            body_cmds.append(make_box_cmd(id_, (x, 0.4, z), (0.3, 0.3, 0.3), 5.0))
     batch_add(session, body_cmds)
-    print("  Placed 4 bodies in a circle")
+    print("  6 objects placed in a ring")
 
     run_for(session, 0.5)
 
-    # Batch-apply torques
+    # Spin them all — varied torque axes
     torque_cmds = [
-        make_torque_cmd(b1id, (0.0, 50.0, 0.0)),
-        make_torque_cmd(b2id, (0.0, 0.0, -30.0)),
-        make_torque_cmd(b3id, (0.0, 80.0, 0.0)),
-        make_torque_cmd(b4id, (40.0, 0.0, 0.0)),
+        make_torque_cmd(ids[0], (0.0, 80.0, 0.0)),
+        make_torque_cmd(ids[1], (0.0, -60.0, 30.0)),
+        make_torque_cmd(ids[2], (0.0, 70.0, 0.0)),
+        make_torque_cmd(ids[3], (40.0, 0.0, -50.0)),
+        make_torque_cmd(ids[4], (0.0, -90.0, 0.0)),
+        make_torque_cmd(ids[5], (-30.0, 60.0, 0.0)),
     ]
     batch_add(session, torque_cmds)
-    print("  Applied torques — spinning...")
+    print("  All spinning...")
+    run_for(session, 2.0)
 
-    run_for(session, 4.0)
-
-    # Wireframe mode for visual effect
+    # Wireframe on to see rotation clearly
     wireframe(session, True)
-    print("  Wireframe view")
-    sleep(2000)
+    print("  Wireframe on — watch the collisions!")
+
+    # Push all objects inward toward center
+    impulse_cmds = []
+    for i in range(6):
+        angle = i * math.pi / 3.0
+        ix = -math.cos(angle) * 8.0
+        iz = -math.sin(angle) * 8.0
+        impulse_cmds.append(make_impulse_cmd(ids[i], (ix, 0.5, iz)))
+    batch_add(session, impulse_cmds)
+    print("  Pushed inward — COLLISION!")
+
+    # Camera drops to side view for dramatic impact
+    set_camera(session, (5.0, 3.0, 5.0), (0.0, 0.5, 0.0))
+    run_for(session, 3.0)
+
+    # Let chaos settle
     wireframe(session, False)
+    set_camera(session, (4.0, 2.0, 4.0), (0.0, 0.3, 0.0))
+    print("  Settling...")
+    run_for(session, 2.0)
+
     list_bodies(session)
 
 

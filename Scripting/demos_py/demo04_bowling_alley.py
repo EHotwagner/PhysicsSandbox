@@ -9,6 +9,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    sleep,
 )
 
 name = "Bowling Alley"
@@ -23,9 +24,15 @@ def run(session):
     ball = bowling_ball(session, pos=(-3.0, 0.15, 0.0))
     print("  Bowling ball ready")
     run_for(session, 1.0)
+    print("  Admiring the pyramid...")
+    sleep(1500)
     print("  STRIKE! Launching ball...")
     launch(session, ball, (5.0, 0.5, 0.0), 25.0)
-    run_for(session, 4.0)
+    run_for(session, 2.5)
+    # Low angle to see debris scatter
+    set_camera(session, (2.0, 0.5, 3.0), (5.0, 0.5, 0.0))
+    print("  Low-angle debris view")
+    run_for(session, 2.0)
     list_bodies(session)
 
 

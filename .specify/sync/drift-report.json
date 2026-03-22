@@ -1,44 +1,65 @@
 {
   "generated": "2026-03-22T00:00:00Z",
   "project": "PhysicsSandbox",
+  "feature": "004-improve-demos",
   "summary": {
     "specs_analyzed": 1,
-    "requirements_checked": 14,
-    "aligned": 12,
-    "drifted": 1,
-    "not_implemented": 1,
-    "unspecced_features": 1
+    "requirements_checked": 15,
+    "aligned": 7,
+    "drifted": 5,
+    "not_implemented": 3,
+    "unspecced_features": 2
   },
   "specs": [
     {
-      "id": "004-scripting-nuget-package",
-      "title": "Scripting Library NuGet Package",
-      "aligned": ["FR-001","FR-002","FR-003","FR-004","FR-005","FR-006","FR-008","SC-001","SC-002","SC-005","SC-006"],
+      "id": "004-improve-demos",
+      "title": "Improve Physics Demos",
+      "aligned": ["FR-003", "FR-004", "FR-005", "FR-007", "FR-009", "SC-005", "SC-006"],
       "drifted": [
         {
-          "requirement": "US3-Scenario-2",
-          "spec_text": "Given the shared Prelude.fsx preamble has been updated, When any script that loads it runs, Then all scripting library modules are available",
-          "actual": "Scripting/scripts/Prelude.fsx was deleted. HelloDrop.fsx inlines #r nuget: PhysicsSandbox.Scripting directly. Preamble no longer needed.",
-          "location": "Scripting/scripts/Prelude.fsx (deleted)",
+          "requirement": "SC-001",
+          "spec_text": "All 15 demos run successfully through both AllDemos runners",
+          "actual": "AllDemos.fsx and demos 06-15 use broken 'open Prelude.DemoHelpers' — module does not exist after Prelude refactor",
+          "location": "Scripting/demos/AllDemos.fsx:6, Scripting/demos/Demo06-15",
+          "severity": "critical"
+        },
+        {
+          "requirement": "FR-001",
+          "spec_text": "Each demo MUST produce visually distinct, interesting physics interactions",
+          "actual": "Viewer renders all objects at default unit size instead of actual physics dimensions — causes visual merging",
+          "location": "src/PhysicsViewer/Rendering/SceneManager.fs:89-105",
+          "severity": "major"
+        },
+        {
+          "requirement": "FR-008",
+          "spec_text": "Camera positioning MUST support viewing key interactions",
+          "actual": "Demo 04 evolved from bowling ball + pyramid to wrecking ball + brick wall during collaborative iteration",
+          "location": "Scripting/demos/Demo04_BowlingAlley.fsx",
           "severity": "minor"
+        },
+        {
+          "requirement": "SC-003",
+          "spec_text": "User confirms each demo is satisfying during per-demo review",
+          "actual": "Only demos 01-05 reviewed collaboratively; demos 06-15 pending",
+          "location": "N/A",
+          "severity": "moderate"
         }
       ],
-      "not_implemented": [
-        {
-          "requirement": "SC-004",
-          "spec_text": "The pack-and-publish workflow completes in a single command sequence",
-          "actual": "No pack script exists. Commands run manually in dependency order.",
-          "severity": "minor"
-        }
-      ]
+      "not_implemented": ["FR-006", "SC-002", "SC-004"]
     }
   ],
   "unspecced": [
     {
-      "feature": "mcpReport port fix",
-      "location": "reports/mcpReport.md",
-      "lines": 1,
-      "suggested_spec": "004-scripting-nuget-package"
+      "feature": "runStandalone helper",
+      "location": "Scripting/demos/Prelude.fsx:104-116",
+      "lines": 13,
+      "suggested_spec": "004-improve-demos"
+    },
+    {
+      "feature": "Viewer shape sizing fix",
+      "location": "src/PhysicsViewer/Rendering/SceneManager.fs:76-88",
+      "lines": 13,
+      "suggested_spec": "new-viewer-rendering-fix"
     }
   ],
   "conflicts": []
