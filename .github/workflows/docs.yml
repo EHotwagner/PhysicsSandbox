@@ -23,8 +23,20 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - run: dotnet tool restore
-      - run: mkdir -p ~/.local/share/nuget-local
-      - run: dotnet build src/PhysicsSandbox.Scripting/PhysicsSandbox.Scripting.fsproj -c Release
+
+      # Pack local NuGet dependencies in dependency order
+      - name: Pack Contracts
+        run: |
+          dotnet pack src/PhysicsSandbox.Shared.Contracts/PhysicsSandbox.Shared.Contracts.csproj -c Release -o local-packages
+      - name: Pack ServiceDefaults
+        run: |
+          dotnet pack src/PhysicsSandbox.ServiceDefaults/PhysicsSandbox.ServiceDefaults.csproj -c Release -o local-packages
+      - name: Pack PhysicsClient
+        run: |
+          dotnet pack src/PhysicsClient/PhysicsClient.fsproj -c Release -o local-packages
+      - name: Build Scripting (for fsdocs)
+        run: dotnet build src/PhysicsSandbox.Scripting/PhysicsSandbox.Scripting.fsproj -c Release
+
       - run: dotnet fsdocs build --clean --properties Configuration=Release
       - uses: actions/upload-pages-artifact@v3
         with:

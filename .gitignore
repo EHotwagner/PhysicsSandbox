@@ -19,6 +19,7 @@ Thumbs.db
 # Build artifacts
 *.nupkg
 *.snupkg
+local-packages/
 
 # Environment
 .env*
