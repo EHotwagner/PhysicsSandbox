@@ -1,7 +1,7 @@
 // HelloDrop — minimal validation script proving the scripting library works
-// Uses only PhysicsSandbox.Scripting.dll (no direct gRPC or Protobuf nuget directives)
+// Single NuGet reference — all dependencies resolve transitively
 
-#load "Prelude.fsx"
+#r "nuget: PhysicsSandbox.Scripting"
 
 open PhysicsClient.Session
 open PhysicsClient.SimulationCommands

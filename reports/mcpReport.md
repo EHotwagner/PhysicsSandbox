@@ -14,7 +14,7 @@ Two MCP servers are configured for Claude Code to interact with the PhysicsSandb
 | Property | Value |
 |----------|-------|
 | Transport | SSE |
-| URL | `http://localhost:5000/sse` |
+| URL | `http://localhost:5180/sse` |
 | Config | `.mcp.json` |
 | Tools | 32 (simulation, presets, generators, steering, audit) |
 
@@ -119,7 +119,7 @@ The `start.sh` script now defaults to the `http` profile (use `--https` to overr
   "mcpServers": {
     "physics-sandbox": {
       "type": "sse",
-      "url": "http://localhost:5000/sse"
+      "url": "http://localhost:5180/sse"
     },
     "aspire-dashboard": {
       "type": "http",

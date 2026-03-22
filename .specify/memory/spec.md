@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-22
-**Revision**: Updated with 004-fsharp-scripting-library archival
+**Revision**: Updated with 004-scripting-nuget-package archival
 
 ## Overview
 
@@ -172,6 +172,18 @@ The MCP server references the scripting library as a project dependency, reusing
 ### US-054: Extend Library with New Functions (P3)
 A developer adds a new function to the scripting library by modifying at most 2 files per module (implementation + signature), with no changes to existing consumers. Optionally, 2 additional Prelude files are updated for script convenience re-export. [Source: specs/004-fsharp-scripting-library]
 
+### US-055: Pack and Publish Libraries as NuGet Packages (P1)
+A developer packs PhysicsSandbox.Shared.Contracts, PhysicsSandbox.ServiceDefaults, PhysicsClient, and PhysicsSandbox.Scripting into local NuGet packages in dependency order, following the BepuFSharp pattern. [Source: specs/004-scripting-nuget-package]
+
+### US-056: Migrate Consumer Projects to PackageReferences (P2)
+Projects consuming PhysicsSandbox.Scripting (MCP server, test project) switch from ProjectReference to PackageReference. The solution builds and all tests pass identically. [Source: specs/004-scripting-nuget-package]
+
+### US-057: Version-Agnostic Script NuGet References (P3)
+All F# scripts and demos use `#r "nuget: PackageName"` (without version specifier) to automatically resolve the newest package from the local feed. [Source: specs/004-scripting-nuget-package]
+
+### US-058: Canonical Port Consistency (P4)
+All scripts, demos, and documentation use canonical server ports (5180 HTTP, 7180 HTTPS). Legacy `localhost:5000` references are eliminated. [Source: specs/004-scripting-nuget-package]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -317,6 +329,14 @@ A developer adds a new function to the scripting library by modifying at most 2 
 - **FR-141**: The scripting library MUST re-export dependencies so scripts don't need separate gRPC/Protobuf package directives. [Source: specs/004-fsharp-scripting-library]
 - **FR-142**: Moving a script from `scratch/` to `scripts/` MUST NOT require code changes — both use identical library reference paths. [Source: specs/004-fsharp-scripting-library]
 - **FR-143**: The scripting library MUST be part of the solution file and buildable with standard `dotnet build`. [Source: specs/004-fsharp-scripting-library]
+- **FR-144**: PhysicsClient, PhysicsSandbox.Shared.Contracts, PhysicsSandbox.ServiceDefaults, and PhysicsSandbox.Scripting MUST all be packable into .nupkg files with defined package identities and versions. [Source: specs/004-scripting-nuget-package]
+- **FR-145**: All packages MUST be publishable to the existing local NuGet feed at `~/.local/share/nuget-local/`. [Source: specs/004-scripting-nuget-package]
+- **FR-146**: All in-solution ProjectReferences to PhysicsSandbox.Scripting MUST be replaced with PackageReferences in consumer projects (MCP, tests). [Source: specs/004-scripting-nuget-package]
+- **FR-147**: All F# script and demo `#r` directives MUST use version-agnostic NuGet references (e.g., `#r "nuget: PhysicsSandbox.Scripting"`) to automatically resolve the newest package. [Source: specs/004-scripting-nuget-package]
+- **FR-148**: PhysicsSandbox.Scripting MUST declare PhysicsClient as a NuGet package dependency (PackageReference, not ProjectReference). [Source: specs/004-scripting-nuget-package]
+- **FR-149**: The packaging workflow MUST follow BepuFSharp conventions (local feed path, version scheme, `-p:NoWarn=NU5104` pack flag). [Source: specs/004-scripting-nuget-package]
+- **FR-150**: Each new package publish MUST use an incremented version number to prevent stale cached packages. [Source: specs/004-scripting-nuget-package]
+- **FR-151**: All server port references across scripts and documentation MUST use canonical ports: 5180 for HTTP, 7180 for HTTPS. [Source: specs/004-scripting-nuget-package]
 
 ## Key Entities
 
@@ -474,3 +494,9 @@ A developer adds a new function to the scripting library by modifying at most 2 
 - **SC-063**: Python automated runner completes all 15 demos and reports results within 3 minutes. [Source: specs/004-python-demo-scripts]
 - **SC-064**: Python demos require no .NET tooling to run — only Python and pip dependencies. [Source: specs/004-python-demo-scripts]
 - **SC-065**: A Python developer unfamiliar with F# can run and understand any demo from its script alone. [Source: specs/004-python-demo-scripts]
+- **SC-066**: The full solution builds successfully with zero ProjectReferences to PhysicsSandbox.Scripting or PhysicsClient from external consumers. [Source: specs/004-scripting-nuget-package]
+- **SC-067**: All existing tests pass after the NuGet migration. [Source: specs/004-scripting-nuget-package]
+- **SC-068**: F# scripts load and execute correctly using version-agnostic NuGet references. [Source: specs/004-scripting-nuget-package]
+- **SC-069**: The pack-and-publish workflow follows the established local NuGet pattern (dependency-ordered `dotnet pack`). [Source: specs/004-scripting-nuget-package]
+- **SC-070**: Zero references to `localhost:5000` remain in script or documentation files. [Source: specs/004-scripting-nuget-package]
+- **SC-071**: Each subsequent package publish uses a higher version number than the previous. [Source: specs/004-scripting-nuget-package]

@@ -13,7 +13,7 @@ let serverAddress =
     match Environment.GetEnvironmentVariable("services__server__https__0") with
     | null | "" ->
         match Environment.GetEnvironmentVariable("services__server__http__0") with
-        | null | "" -> "http://localhost:5000"
+        | null | "" -> "http://localhost:5180"
         | addr -> addr
     | addr -> addr
 

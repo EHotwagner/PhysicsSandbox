@@ -18,4 +18,4 @@ open PhysicsClient.Steering
 open PhysicsClient.StateDisplay
 open PhysicsClient.LiveWatch
 
-printfn "PhysicsClient loaded. Use Session.connect \"http://localhost:5000\" to begin."
+printfn "PhysicsClient loaded. Use Session.connect \"http://localhost:5180\" to begin."

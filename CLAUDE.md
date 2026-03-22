@@ -18,6 +18,8 @@ Last updated: 2026-03-22
 - N/A (stateless scripts communicating with running server) (004-python-demo-scripts)
 - F# on .NET 10.0 + PhysicsClient (project ref), PhysicsSandbox.Shared.Contracts (transitive), Grpc.Net.Client 2.x, Google.Protobuf 3.x (004-fsharp-scripting-library)
 - N/A (stateless library) (004-fsharp-scripting-library)
+- F# on .NET 10.0 (PhysicsClient, Scripting), C# on .NET 10.0 (Contracts, ServiceDefaults) + Grpc.Net.Client 2.x, Google.Protobuf 3.x, Grpc.AspNetCore 2.x, Spectre.Console 0.49.x, OpenTelemetry 1.14.x, Microsoft.Extensions.ServiceDiscovery 10.1.0 (004-scripting-nuget-package)
+- N/A (local NuGet feed at `~/.local/share/nuget-local/`) (004-scripting-nuget-package)
 
 ## Project Structure
 
@@ -79,9 +81,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 004-scripting-nuget-package: Published PhysicsSandbox.Shared.Contracts, PhysicsSandbox.ServiceDefaults, PhysicsClient, and PhysicsSandbox.Scripting as local NuGet packages (0.1.0) to ~/.local/share/nuget-local/. Migrated MCP server and Scripting.Tests from ProjectReference to PackageReference. Converted all F# script/demo DLL paths to version-agnostic `#r "nuget: ..."` references. Fixed port consistency: replaced all localhost:5000 with canonical 5180 (HTTP) / 7180 (HTTPS). 38 tasks completed.
 - 004-fsharp-scripting-library: F# scripting convenience library (PhysicsSandbox.Scripting) with 6 modules (Helpers, Vec3Builders, CommandBuilders, BatchOperations, SimulationLifecycle, Prelude). Wraps PhysicsClient for script-friendly API. Single #r reference replaces 3 DLLs + 4 nuget packages. scratch/ (gitignored) and scripts/ (tracked) folders at repo root. MCP server uses shared toVec3 from library. 19 unit tests + surface area baseline. 42 tasks completed.
 - 004-python-demo-scripts: Python demo suite (15 demos mirroring F# suite) with shared prelude.py (40+ functions: session, commands, presets, generators, steering, display), automated runner (auto_run.py), interactive runner (run_all.py), proto stub generation. Communicates via gRPC using Python-generated stubs. 29 tasks completed.
-- 003-stress-test-demos: Added F# scripts (.fsx) on .NET 10.0 + PhysicsClient.dll (existing), PhysicsSandbox.Shared.Contracts.dll (existing), Grpc.Net.Client, Google.Protobuf
 
 ## Environment
 

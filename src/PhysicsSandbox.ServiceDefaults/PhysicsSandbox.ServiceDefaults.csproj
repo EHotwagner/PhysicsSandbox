@@ -4,7 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IsAspireSharedProject>true</IsAspireSharedProject>
+    <IsAspireSharedProject>false</IsAspireSharedProject>
+    <IsPackable>true</IsPackable>
+    <PackageId>PhysicsSandbox.ServiceDefaults</PackageId>
+    <Version>0.1.0</Version>
     <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
   </PropertyGroup>
 

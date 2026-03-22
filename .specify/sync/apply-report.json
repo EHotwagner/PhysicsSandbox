@@ -1,41 +1,18 @@
 {
-  "applied_at": "2026-03-21T12:00:00Z",
-  "proposals_applied": 1,
+  "applied_at": "2026-03-22T00:00:00Z",
+  "proposals_applied": 3,
   "proposals_skipped": 0,
-  "specs_updated": [],
+  "specs_updated": [
+    {
+      "spec": "004-scripting-nuget-package",
+      "changes": [
+        {"field": "Status", "from": "Draft", "to": "Implemented"},
+        {"requirement": "US3-Scenario-2", "type": "modified", "from": "Prelude.fsx preamble reference", "to": "Direct #r nuget: reference"},
+        {"requirement": "SC-004", "type": "reworded", "from": "single command sequence", "to": "established local NuGet pattern"}
+      ]
+    }
+  ],
   "new_specs_created": [],
-  "align_tasks_generated": {
-    "file": ".specify/sync/align-tasks.md",
-    "count": 4,
-    "tasks": [
-      {
-        "id": 1,
-        "title": "Add ReportRenderTime RPC to proto",
-        "spec": "002-performance-diagnostics",
-        "requirement": "FR-011",
-        "effort": "small"
-      },
-      {
-        "id": 2,
-        "title": "Server caches and serves viewer render time",
-        "spec": "002-performance-diagnostics",
-        "requirement": "FR-011",
-        "effort": "small"
-      },
-      {
-        "id": 3,
-        "title": "Viewer reports smoothed frame time periodically",
-        "spec": "002-performance-diagnostics",
-        "requirement": "FR-011",
-        "effort": "small"
-      },
-      {
-        "id": 4,
-        "title": "Unit + integration tests for render time pipeline",
-        "spec": "002-performance-diagnostics",
-        "requirement": "FR-011",
-        "effort": "small"
-      }
-    ]
-  }
+  "align_tasks_generated": null,
+  "backup": ".specify/sync/backups/004-scripting-nuget-package-spec.md.bak"
 }

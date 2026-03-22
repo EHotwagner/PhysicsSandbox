@@ -1,12 +1,7 @@
 // AutoRun.fsx — Non-interactive demo runner (single self-contained file)
 // Usage: dotnet fsi Scripting/demos/AutoRun.fsx [server-address]
 
-#r "../../src/PhysicsClient/bin/Debug/net10.0/PhysicsClient.dll"
-#r "../../src/PhysicsSandbox.Shared.Contracts/bin/Debug/net10.0/PhysicsSandbox.Shared.Contracts.dll"
-#r "../../src/PhysicsSandbox.ServiceDefaults/bin/Debug/net10.0/PhysicsSandbox.ServiceDefaults.dll"
-#r "nuget: Grpc.Net.Client"
-#r "nuget: Google.Protobuf"
-#r "nuget: Grpc.Core.Api"
+#r "nuget: PhysicsClient"
 #r "nuget: Spectre.Console"
 
 open PhysicsClient.Session
@@ -347,7 +342,7 @@ let demos = [|
 |]
 
 // --- Runner ---
-let serverAddress = match fsi.CommandLineArgs |> Array.tryItem 1 with Some a -> a | None -> "http://localhost:5000"
+let serverAddress = match fsi.CommandLineArgs |> Array.tryItem 1 with Some a -> a | None -> "http://localhost:5180"
 
 printfn "\n============================================"
 printfn "  PhysicsSandbox Demo Runner — %d demos" demos.Length

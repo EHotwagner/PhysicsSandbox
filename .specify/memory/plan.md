@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-22
-**Revision**: Updated with 004-fsharp-scripting-library archival
+**Revision**: Updated with 004-scripting-nuget-package archival
 
 ## Technical Context
 
@@ -192,10 +192,10 @@ Scripting/                                   # All scripting folders consolidate
 
 - `ASPIRE_CONTAINER_RUNTIME=podman` — set in AppHost launchSettings.json
 - `ASPNETCORE_KESTREL__ENDPOINTDEFAULTS__PROTOCOLS=Http1AndHttp2` — set by AppHost on server resource for gRPC
-- `NuGet.config` — local feed at `~/.local/share/nuget-local/` for BepuFSharp package
+- `NuGet.config` — local feed at `~/.local/share/nuget-local/` for BepuFSharp, PhysicsSandbox.Shared.Contracts, PhysicsSandbox.ServiceDefaults, PhysicsClient, and PhysicsSandbox.Scripting packages
 - Simulation connects to server via Aspire service discovery (`services__server__https__0` env var)
 - Viewer connects to server via same Aspire service discovery env vars
-- Client connects to server via same Aspire service discovery env vars (fallback: `http://localhost:5000`)
+- Client connects to server via same Aspire service discovery env vars (fallback: `http://localhost:5180`)
 - MCP server connects to PhysicsServer via Aspire service discovery (`services__server__https__0` / `services__server__http__0` env vars); falls back to CLI arg or `https://localhost:7180` for standalone use
 - Stride3D uses OpenGL graphics API (`<StrideGraphicsApi>OpenGL</StrideGraphicsApi>`) for container/GPU-passthrough compatibility
 - Stride asset compiler disabled by default (`StrideCompilerSkipBuild`); builds without it for CI, enable for live runs with GPU

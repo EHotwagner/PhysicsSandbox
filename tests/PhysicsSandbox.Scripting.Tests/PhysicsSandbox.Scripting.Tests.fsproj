@@ -26,8 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\PhysicsSandbox.Scripting\PhysicsSandbox.Scripting.fsproj" />
-    <ProjectReference Include="..\..\src\PhysicsSandbox.Shared.Contracts\PhysicsSandbox.Shared.Contracts.csproj" />
+    <PackageReference Include="PhysicsSandbox.Scripting" Version="0.1.0" />
   </ItemGroup>
 
 </Project>
