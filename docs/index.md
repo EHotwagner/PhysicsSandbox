@@ -33,6 +33,7 @@ graph TD
 
 - **[Getting Started](getting-started.html)** — Build, run, and interact with the sandbox
 - **[Architecture](architecture.html)** — Service design, data flow, and gRPC contracts
+- **[Scripting Library](scripting-library.html)** — Convenience library for F# script authors
 - **[Demo Scripts](demo-scripts.html)** — 15 physics demos in F# and Python
 - **[MCP Tools](mcp-tools.html)** — 38 tools for AI-assisted physics debugging
 - **[Known Issues](known-issues.html)** — Current limitations and workarounds
