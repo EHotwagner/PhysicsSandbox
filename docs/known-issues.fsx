@@ -200,6 +200,59 @@ noisy.
 (**
 ---
 
+## Stride3D / Viewer (005 Release)
+
+### Complex Shape Rendering (Triangle, Compound, Mesh)
+
+Triangle, Compound, and Mesh shapes render as bounding-box cubes rather than
+geometrically accurate meshes. This is because generating custom Stride MeshDraw
+from vertex data requires graphics device context that isn't available in the
+current rendering pipeline. The bounding box approximation is functionally correct
+for debugging but not visually accurate.
+
+**Workaround:** Use debug wireframe mode (F3) for accurate collider outlines of
+all shapes.
+
+---
+
+## Physics Engine (005 Release)
+
+### SetBodyPose for Static Bodies
+
+`SetBodyPose` command rejects static bodies. Static bodies cannot be repositioned
+after creation — they must be removed and re-created.
+
+---
+
+## Scripting Library (005 Release)
+
+### Constraint Builder Coverage
+
+Only 4 of 10 constraint types have convenience builders in the Scripting library
+(`BallSocket`, `Hinge`, `Weld`, `DistanceLimit`). The remaining 6
+(`DistanceSpring`, `SwingLimit`, `TwistLimit`, `LinearAxisMotor`, `AngularMotor`,
+`PointOnLine`) require manual proto message construction via the full PhysicsClient
+API.
+
+---
+
+## Build System (005 Release)
+
+### NuGet Package Cache Staleness
+
+After repacking local NuGet packages (`PhysicsSandbox.Shared.Contracts`,
+`PhysicsClient`, `PhysicsSandbox.Scripting`), NuGet may serve stale cached
+versions. Clear the global packages folder if new proto types are not visible:
+*)
+
+(*** do-not-eval ***)
+// Clear stale NuGet cache for local packages:
+//   rm -rf ~/.nuget/packages/physicssandbox.shared.contracts/0.1.0
+//   dotnet restore --force
+
+(**
+---
+
 ## No Unimplemented Features
 
 The codebase contains **zero** `TODO`, `FIXME`, `HACK`, `BUG`, `XXX`, or

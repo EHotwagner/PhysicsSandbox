@@ -4,7 +4,7 @@
 
 # Physics Sandbox
 
-A real-time 3D physics simulation built as an F# microservices architecture on .NET 10, orchestrated by [.NET Aspire](https://learn.microsoft.com/dotnet/aspire/). Drop bodies, apply forces, flip gravity, and watch the results in a live Stride3D viewer — controlled through a REPL client, F#/Python scripts, or AI assistants via [MCP](https://modelcontextprotocol.io/).
+A real-time 3D physics simulation built as an F# microservices architecture on .NET 10, orchestrated by [.NET Aspire](https://learn.microsoft.com/dotnet/aspire/). Drop bodies, apply forces, flip gravity, and watch the results in a live [Stride3D](https://www.stride3d.net/) viewer — controlled through a REPL client, F#/Python scripts, or AI assistants via [MCP](https://modelcontextprotocol.io/). Physics powered by [BepuPhysics2](https://github.com/bepu/bepuphysics2).
 
 ## Architecture
 
@@ -16,7 +16,7 @@ graph TD
     Sim["Simulation\n(BepuPhysics2)"]
     Viewer["3D Viewer\n(Stride3D)"]
     Client["REPL Client\n(Spectre.Console)"]
-    MCP["MCP Server\n(38 AI Tools)"]
+    MCP["MCP Server\n(44 AI Tools)"]
 
     Server <-->|"commands / state\nbidirectional stream"| Sim
     Client -->|"commands\nview commands"| Server
@@ -32,7 +32,15 @@ graph TD
 | **PhysicsSimulation** | BepuPhysics2 engine — steps the world, streams state |
 | **PhysicsViewer** | Stride3D renderer — visualizes bodies, applies camera commands |
 | **PhysicsClient** | REPL console — sends commands, displays state with Spectre.Console |
-| **PhysicsSandbox.Mcp** | MCP server — 38 tools for AI-assisted simulation control |
+| **PhysicsSandbox.Mcp** | MCP server — 44 tools for AI-assisted simulation control |
+
+## Key Technologies
+
+- [.NET Aspire](https://learn.microsoft.com/dotnet/aspire/) — service orchestration and telemetry
+- [BepuPhysics2](https://github.com/bepu/bepuphysics2) — high-performance rigid body physics engine
+- [Stride3D](https://www.stride3d.net/) — open-source C# game engine for 3D visualization
+- [MCP](https://modelcontextprotocol.io/) — Model Context Protocol for AI assistant integration
+- [Spectre.Console](https://spectreconsole.net/) — rich terminal UI for the REPL client
 
 ## Quick Start
 
@@ -74,7 +82,7 @@ pip install grpcio grpcio-tools protobuf
 python -m Scripting.demos_py.demo01_hello_drop
 ```
 
-**MCP (AI Assistants)** — 38 tools for Claude Code, etc.:
+**MCP (AI Assistants)** — 44 tools for Claude Code, etc.:
 ```bash
 dotnet run --project src/PhysicsSandbox.Mcp
 ```
@@ -95,22 +103,27 @@ Then open http://localhost:8901.
 - [Getting Started](https://EHotwagner.github.io/PhysicsSandbox/getting-started.html) — build, run, and interact
 - [Architecture](https://EHotwagner.github.io/PhysicsSandbox/architecture.html) — service design and gRPC contracts
 - [Demo Scripts](https://EHotwagner.github.io/PhysicsSandbox/demo-scripts.html) — 15 physics demos in F# and Python
-- [MCP Tools](https://EHotwagner.github.io/PhysicsSandbox/mcp-tools.html) — 38 tools for AI-assisted control
-- [Test Suite](https://EHotwagner.github.io/PhysicsSandbox/tests.html) — 165 tests across 5 projects
+- [MCP Tools](https://EHotwagner.github.io/PhysicsSandbox/mcp-tools.html) — 44 tools for AI-assisted control
+- [Test Suite](https://EHotwagner.github.io/PhysicsSandbox/tests.html) — 225+ tests across 6 projects
+- [Release: Stride BepuPhysics Integration](https://EHotwagner.github.io/PhysicsSandbox/release-005.html) — what's new in the latest release
 - [Known Issues](https://EHotwagner.github.io/PhysicsSandbox/known-issues.html) — limitations and workarounds
 
 ## Features
 
-- **Real-time physics** — BepuPhysics2 simulation with spheres, boxes, and planes
-- **3D visualization** — Stride3D renderer with camera control and wireframe mode
+- **Real-time physics** — BepuPhysics2 simulation with 10 shape types (sphere, box, plane, capsule, cylinder, triangle, convex hull, compound, mesh, shape reference)
+- **10 constraint types** — hinge, ball-socket, weld, distance, swing/twist limits, motors, point-on-line
+- **Per-body color** — RGBA color per body with auto-assigned shape-type defaults
+- **Material properties** — friction, bounciness, damping per body with presets
+- **Physics queries** — raycast, sweep cast, overlap with batch variants via dedicated RPCs
+- **Collision layers** — 32-bit group/mask filtering for physics and queries
+- **Kinematic bodies** — script-driven motion, unaffected by gravity
+- **Debug visualization** — wireframe collider outlines and constraint connections (F3 toggle)
+- **3D visualization** — Stride3D renderer with camera control and per-body color
 - **gRPC communication** — contract-first design with proto files
 - **Aspire orchestration** — service discovery, health checks, telemetry dashboard
-- **MCP integration** — 38 tools for AI assistants (add bodies, apply forces, stress test)
-- **Dual scripting** — 15 demos in both F# (.fsx) and Python
-- **Batch commands** — submit up to 100 commands per RPC call
-- **Stress testing** — built-in tools for load testing and performance comparison
-- **Metrics pipeline** — per-service message counts, pipeline timings, diagnostics
-- **165 tests** — unit tests (xUnit) + Aspire integration tests
+- **MCP integration** — 44 tools for AI assistants
+- **Dual scripting** — 15 demos in both F# and Python
+- **225+ tests** — unit tests (xUnit) + Aspire integration tests
 
 ## Testing
 
@@ -122,8 +135,9 @@ dotnet test PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true
 |---|---|---|
 | PhysicsClient.Tests | 52 | Unit |
 | PhysicsServer.Tests | 27 | Unit |
-| PhysicsSimulation.Tests | 49 | Unit |
-| PhysicsViewer.Tests | 24 | Unit |
+| PhysicsSimulation.Tests | 85 | Unit |
+| PhysicsViewer.Tests | 40 | Unit |
+| PhysicsSandbox.Scripting.Tests | 20 | Unit |
 | PhysicsSandbox.Integration.Tests | 42 | Integration (Aspire) |
 
 ## Project Structure
@@ -136,14 +150,21 @@ src/
   PhysicsSandbox.Shared.Contracts/  # Proto gRPC contracts
   PhysicsServer/                    # F# server hub (message router)
   PhysicsSimulation/                # F# physics simulation (BepuFSharp)
+    Queries/                        #   QueryHandler (raycast, sweep, overlap)
   PhysicsViewer/                    # F# 3D viewer (Stride3D)
+    Rendering/ShapeGeometry         #   procedural mesh generation
+    Rendering/DebugRenderer         #   wireframe collider + constraint visualization
   PhysicsClient/                    # F# REPL client (Spectre.Console)
-  PhysicsSandbox.Mcp/               # F# MCP server (38 tools)
+  PhysicsSandbox.Mcp/               # F# MCP server (44 tools)
+  PhysicsSandbox.Scripting/         # F# scripting library (6 modules)
+    ConstraintBuilders              #   constraint creation helpers
+    QueryBuilders                   #   physics query helpers
 tests/
-  PhysicsServer.Tests/              # 18 unit tests
-  PhysicsSimulation.Tests/          # 39 unit tests
-  PhysicsViewer.Tests/              # 19 unit tests
+  PhysicsServer.Tests/              # 27 unit tests
+  PhysicsSimulation.Tests/          # 85 unit tests
+  PhysicsViewer.Tests/              # 40 unit tests
   PhysicsClient.Tests/              # 52 unit tests
+  PhysicsSandbox.Scripting.Tests/   # 20 unit tests
   PhysicsSandbox.Integration.Tests/ # 42 integration tests
 Scripting/
   demos/                            # F# demo scripts (15 demos)
