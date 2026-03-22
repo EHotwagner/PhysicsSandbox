@@ -38,3 +38,4 @@ graph TD
 - **[MCP Tools](mcp-tools.html)** — 38 tools for AI-assisted physics debugging
 - **[Known Issues](known-issues.html)** — Current limitations and workarounds
 - **[Test Suite](tests.html)** — 165 tests across 5 projects
+- **[API Reference](reference/index.html)** — PhysicsSandbox.Scripting module documentation
