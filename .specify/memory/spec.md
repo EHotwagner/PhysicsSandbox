@@ -315,7 +315,7 @@ All scripts, demos, and documentation use canonical server ports (5180 HTTP, 718
 - **FR-127**: System MUST provide an automated Python runner (`auto_run.py`) that executes all 15 demos sequentially with pass/fail reporting. [Source: specs/004-python-demo-scripts]
 - **FR-128**: System MUST provide an interactive Python runner (`run_all.py`) with keypress advancement. [Source: specs/004-python-demo-scripts]
 - **FR-129**: Each Python demo MUST be self-contained: reset the scene, configure camera, create bodies, run simulation, display results. [Source: specs/004-python-demo-scripts]
-- **FR-130**: Each Python demo MUST accept an optional server address argument, defaulting to `http://localhost:5000`. [Source: specs/004-python-demo-scripts]
+- **FR-130**: Each Python demo MUST accept an optional server address argument, defaulting to `http://localhost:5180`. [Source: specs/004-python-demo-scripts]
 - **FR-131**: Python demos MUST be runnable via `python` without requiring .NET tooling — only Python and pip dependencies. [Source: specs/004-python-demo-scripts]
 - **FR-132**: Python `batch_add` helper MUST automatically split command lists exceeding 100 items into multiple batches. [Source: specs/004-python-demo-scripts]
 - **FR-133**: System MUST provide a proto stub generation script (`generate_stubs.sh`) that generates Python stubs from the existing `physics_hub.proto`. [Source: specs/004-python-demo-scripts]

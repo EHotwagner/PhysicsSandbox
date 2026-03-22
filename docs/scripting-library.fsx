@@ -40,7 +40,7 @@ A script needs just one `#r` directive and a few `open` statements:
 *)
 
 (*** do-not-eval ***)
-#r "../src/PhysicsSandbox.Scripting/bin/Debug/net10.0/PhysicsSandbox.Scripting.dll"
+#r "nuget: PhysicsSandbox.Scripting"
 
 open PhysicsClient.Session
 open PhysicsClient.SimulationCommands
@@ -61,7 +61,7 @@ disconnect s
 
 <div class="alert alert-info">
 <strong>Tip:</strong> Both <code>Scripting/scratch/</code> and <code>Scripting/scripts/</code> folders use the same
-relative path to the DLL, so moving a script between them requires no code changes.
+<code>#r "nuget: PhysicsSandbox.Scripting"</code> reference, so moving a script between them requires no code changes.
 </div>
 
 ## Helpers Module

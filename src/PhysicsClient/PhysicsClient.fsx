@@ -1,12 +1,9 @@
 // PhysicsClient — FSI convenience script
 // Load this in F# Interactive: dotnet fsi src/PhysicsClient/PhysicsClient.fsx
 //
-// Prerequisites: dotnet build PhysicsSandbox.slnx
+// Prerequisites: local NuGet packages published (see nuget.config)
 
-#r "bin/Debug/net10.0/PhysicsClient.dll"
-#r "../../src/PhysicsSandbox.Shared.Contracts/bin/Debug/net10.0/PhysicsSandbox.Shared.Contracts.dll"
-#r "nuget: Grpc.Net.Client"
-#r "nuget: Google.Protobuf"
+#r "nuget: PhysicsClient"
 #r "nuget: Spectre.Console"
 
 open PhysicsClient.Session
