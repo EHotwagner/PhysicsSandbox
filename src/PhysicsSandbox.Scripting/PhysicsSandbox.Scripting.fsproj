@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="NamespaceDoc.fs" />
     <Compile Include="Helpers.fsi" />
     <Compile Include="Helpers.fs" />
     <Compile Include="Vec3Builders.fsi" />
