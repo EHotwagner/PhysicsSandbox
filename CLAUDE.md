@@ -26,6 +26,7 @@ Last updated: 2026-03-23
 - In-memory (physics world, shape cache, constraint registry, metrics counters) (005-stride-bepu-integration)
 - F# on .NET 10.0 (PhysicsViewer project) + Stride.CommunityToolkit 1.0.0-preview.62 (rendering), Stride.CommunityToolkit.Bepu 1.0.0-preview.62 (Bepu3DPhysicsOptions, Create3DPrimitive), Grpc.Net.Client 2.x (server communication), System.Text.Json (settings persistence) (005-viewer-settings-sizing-fix)
 - JSON file at `~/.config/PhysicsSandbox/viewer-settings.json` (005-viewer-settings-sizing-fix)
+- F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient.dll (NuGet), PhysicsSandbox.Shared.Contracts.dll (proto types), Grpc.Net.Client 2.x, Google.Protobuf 3.x (005-enhance-demos)
 
 ## Project Structure
 
@@ -87,9 +88,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 005-enhance-demos: Added F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient.dll (NuGet), PhysicsSandbox.Shared.Contracts.dll (proto types), Grpc.Net.Client 2.x, Google.Protobuf 3.x
 - 005-viewer-settings-sizing-fix: Added F# on .NET 10.0 (PhysicsViewer project) + Stride.CommunityToolkit 1.0.0-preview.62 (rendering), Stride.CommunityToolkit.Bepu 1.0.0-preview.62 (Bepu3DPhysicsOptions, Create3DPrimitive), Grpc.Net.Client 2.x (server communication), System.Text.Json (settings persistence)
 - 005-stride-bepu-integration: Extended physics sandbox — 10 shape types (sphere, box, plane, capsule, cylinder, triangle, convex hull, compound, mesh, shape reference), 10 constraint types (ball socket, hinge, weld, distance limit/spring, swing/twist limits, linear/angular motors, point-on-line), per-body color + material properties, collision layer filtering, kinematic bodies, physics queries (raycast, sweep cast, overlap) via dedicated RPCs, debug wireframe visualization (F3 toggle). BepuFSharp 0.1.0→0.2.0-beta.1. New modules: QueryHandler, ShapeGeometry, DebugRenderer.
-- 004-improve-demos: Improved all 15 F# + Python demos for richer physics. AutoRun refactored to load AllDemos (no duplication). Prelude.fsx refactored to top-level bindings with runStandalone helper. Viewer shape sizing fix (Bepu3DPhysicsOptions.Size) — pending validation
 
 ## Environment
 

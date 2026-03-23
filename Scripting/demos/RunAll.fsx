@@ -8,6 +8,7 @@
 #load "Prelude.fsx"
 #load "AllDemos.fsx"
 
+open AllDemos
 open PhysicsClient.Session
 
 let serverAddress =
