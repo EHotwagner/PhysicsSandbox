@@ -77,15 +77,18 @@ public class MeshCacheIntegrationTests
         await client.SendCommandAsync(MakeStepCommand());
         await Task.Delay(500);
 
-        // Stream state and verify CachedShapeRef
+        // Shapes are now delivered via PropertyEvent (not TickState).
+        // Use StreamProperties to get the PropertySnapshot backfill.
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-        var stateStream = client.StreamState(new StateRequest(), cancellationToken: cts.Token);
+        using var propCall = client.StreamProperties(new StateRequest(), cancellationToken: cts.Token);
+        var propStream = propCall.ResponseStream;
 
-        Assert.True(await stateStream.ResponseStream.MoveNext(cts.Token));
-        var state = stateStream.ResponseStream.Current;
+        Assert.True(await propStream.MoveNext(cts.Token));
+        var backfill = propStream.Current;
+        Assert.NotNull(backfill.Snapshot);
 
-        // Find the hull body
-        var hullBody = state.Bodies.FirstOrDefault(b => b.Id == "hull1");
+        // Find the hull body in the property snapshot
+        var hullBody = backfill.Snapshot.Bodies.FirstOrDefault(b => b.Id == "hull1");
         Assert.NotNull(hullBody);
         Assert.Equal(Shape.ShapeOneofCase.CachedRef, hullBody.Shape.ShapeCase);
 
@@ -136,14 +139,16 @@ public class MeshCacheIntegrationTests
         });
         var lateClient = new PhysicsHub.PhysicsHubClient(channel2);
 
-        // Verify late joiner gets state with CachedShapeRef
+        // Verify late joiner gets property snapshot with CachedShapeRef
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        var lateStream = lateClient.StreamState(new StateRequest(), cancellationToken: cts.Token);
+        using var propCall = lateClient.StreamProperties(new StateRequest(), cancellationToken: cts.Token);
+        var propStream = propCall.ResponseStream;
 
-        Assert.True(await lateStream.ResponseStream.MoveNext(cts.Token));
-        var state = lateStream.ResponseStream.Current;
+        Assert.True(await propStream.MoveNext(cts.Token));
+        var backfill = propStream.Current;
+        Assert.NotNull(backfill.Snapshot);
 
-        var hullBody = state.Bodies.FirstOrDefault(b => b.Id == "hull-late");
+        var hullBody = backfill.Snapshot.Bodies.FirstOrDefault(b => b.Id == "hull-late");
         Assert.NotNull(hullBody);
         Assert.Equal(Shape.ShapeOneofCase.CachedRef, hullBody.Shape.ShapeCase);
 

@@ -19,36 +19,8 @@ if [[ "${1:-}" == "--https" ]]; then
 fi
 
 # Kill any existing AppHost and all related processes to avoid duplicate stacks
-PATTERNS=(
-    "PhysicsSandbox.AppHost"
-    "PhysicsServer"
-    "PhysicsSimulation"
-    "PhysicsViewer"
-    "PhysicsClient"
-    "PhysicsSandbox.Mcp"
-    "Aspire.Dashboard"
-    "tools/dcp "
-    "tools/ext/dcpctrl"
-    "tools/ext/bin/dcpproc"
-)
-FOUND=false
-for pat in "${PATTERNS[@]}"; do
-    if pgrep -f "$pat" > /dev/null 2>&1; then FOUND=true; break; fi
-done
-if $FOUND; then
-    echo "Stopping existing processes..."
-    for pat in "${PATTERNS[@]}"; do
-        pkill -f "$pat" 2>/dev/null || true
-    done
-    sleep 2
-    # Force kill anything that survived
-    for pat in "${PATTERNS[@]}"; do
-        pkill -9 -f "$pat" 2>/dev/null || true
-    done
-    sleep 1
-    echo "Existing processes stopped."
-    echo ""
-fi
+"$SCRIPT_DIR/kill.sh"
+echo ""
 
 echo "Starting PhysicsSandbox AppHost (profile: $PROFILE)..."
 echo "  Dashboard: $(if [[ $PROFILE == "https" ]]; then echo 'https://localhost:8081'; else echo 'http://localhost:8081'; fi)"

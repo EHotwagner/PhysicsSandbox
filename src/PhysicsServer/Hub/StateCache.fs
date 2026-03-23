@@ -1,32 +1,48 @@
-/// <summary>Thread-safe cache for the latest simulation state snapshot, used to serve late-joining clients.</summary>
+/// <summary>Thread-safe caches for late-joining clients: tick state (60 Hz) and property snapshot (on-change).</summary>
 module PhysicsServer.Hub.StateCache
 
 open PhysicsSandbox.Shared.Contracts
 
-/// <summary>Thread-safe container that holds the most recent simulation state behind a lock.</summary>
+/// <summary>Thread-safe container that holds the most recent tick state behind a lock.</summary>
 type StateCache =
-    { mutable Current: SimulationState option
+    { mutable Current: TickState option
+      Lock: obj }
+
+/// <summary>Thread-safe container that holds the most recent property snapshot behind a lock.</summary>
+type PropertyCache =
+    { mutable Current: PropertySnapshot option
       Lock: obj }
 
 /// <summary>Create a new empty state cache with no cached state.</summary>
-/// <returns>A fresh StateCache instance.</returns>
-let create () =
+let create () : StateCache =
     { Current = None
       Lock = obj () }
 
-/// <summary>Retrieve the most recently cached simulation state, or None if no state has been received yet.</summary>
-/// <param name="cache">The state cache to read from.</param>
-/// <returns>The latest SimulationState if available, otherwise None.</returns>
+/// <summary>Retrieve the most recently cached tick state, or None if no state has been received yet.</summary>
 let get (cache: StateCache) =
     lock cache.Lock (fun () -> cache.Current)
 
-/// <summary>Replace the cached state with a new simulation state snapshot.</summary>
-/// <param name="cache">The state cache to update.</param>
-/// <param name="state">The new simulation state to store.</param>
-let update (cache: StateCache) (state: SimulationState) =
+/// <summary>Replace the cached state with a new tick state snapshot.</summary>
+let update (cache: StateCache) (state: TickState) =
     lock cache.Lock (fun () -> cache.Current <- Some state)
 
 /// <summary>Clear the cached state, resetting it to None.</summary>
-/// <param name="cache">The state cache to clear.</param>
 let clear (cache: StateCache) =
+    lock cache.Lock (fun () -> cache.Current <- None)
+
+/// <summary>Create a new empty property cache.</summary>
+let createPropertyCache () : PropertyCache =
+    { Current = None
+      Lock = obj () }
+
+/// <summary>Retrieve the most recently cached property snapshot.</summary>
+let getProperties (cache: PropertyCache) =
+    lock cache.Lock (fun () -> cache.Current)
+
+/// <summary>Replace the cached property snapshot.</summary>
+let updateProperties (cache: PropertyCache) (snapshot: PropertySnapshot) =
+    lock cache.Lock (fun () -> cache.Current <- Some snapshot)
+
+/// <summary>Clear the property cache.</summary>
+let clearProperties (cache: PropertyCache) =
     lock cache.Lock (fun () -> cache.Current <- None)

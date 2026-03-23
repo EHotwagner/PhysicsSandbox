@@ -14,6 +14,7 @@
     <Compile Include="CommandHandlerTests.fs" />
     <Compile Include="ExtendedFeatureTests.fs" />
     <Compile Include="SurfaceAreaTests.fs" />
+    <Compile Include="StateDecompositionTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\PhysicsSimulation\PhysicsSimulation.fsproj" />
+    <ProjectReference Include="..\..\src\PhysicsServer\PhysicsServer.fsproj" />
   </ItemGroup>
 
 </Project>

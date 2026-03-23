@@ -103,6 +103,17 @@ type RecordingEngine() =
                 writer.Enqueue(LogEntry.MeshDefinition(ts, mg.MeshId, mg.Shape))
         | _ -> ()
 
+    member _.OnPropertyEventReceived(event: PropertyEvent) =
+        if not isRecording then ()
+        else
+        match currentWriter with
+        | Some writer ->
+            let ts = DateTimeOffset.UtcNow
+            // Record mesh definitions piggyback on property events
+            for mg in event.NewMeshes do
+                writer.Enqueue(LogEntry.MeshDefinition(ts, mg.MeshId, mg.Shape))
+        | None -> ()
+
     member _.OnCommandReceived(event: CommandEvent) =
         if not isRecording then ()
         else

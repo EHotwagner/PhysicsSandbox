@@ -13,7 +13,7 @@ let ``Get returns None when cache is empty`` () =
 [<Fact>]
 let ``Get returns latest state after update`` () =
     let cache = create ()
-    let state = SimulationState(Time = 1.0, Running = true)
+    let state = TickState(Time = 1.0, Running = true)
     update cache state
     let result = get cache
     Assert.True(result.IsSome)
@@ -23,8 +23,8 @@ let ``Get returns latest state after update`` () =
 [<Fact>]
 let ``Update overwrites previous state`` () =
     let cache = create ()
-    let state1 = SimulationState(Time = 1.0, Running = true)
-    let state2 = SimulationState(Time = 2.0, Running = false)
+    let state1 = TickState(Time = 1.0, Running = true)
+    let state2 = TickState(Time = 2.0, Running = false)
     update cache state1
     update cache state2
     let result = get cache
@@ -35,7 +35,7 @@ let ``Update overwrites previous state`` () =
 [<Fact>]
 let ``Clear removes cached state`` () =
     let cache = create ()
-    let state = SimulationState(Time = 1.0, Running = true)
+    let state = TickState(Time = 1.0, Running = true)
     update cache state
     clear cache
     let result = get cache

@@ -9,6 +9,7 @@ PhysicsSandbox.Scripting.CommandBuilders:makeColor
 PhysicsSandbox.Scripting.CommandBuilders:makeCylinderCmd
 PhysicsSandbox.Scripting.CommandBuilders:makeImpulseCmd
 PhysicsSandbox.Scripting.CommandBuilders:makeMaterialProperties
+PhysicsSandbox.Scripting.CommandBuilders:makeSetBodyPoseCmd
 PhysicsSandbox.Scripting.CommandBuilders:makeSphereCmd
 PhysicsSandbox.Scripting.CommandBuilders:makeTorqueCmd
 PhysicsSandbox.Scripting.CommandBuilders:slipperyMaterial
@@ -40,6 +41,7 @@ PhysicsSandbox.Scripting.Prelude:makeHingeCmd
 PhysicsSandbox.Scripting.Prelude:makeImpulseCmd
 PhysicsSandbox.Scripting.Prelude:makeMaterialProperties
 PhysicsSandbox.Scripting.Prelude:makeRemoveConstraintCmd
+PhysicsSandbox.Scripting.Prelude:makeSetBodyPoseCmd
 PhysicsSandbox.Scripting.Prelude:makeSphereCmd
 PhysicsSandbox.Scripting.Prelude:makeTorqueCmd
 PhysicsSandbox.Scripting.Prelude:makeWeldCmd

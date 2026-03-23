@@ -10,6 +10,7 @@ type RecordingEngine =
     member IsRecording: bool
     member ActiveSession: RecordingSession option
     member OnStateReceived: PhysicsSandbox.Shared.Contracts.SimulationState -> unit
+    member OnPropertyEventReceived: PhysicsSandbox.Shared.Contracts.PropertyEvent -> unit
     member OnCommandReceived: PhysicsSandbox.Shared.Contracts.CommandEvent -> unit
     interface IDisposable
 

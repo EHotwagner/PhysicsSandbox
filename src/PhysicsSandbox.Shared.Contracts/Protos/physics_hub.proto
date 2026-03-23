@@ -13,9 +13,15 @@ service PhysicsHub {
   // Client sends a view command (camera, wireframe, zoom)
   rpc SendViewCommand (ViewCommand) returns (CommandAck);
 
-  // Client/Viewer subscribes to simulation state updates.
-  // Late joiners receive the most recent cached state as the first message.
-  rpc StreamState (StateRequest) returns (stream SimulationState);
+  // Client/Viewer subscribes to lean tick-rate pose updates (60 Hz).
+  // Contains only dynamic body poses + simulation metadata.
+  // Late joiners receive the most recent cached tick as the first message.
+  rpc StreamState (StateRequest) returns (stream TickState);
+
+  // Client/Viewer subscribes to semi-static property events (on-change).
+  // Late joiners receive a PropertySnapshot backfill as the first message.
+  // Delivers body lifecycle (created/removed/updated), constraint/shape snapshots, mesh definitions.
+  rpc StreamProperties (StateRequest) returns (stream PropertyEvent);
 
   // Server streams view commands to the viewer.
   // Viewer subscribes to receive camera, wireframe, and zoom commands
@@ -180,6 +186,77 @@ message Body {
   uint32 collision_mask = 12;
   MaterialProperties material = 13;
 }
+
+// ─── Optimized Streaming Messages ───────────────────────────────────────────
+
+// Per-body pose data for dynamic bodies only (60 Hz tick stream).
+// Velocity fields omitted for clients with exclude_velocity=true.
+message BodyPose {
+  string id = 1;
+  Vec3 position = 2;
+  Vec4 orientation = 3;
+  Vec3 velocity = 4;
+  Vec3 angular_velocity = 5;
+}
+
+// Lean per-tick state sent at 60 Hz. Contains only dynamic body poses.
+// Replaces SimulationState on the StreamState RPC.
+message TickState {
+  repeated BodyPose bodies = 1;
+  double time = 2;
+  bool running = 3;
+  double tick_ms = 4;
+  double serialize_ms = 5;
+  repeated QueryResponse query_responses = 6;
+}
+
+// Full semi-static properties for a body.
+// Includes pose for static bodies and motion type transitions.
+message BodyProperties {
+  string id = 1;
+  Shape shape = 2;
+  Color color = 3;
+  double mass = 4;
+  bool is_static = 5;
+  BodyMotionType motion_type = 6;
+  uint32 collision_group = 7;
+  uint32 collision_mask = 8;
+  MaterialProperties material = 9;
+  Vec3 position = 10;
+  Vec4 orientation = 11;
+}
+
+// Wrapper for property/lifecycle events on the property event stream.
+message PropertyEvent {
+  oneof event {
+    BodyProperties body_created = 1;
+    string body_removed = 2;
+    BodyProperties body_updated = 3;
+    PropertySnapshot snapshot = 4;
+    ConstraintSnapshot constraints_snapshot = 5;
+    RegisteredShapeSnapshot registered_shapes_snapshot = 6;
+  }
+  repeated MeshGeometry new_meshes = 10;
+}
+
+// Snapshot of all constraints (sent on change).
+message ConstraintSnapshot {
+  repeated ConstraintState constraints = 1;
+}
+
+// Snapshot of all registered shapes (sent on change).
+message RegisteredShapeSnapshot {
+  repeated RegisteredShapeState registered_shapes = 1;
+}
+
+// Full snapshot for late-joiner backfill.
+message PropertySnapshot {
+  repeated BodyProperties bodies = 1;
+  repeated ConstraintState constraints = 2;
+  repeated RegisteredShapeState registered_shapes = 3;
+}
+
+// ─── Vectors ────────────────────────────────────────────────────────────────
 
 message Vec3 {
   double x = 1;
@@ -566,7 +643,10 @@ message CommandAck {
 }
 
 message StateRequest {
-  // Empty — subscribes the caller to state updates.
+  // If true, TickState omits velocity and angular_velocity fields.
+  // Default false = include velocity (backward compatible).
+  // Viewer sets true to minimize bandwidth.
+  bool exclude_velocity = 1;
 }
 
 message CommandEvent {

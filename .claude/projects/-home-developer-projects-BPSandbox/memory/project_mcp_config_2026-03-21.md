@@ -7,7 +7,7 @@ type: project
 Two MCP servers are configured for Claude Code in `.mcp.json` (project root). The `.claude/settings.local.json` is cleared.
 
 ## Physics Sandbox MCP (SSE)
-- Transport: SSE at `http://localhost:5000/sse`
+- Transport: SSE at `http://localhost:5180/sse`
 - Connects to PhysicsServer via Aspire service discovery (`services__server__https__0`)
 - Requires `Http1AndHttp2` protocol on PhysicsServer Kestrel (not `Http2` only) — the Aspire DCP proxy needs HTTP/1.1 to forward gRPC streams
 - 32 MCP tools for simulation control, presets, generators, steering

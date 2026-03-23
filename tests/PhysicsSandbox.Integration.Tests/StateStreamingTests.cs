@@ -121,7 +121,7 @@ public class StateStreamingTests
         var stream = client.StreamState(new StateRequest(), cancellationToken: cts.Token);
 
         // Read messages until we find one with bodies (cached state should arrive quickly)
-        SimulationState? stateWithBodies = null;
+        TickState? stateWithBodies = null;
         try
         {
             while (await stream.ResponseStream.MoveNext(cts.Token))

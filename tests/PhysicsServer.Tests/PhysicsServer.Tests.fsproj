@@ -18,6 +18,7 @@
     <Compile Include="BatchRoutingTests.fs" />
     <Compile Include="MeshCacheTests.fs" />
     <Compile Include="MessageRouterTests.fs" />
+    <Compile Include="StateStreamOptimizationTests.fs" />
   </ItemGroup>
 
   <ItemGroup>

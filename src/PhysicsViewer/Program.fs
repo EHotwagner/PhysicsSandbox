@@ -44,6 +44,11 @@ let mutable lastAppliedVersion = 0
 // Mesh resolver for on-demand geometry fetch
 let mutable meshResolverState: MeshResolver.MeshResolverState option = None
 
+// Body properties cache for split-channel reconstruction
+let bodyPropsCache = System.Collections.Concurrent.ConcurrentDictionary<string, BodyProperties>()
+let mutable cachedConstraints: ConstraintState list = []
+let mutable cachedRegisteredShapes: RegisteredShapeState list = []
+
 // Viewer metrics counters
 let mutable viewerMsgRecv = 0L
 let mutable viewerBytesRecv = 0L
@@ -72,6 +77,108 @@ let createGrpcChannel (serverAddress: string) =
         System.Net.Security.RemoteCertificateValidationCallback(fun _ _ _ _ -> true)
     Grpc.Net.Client.GrpcChannel.ForAddress(serverAddress, Grpc.Net.Client.GrpcChannelOptions(HttpHandler = handler))
 
+let private reconstructSimState (tick: TickState) =
+    let state = SimulationState()
+    state.Time <- tick.Time
+    state.Running <- tick.Running
+    state.TickMs <- tick.TickMs
+    state.SerializeMs <- tick.SerializeMs
+    let dynamicIds = System.Collections.Generic.HashSet<string>()
+    for pose in tick.Bodies do
+        dynamicIds.Add(pose.Id) |> ignore
+        let b = Body()
+        b.Id <- pose.Id
+        b.Position <- pose.Position
+        b.Orientation <- pose.Orientation
+        b.Velocity <- pose.Velocity
+        b.AngularVelocity <- pose.AngularVelocity
+        match bodyPropsCache.TryGetValue(pose.Id) with
+        | true, p ->
+            b.Shape <- p.Shape
+            b.Color <- p.Color
+            b.Mass <- p.Mass
+            b.IsStatic <- p.IsStatic
+            b.MotionType <- p.MotionType
+            b.CollisionGroup <- p.CollisionGroup
+            b.CollisionMask <- p.CollisionMask
+            b.Material <- p.Material
+        | _ -> ()
+        state.Bodies.Add(b)
+    for kvp in bodyPropsCache do
+        if kvp.Value.IsStatic && not (dynamicIds.Contains(kvp.Key)) then
+            let b = Body()
+            b.Id <- kvp.Value.Id
+            b.Shape <- kvp.Value.Shape
+            b.Color <- kvp.Value.Color
+            b.Mass <- kvp.Value.Mass
+            b.IsStatic <- kvp.Value.IsStatic
+            b.MotionType <- kvp.Value.MotionType
+            b.CollisionGroup <- kvp.Value.CollisionGroup
+            b.CollisionMask <- kvp.Value.CollisionMask
+            b.Material <- kvp.Value.Material
+            b.Position <- kvp.Value.Position
+            b.Orientation <- kvp.Value.Orientation
+            b.Velocity <- Vec3()
+            b.AngularVelocity <- Vec3()
+            state.Bodies.Add(b)
+    for cs in cachedConstraints do
+        state.Constraints.Add(cs)
+    for rs in cachedRegisteredShapes do
+        state.RegisteredShapes.Add(rs)
+    for qr in tick.QueryResponses do
+        state.QueryResponses.Add(qr)
+    state
+
+let private processViewerPropertyEvent (evt: PropertyEvent) =
+    match evt.EventCase with
+    | PropertyEvent.EventOneofCase.BodyCreated ->
+        bodyPropsCache.[evt.BodyCreated.Id] <- evt.BodyCreated
+    | PropertyEvent.EventOneofCase.BodyUpdated ->
+        bodyPropsCache.[evt.BodyUpdated.Id] <- evt.BodyUpdated
+    | PropertyEvent.EventOneofCase.BodyRemoved ->
+        bodyPropsCache.TryRemove(evt.BodyRemoved) |> ignore
+    | PropertyEvent.EventOneofCase.Snapshot ->
+        bodyPropsCache.Clear()
+        for bp in evt.Snapshot.Bodies do
+            bodyPropsCache.[bp.Id] <- bp
+        cachedConstraints <- evt.Snapshot.Constraints |> Seq.toList
+        cachedRegisteredShapes <- evt.Snapshot.RegisteredShapes |> Seq.toList
+    | PropertyEvent.EventOneofCase.ConstraintsSnapshot ->
+        cachedConstraints <- evt.ConstraintsSnapshot.Constraints |> Seq.toList
+    | PropertyEvent.EventOneofCase.RegisteredShapesSnapshot ->
+        cachedRegisteredShapes <- evt.RegisteredShapesSnapshot.RegisteredShapes |> Seq.toList
+    | _ -> ()
+    // Process new mesh definitions piggyback
+    if evt.NewMeshes.Count > 0 then
+        match meshResolverState with
+        | Some resolver -> MeshResolver.processNewMeshes evt.NewMeshes resolver
+        | None -> ()
+
+let startPropertyStream (serverAddress: string) =
+    Task.Run(fun () ->
+        task {
+            let mutable delay = 1000
+            while not cts.Token.IsCancellationRequested do
+                try
+                    use channel = createGrpcChannel serverAddress
+                    let client = PhysicsHub.PhysicsHubClient(channel)
+                    // Viewer uses exclude_velocity=true for leaner tick stream
+                    use call = client.StreamProperties(StateRequest(ExcludeVelocity = true), cancellationToken = cts.Token)
+                    let stream = call.ResponseStream
+                    delay <- 1000
+                    logger.LogInformation("Property stream connected to {Address}", serverAddress)
+                    while not cts.Token.IsCancellationRequested do
+                        let! hasNext = stream.MoveNext(cts.Token)
+                        if hasNext then
+                            processViewerPropertyEvent stream.Current
+                with
+                | :? OperationCanceledException -> ()
+                | ex when not cts.Token.IsCancellationRequested ->
+                    logger.LogWarning("Property stream error: {Message}, reconnecting in {Delay}ms", ex.Message, delay)
+                    do! Task.Delay(delay, cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
+                    delay <- min (delay * 2) 30000
+        } :> Task) |> ignore
+
 let startStateStream (serverAddress: string) =
     Task.Run(fun () ->
         task {
@@ -80,24 +187,22 @@ let startStateStream (serverAddress: string) =
                 try
                     use channel = createGrpcChannel serverAddress
                     let client = PhysicsHub.PhysicsHubClient(channel)
-                    use call = client.StreamState(StateRequest(), cancellationToken = cts.Token)
+                    // Viewer uses exclude_velocity=true for leaner tick stream
+                    use call = client.StreamState(StateRequest(ExcludeVelocity = true), cancellationToken = cts.Token)
                     let stream = call.ResponseStream
                     delay <- 1000
                     logger.LogInformation("State stream connected to {Address}", serverAddress)
-                    // Initialize mesh resolver with this channel's client
                     if meshResolverState.IsNone then
                         meshResolverState <- Some (MeshResolver.create client)
 
                     while not cts.Token.IsCancellationRequested do
                         let! hasNext = stream.MoveNext(cts.Token)
                         if hasNext then
-                            let state = stream.Current
-                            // Process new meshes from state update
+                            let tick = stream.Current
+                            let state = reconstructSimState tick
+                            // Fetch any unresolved CachedShapeRef mesh IDs
                             match meshResolverState with
                             | Some resolver ->
-                                if state.NewMeshes.Count > 0 then
-                                    MeshResolver.processNewMeshes state.NewMeshes resolver
-                                // Collect unresolved CachedShapeRef mesh IDs and fetch asynchronously
                                 let missingIds =
                                     state.Bodies
                                     |> Seq.choose (fun b ->
@@ -114,7 +219,7 @@ let startStateStream (serverAddress: string) =
                             Volatile.Write(&latestSimState, state)
                             Interlocked.Increment(&stateVersion) |> ignore
                             Interlocked.Increment(&viewerMsgRecv) |> ignore
-                            Interlocked.Add(&viewerBytesRecv, int64 (state.CalculateSize())) |> ignore
+                            Interlocked.Add(&viewerBytesRecv, int64 (tick.CalculateSize())) |> ignore
                 with
                 | :? OperationCanceledException -> ()
                 | ex when not cts.Token.IsCancellationRequested ->
@@ -184,6 +289,7 @@ let start (scene: Scene) =
 
     let addr = resolveServerAddress ()
     logger.LogInformation("Viewer starting, server address: {Address}", addr)
+    startPropertyStream addr
     startStateStream addr
     startViewCommandStream addr
 

@@ -34,6 +34,8 @@ Last updated: 2026-03-23
 - In-memory (physics world, mesh caches). Append-only protobuf binary files for MCP recordings. (004-mesh-cache-transport)
 - F# on .NET 10.0 (PhysicsServer, PhysicsSandbox.Mcp), C# on .NET 10.0 (integration tests) + Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, ModelContextProtocol.AspNetCore 1.1.*, System.Threading.Channels (004-mcp-mesh-logging)
 - Append-only protobuf binary files at `~/.config/PhysicsSandbox/recordings/` (existing recording infrastructure) (004-mcp-mesh-logging)
+- F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console (004-state-stream-optimization)
+- In-memory (physics world, mesh caches, state caches). Append-only protobuf binary files for MCP recordings. (004-state-stream-optimization)
 
 ## Project Structure
 
@@ -96,9 +98,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 004-state-stream-optimization: Added F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console
 - 004-mcp-mesh-logging: MCP recording for FetchMeshes RPC — MeshFetchEvent (EntryType=3) records requested IDs, hits/misses. Published via CommandEvent audit stream. New query_mesh_fetches tool. 17 tasks.
 - 004-mesh-cache-transport: Mesh cache and on-demand transport — complex shapes (ConvexHull, MeshShape, Compound) use CachedShapeRef (mesh_id + bbox) instead of inline geometry after first tick. Server MeshCache + FetchMeshes RPC. MeshResolver in viewer/client/MCP. Viewer bounding box placeholders. MeshDefinition recording. 75 tasks, 262+ tests.
-- 005-mcp-data-logging: Added persistent data recording to MCP server — auto-captures all state updates + command events to protobuf binary chunk files at `~/.config/PhysicsSandbox/recordings/`. 9 new MCP tools (5 session management + 4 query). Dual-limit pruning (10 min / 500 MB). Async Channel pipeline. 12 new unit tests
 
 ## Environment
 

@@ -19,7 +19,15 @@ module MetricsCounter =
           mutable MeshesCachedTotal: int64
           mutable FetchRequestsTotal: int64
           mutable FetchHitsTotal: int64
-          mutable FetchMissesTotal: int64 }
+          mutable FetchMissesTotal: int64
+          /// Tick state messages (continuous 60 Hz stream) sent to subscribers
+          mutable TickMessagesSent: int64
+          /// Tick state bytes sent
+          mutable TickBytesSent: int64
+          /// Property event messages (semi-static on-change stream) sent to subscribers
+          mutable PropertyMessagesSent: int64
+          /// Property event bytes sent
+          mutable PropertyBytesSent: int64 }
 
     /// <summary>Create a new zeroed metrics state for the given service name.</summary>
     /// <param name="serviceName">The display name used when reporting metrics.</param>
@@ -33,7 +41,11 @@ module MetricsCounter =
           MeshesCachedTotal = 0L
           FetchRequestsTotal = 0L
           FetchHitsTotal = 0L
-          FetchMissesTotal = 0L }
+          FetchMissesTotal = 0L
+          TickMessagesSent = 0L
+          TickBytesSent = 0L
+          PropertyMessagesSent = 0L
+          PropertyBytesSent = 0L }
 
     /// <summary>Atomically increment the sent message count and byte total.</summary>
     /// <param name="count">Number of messages sent.</param>
@@ -60,6 +72,16 @@ module MetricsCounter =
         Interlocked.Increment(&state.FetchRequestsTotal) |> ignore
         Interlocked.Add(&state.FetchHitsTotal, int64 hits) |> ignore
         Interlocked.Add(&state.FetchMissesTotal, int64 misses) |> ignore
+
+    /// <summary>Atomically increment the tick state message and byte counters (continuous 60 Hz stream).</summary>
+    let incrementTickSent (count: int) (bytes: int64) (state: MetricsState) : unit =
+        Interlocked.Add(&state.TickMessagesSent, int64 count) |> ignore
+        Interlocked.Add(&state.TickBytesSent, bytes) |> ignore
+
+    /// <summary>Atomically increment the property event message and byte counters (semi-static on-change stream).</summary>
+    let incrementPropertySent (count: int) (bytes: int64) (state: MetricsState) : unit =
+        Interlocked.Add(&state.PropertyMessagesSent, int64 count) |> ignore
+        Interlocked.Add(&state.PropertyBytesSent, bytes) |> ignore
 
     /// <summary>Capture a point-in-time snapshot of the current metrics as a protobuf report.</summary>
     /// <param name="state">The metrics state to read.</param>
