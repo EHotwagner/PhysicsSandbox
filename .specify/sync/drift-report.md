@@ -1,70 +1,72 @@
 # Spec Drift Report
 
 Generated: 2026-03-23
-Project: PhysicsSandbox (005-viewer-settings-sizing-fix)
+Project: PhysicsSandbox (005-refactor-evaluation)
 
 ## Summary
 
 | Category | Count |
 |----------|-------|
 | Specs Analyzed | 1 |
-| Requirements Checked | 9 |
-| ✓ Aligned | 7 (78%) |
-| ⚠️ Drifted | 2 (22%) |
-| ✗ Not Implemented | 0 (0%) |
-| 🆕 Unspecced Code | 0 |
+| Requirements Checked | 12 |
+| Aligned | 12 (100%) |
+| Drifted | 0 (0%) |
+| Not Implemented | 0 (0%) |
+| Unspecced Code | 0 |
 
 ## Detailed Findings
 
-### Spec: 005-viewer-settings-sizing-fix - Viewer Display Settings & Shape Sizing Fix
+### Spec: 005-refactor-evaluation - Refactor Evaluation Analysis
 
-#### Aligned ✓
+#### Aligned
 
-- **FR-001**: Viewer renders physics body shapes at exact physics dimensions → `ShapeGeometry.shapeSize` passes radius (not diameter) for sphere/capsule/cylinder. Box uses full extents. Unit tests verify correct values.
-  - Location: `src/PhysicsViewer/Rendering/ShapeGeometry.fs:30-137`
+- **FR-001**: Report analyses every source project (9 + tests + scripting) -> `reports/refactorEvaluation.md` Part 1 sections 1.1-1.8 cover all 9 source projects, 6 test projects, 2 scripting layers
+- **FR-002**: Each project has numeric quality rating (1-10) with justification -> 11 ratings: PhysicsServer 6.5, PhysicsSimulation 7.5, PhysicsViewer 8.5, PhysicsClient 7.5, MCP 6.5, Scripting 8.0, AppHost 9.0, ServiceDefaults 8.0, Contracts 7.0, Tests 7.5, Scripting 7.0
+- **FR-003**: Specific code duplication, spaghetti, coupling, complexity identified per project -> Issue tables with Severity/LOC Impact/Location for all F# projects; duplication table in Part 2.1
+- **FR-004**: Solution-level architectural analysis with cross-project concerns -> Part 2: duplication (645 LOC), ID generation inconsistency, error handling inconsistency, proto type conflicts
+- **FR-005**: At least 3 alternative approaches described and evaluated -> Part 3: 4 alternatives (A-D) each with scope, effort, risk, pros, cons
+- **FR-006**: Prioritized refactoring roadmap with effort/impact -> Part 4: 13-item roadmap with Priority, Target, Impact, Effort, ROI columns
+- **FR-007**: Delivered as `reports/refactorEvaluation.md` -> File exists (423 lines)
+- **FR-008**: LOC metrics per project -> Appendix table: source 8,657 + tests 4,816 + scripting 4,667 = 18,140 total
+- **SC-001**: All projects analysed with individual ratings -> 11 ratings in Executive Summary table
+- **SC-002**: 3+ alternatives with pros, cons, trade-offs -> 4 alternatives with full analysis
+- **SC-003**: 10+ specific actionable roadmap items -> 13 items with target, impact, effort, ROI
+- **SC-004**: Self-contained and readable -> Includes methodology, context, findings, recommendations, appendix
 
-- **FR-003**: Fullscreen toggle via F11 with borderless windowed mode → `DisplayManager.toggleFullscreen` + F11/Escape handling in `Program.fs:190-210`. Window uses `IsBorderLess` + `IsFullscreen`.
-  - Location: `src/PhysicsViewer/Settings/DisplayManager.fs:44-67`, `src/PhysicsViewer/Program.fs:190-210`
+#### Drifted
 
-- **FR-004**: Resolution selection from supported resolutions → `SettingsOverlay` presents 1280x720, 1920x1080, 2560x1440 options. `DisplayManager.applySettings` sets `PreferredBackBufferWidth/Height` + `ApplyChanges()`.
-  - Location: `src/PhysicsViewer/Settings/SettingsOverlay.fs:22`, `src/PhysicsViewer/Settings/DisplayManager.fs:36-42`
+None.
 
-- **FR-006**: Settings persist across restarts → `ViewerSettings.save` writes JSON to `~/.config/PhysicsSandbox/viewer-settings.json`. `ViewerSettings.load` reads on startup. `Program.fs:start` calls `ViewerSettings.load` and applies.
-  - Location: `src/PhysicsViewer/Settings/ViewerSettings.fs:41-84`
+#### Not Implemented
 
-- **FR-008**: On-screen settings interface via keyboard shortcut → F2 toggles `SettingsOverlay` with Display/Quality tabs, arrow keys navigate, Enter/Left/Right change values.
-  - Location: `src/PhysicsViewer/Settings/SettingsOverlay.fs`, `src/PhysicsViewer/Program.fs:212-232`
+None.
 
-- **FR-009**: Debug wireframe renders at same dimensions as solid body (no artificial scaling) → 1.02x scale removed from `createPrimitiveWireframe`. Comment on line 42 documents FR-009 compliance.
-  - Location: `src/PhysicsViewer/Rendering/DebugRenderer.fs:34-46`
+#### Acceptance Scenarios
 
-- **FR-002**: Debug wireframe covers all 10 shape types. Compound shapes render per-child wireframes. Convex hull/mesh/triangle use correctly-dimensioned bounding boxes (per clarified spec).
-  - Location: `src/PhysicsViewer/Rendering/DebugRenderer.fs:48-70`
+| Scenario | Status |
+|----------|--------|
+| US1-AS1: Each project rated with justifications and issues | PASS |
+| US1-AS2: Each issue has location, severity, improvement suggestion | PASS |
+| US2-AS1: 3+ distinct approaches with trade-offs | PASS |
+| US2-AS2: Recommendation supported by per-project evidence | PASS |
+| US3-AS1: Each refactoring target has ROI assessment | PASS |
 
-#### Drifted ⚠️
+#### Edge Cases
 
-- **FR-005**: Spec says "Viewer MUST provide basic quality settings: anti-aliasing level, shadow quality, and texture filtering quality." Code provides the UI (`SettingsOverlay.fs` Quality tab with AA/Shadows/TextureFiltering/VSync options) but `DisplayManager.applySettings` only applies resolution and VSync via `GraphicsDeviceManager`. MSAA, shadow cascade count, and texture sampler changes are not yet wired to Stride's rendering pipeline — the settings save/load correctly but the visual effect is not applied at runtime.
-  - Location: `src/PhysicsViewer/Settings/DisplayManager.fs:36-42`
-  - Severity: moderate
-  - Impact: Quality settings persist and display correctly in the UI, but changing AA/shadow/texture filtering has no visual effect.
+| Edge Case | Status | Evidence |
+|-----------|--------|----------|
+| Healthy project reported as healthy | PASS | AppHost 9.0/10: "Minimal, correct, no issues" |
+| Essential vs accidental complexity distinguished | PASS | Viewer mutable state: "Stride boundary; unavoidable" |
 
-- **FR-007**: Spec says "All settings changes MUST apply immediately without requiring a viewer restart." Resolution and fullscreen apply immediately. Quality settings (AA, shadows, texture filtering) do not apply at runtime — same root cause as FR-005 drift.
-  - Location: `src/PhysicsViewer/Settings/DisplayManager.fs:36-42`
-  - Severity: moderate
-  - Impact: Resolution and fullscreen work immediately. Quality changes require restart to take effect.
+### Unspecced Code
 
-### Unspecced Code 🆕
-
-No unspecced code detected. All new modules map directly to spec requirements.
+None. Documentation-only feature.
 
 ## Inter-Spec Conflicts
 
-None detected.
+None.
 
 ## Recommendations
 
-1. **Wire quality settings to Stride rendering pipeline** (FR-005/FR-007 drift): `DisplayManager.applySettings` needs to apply MSAA via `GraphicsDeviceManager.PreferredMultisampleCount`, shadow quality via the directional light's `LightDirectionalShadowMap.CascadeCount`, and texture filtering via `GraphicsDevice.SamplerStates`.
-
-2. **Native resolution detection** (FR-004 minor gap): The resolution list is hardcoded to 3 options. The spec mentions "display's native resolution" should also be available. Consider querying `game.Window` for native resolution.
-
-3. **Resolution clamping** (edge case): The spec mentions clamping to max supported resolution — `DisplayManager` should validate before applying.
+1. No action needed — full alignment between spec and implementation
+2. Update spec status from "Draft" to "Complete"
