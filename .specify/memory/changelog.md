@@ -1,5 +1,37 @@
 # Merged Features Log
 
+## Enhance Demos with New Body Types and Fix Impacts — 2026-03-23
+**Branch:** 005-enhance-demos
+**Spec:** specs/005-enhance-demos
+
+**What was added:**
+- Fixed Demo 03 (Crate Stack): boulder realigned to strike tower center via `launch` at speed 40
+- Fixed Demo 04 (Bowling Alley): pyramid moved to Z=5, ball approaches frontally along Z-axis
+- Added Demo 16 (Constraints): pendulum chain (ball-socket + distance-limit), hinged bridge (hinge), weld cluster (weld) — 4 constraint types
+- Added Demo 17 (Query Range): raycast, overlap sphere, sweep sphere queries with printed results
+- Added Demo 18 (Kinematic Sweep): kinematic bulldozer animated via setBodyPose plowing through 30 dynamic bodies
+- Enhanced all 15 existing demos with custom colors using 8-color palette (projectile/target/structure + 4 accents + kinematic)
+- Distributed capsules, cylinders, triangles, convex hulls, compounds across demos (8/10 shape types used)
+- Applied bouncy/sticky/slippery material presets to 4 demos for visible behavioral contrast
+- Extended Prelude.fsx: makeTriangleCmd, makeConvexHullCmd, makeCompoundCmd, makeKinematicCmd, withMotionType, withCollisionFilter, setPose, queryRaycast, queryOverlapSphere, querySweepSphere, 8 color palette constants
+- Extended prelude.py with matching Python helpers
+- Repacked PhysicsClient NuGet to 0.2.0 (with query/pose APIs)
+
+**New Components:**
+- `Scripting/demos/16_Constraints.fsx` — Constraint showcase demo
+- `Scripting/demos/17_QueryRange.fsx` — Physics query demo
+- `Scripting/demos/18_KinematicSweep.fsx` — Kinematic body demo
+
+**Modified Components:**
+- `Scripting/demos/Prelude.fsx` — Color palette, shape builders, kinematic/query/pose helpers
+- `Scripting/demos/AllDemos.fsx` — All 18 demos (15 enhanced + 3 new)
+- `Scripting/demos_py/prelude.py` — Python parity helpers
+- `~/.local/share/nuget-local/PhysicsClient.0.2.0.nupkg` — Repacked NuGet
+
+**Tasks Completed:** 29/43 tasks (14 remaining are Python parity + standalone sync)
+
+---
+
 ## Viewer Display Settings & Shape Sizing Fix — 2026-03-23
 **Branch:** 005-viewer-settings-sizing-fix
 **Spec:** specs/005-viewer-settings-sizing-fix

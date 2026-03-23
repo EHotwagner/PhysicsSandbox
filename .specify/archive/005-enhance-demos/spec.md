@@ -2,7 +2,7 @@
 
 **Feature Branch**: `005-enhance-demos`
 **Created**: 2026-03-23
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "improve the demos to show the new body types and other capabilities. also some demos need work like the tower that does not get hit or the pyramid that gets hit too light and from the side not frontal."
 
 ## User Scenarios & Testing *(mandatory)*

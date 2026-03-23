@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
-**Last Updated**: 2026-03-22
-**Revision**: Updated with 005-stride-bepu-integration archival
+**Last Updated**: 2026-03-23
+**Revision**: Updated with 005-enhance-demos archival
 
 ## Overview
 
@@ -232,6 +232,24 @@ A user presses F2 to open a settings overlay, selects a resolution (1280x720, 19
 ### US-074: Quality Settings (P3)
 A user adjusts anti-aliasing (Off/X2/X4/X8), shadow quality (Off/Low/Medium/High), texture filtering (Point/Linear/Anisotropic), and VSync via the F2 settings overlay. MSAA and shadow changes apply immediately. Settings persist across restarts. [Source: specs/005-viewer-settings-sizing-fix]
 
+### US-075: Fix Broken Impact Demos (P1)
+A user runs the Crate Stack and Bowling Alley demos and projectiles strike targets centrally with dramatic visible destruction — tower topples, pyramid scatters. [Source: specs/005-enhance-demos]
+
+### US-076: Showcase Constraint Physics (P1)
+A user runs Demo 16 and sees 4 constraint types in action: pendulum chain (ball-socket + distance-limit), hinged bridge (hinge), and weld cluster (weld). Bodies move in physically plausible linked motion. [Source: specs/005-enhance-demos]
+
+### US-077: Showcase Advanced Shape Types (P1)
+A user runs the demo suite and sees 8 of 10 shape types used across demos: sphere, box, capsule, cylinder, triangle, convex hull, compound, plane — each in contextually meaningful roles. [Source: specs/005-enhance-demos]
+
+### US-078: Showcase Physics Queries (P2)
+A user runs Demo 17 and sees raycast, overlap, and sweep cast queries with printed results showing hit body IDs, positions, and distances. [Source: specs/005-enhance-demos]
+
+### US-079: Expand Colors and Materials Across Demos (P2)
+A user runs the demo suite and 12+ demos use custom per-body colors for visual distinction, with 4 demos using bouncy/sticky/slippery material presets for visible behavioral contrast. [Source: specs/005-enhance-demos]
+
+### US-080: Demonstrate Kinematic Bodies (P3)
+A user runs Demo 18 and sees a kinematic bulldozer move through a grid of dynamic bodies, pushing them aside on a scripted path. [Source: specs/005-enhance-demos]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -416,6 +434,18 @@ A user adjusts anti-aliasing (Off/X2/X4/X8), shadow quality (Off/Low/Medium/High
 - **FR-180**: All settings changes (resolution, fullscreen, quality) apply immediately without requiring a viewer restart. [Source: specs/005-viewer-settings-sizing-fix]
 - **FR-181**: Compound shape debug wireframes render each child shape individually at correct local position/orientation within the compound. [Source: specs/005-viewer-settings-sizing-fix]
 - **FR-182**: Near-zero shape dimensions clamped to 0.01f minimum to prevent invisible bodies. [Source: specs/005-viewer-settings-sizing-fix]
+- **FR-183**: Demo 03 (Crate Stack) launches projectile along same axis as tower, striking centrally with sufficient impulse to topple majority. [Source: specs/005-enhance-demos]
+- **FR-184**: Demo 04 (Bowling Alley) launches projectile from directly in front of pyramid (frontal Z-axis approach) with sufficient impulse to scatter majority. [Source: specs/005-enhance-demos]
+- **FR-185**: Demo suite includes Demo 16 demonstrating 4 constraint types: ball-socket, distance-limit, hinge, weld. [Source: specs/005-enhance-demos]
+- **FR-186**: Demo suite includes compound shapes (multi-child rigid bodies) in Demos 11 and 12. [Source: specs/005-enhance-demos]
+- **FR-187**: Demo suite features capsule, cylinder, convex hull, triangle, and compound shapes distributed across multiple demos (not a single showcase). [Source: specs/005-enhance-demos]
+- **FR-188**: Demo 17 performs raycast, sweep cast, and overlap queries with printed results. [Source: specs/005-enhance-demos]
+- **FR-189**: At least 12 demos use custom per-body colors via 8-color palette (projectile, target, structure, yellow, green, purple, orange, kinematic). [Source: specs/005-enhance-demos]
+- **FR-190**: At least 4 demos use material presets (bouncy, sticky, slippery) with visible behavioral contrast. [Source: specs/005-enhance-demos]
+- **FR-191**: Demo 18 uses kinematic body (bulldozer) animated via setBodyPose in a loop, pushing dynamic bodies. [Source: specs/005-enhance-demos]
+- **FR-192**: All 18 F# demos pass in AutoRun.fsx with 0 failures. [Source: specs/005-enhance-demos]
+- **FR-193**: Prelude.fsx extended with: makeTriangleCmd, makeConvexHullCmd, makeCompoundCmd, makeKinematicCmd, withMotionType, withCollisionFilter, setPose, queryRaycast, queryOverlapSphere, querySweepSphere, and 8 color palette constants. [Source: specs/005-enhance-demos]
+- **FR-194**: PhysicsClient NuGet package repacked to version 0.2.0 with raycast, sweepCast, overlap, setBodyPose APIs. [Source: specs/005-enhance-demos]
 
 ## Key Entities
 

@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-23
-**Revision**: Updated with 005-viewer-settings-sizing-fix archival
+**Revision**: Updated with 005-enhance-demos archival
 
 ## Technical Context
 
@@ -166,30 +166,33 @@ Scripting/                                   # All scripting folders consolidate
 ├── scripts/                                 # Curated F# scripts using PhysicsSandbox.Scripting library
 │   ├── Prelude.fsx                          # Single #r to Scripting DLL + opens
 │   └── HelloDrop.fsx                        # Minimal validation script
-├── demos/                                   # F# scripts — demo suite (15 demos + runners)
-├── Prelude.fsx                            # Shared helpers: resetSimulation, command builders, batchAdd, nextId, toVec3, timed, runStandalone + all PhysicsClient opens
-├── Demo01_HelloDrop.fsx                   # 4 objects (bowling ball, beach ball, crate, die) — comparative fall + impulse
-├── Demo02_BouncingMarbles.fsx             # 25 marbles in 2 waves, varied sizes, 2D spread
-├── Demo03_CrateStack.fsx                  # 12 light crates — boulder smash
-├── Demo04_BowlingAlley.fsx                # 30-brick wall — wrecking ball frontal impact
-├── Demo05_MarbleRain.fsx                  # 20 random spheres + 20 crates — mixed shape pile
-├── Demo06_DominoRow.fsx                   # 20 dominoes with camera tracking cascade
-├── Demo07_SpinningTops.fsx                # 6 spinning objects in ring — pushed inward for collision
-├── Demo08_GravityFlip.fsx                 # 25 light objects (beach balls, dice, spheres) — 4 gravity directions
-├── Demo09_Billiards.fsx                   # 16 spheres (batched) + cue ball break + low-angle view
-├── Demo10_Chaos.fsx                       # Full showcase with dramatic pauses + tighter camera sweep
-├── Demo11_BodyScaling.fsx                 # Stress: tight packing, mixed shapes, 50/100/200/500 tiers
-├── Demo12_CollisionPit.fsx                # Stress: 3 waves (40 large + 60 small + 20 heavy) in walled pit
-├── Demo13_ForceFrenzy.fsx                 # Stress: 80 tight-packed bodies, 3 force rounds with inward swarming
-├── Demo14_DominoCascade.fsx               # Stress: 120 dominoes semicircular with overhead view + tighter sweep
-├── Demo15_Overload.fsx                    # Stress: 200+ bodies with wireframe during impulse storm + status reports
-├── AllDemos.fsx                           # All 15 demos as inline functions (loaded by RunAll + AutoRun)
+├── demos/                                   # F# scripts — demo suite (18 demos + runners)
+├── Prelude.fsx                            # Shared helpers: command builders (sphere, box, capsule, cylinder, triangle, convex hull, compound, kinematic), color palette (8 constants), material presets, constraint helpers (ball-socket, hinge), query helpers (raycast, overlap, sweep), setPose, batchAdd, resetSimulation, runFor, nextId, toVec3, timed, runStandalone + all PhysicsClient 0.2.0 opens
+├── 01_HelloDrop.fsx                       # 6 shapes (sphere, box, capsule, cylinder) — comparative fall + bouncy/sticky materials
+├── 02_BouncingMarbles.fsx                 # 25 marbles in 2 color-coded waves (yellow/green)
+├── 03_CrateStack.fsx                      # 12 blue crates — red boulder strikes tower center via launch
+├── 04_BowlingAlley.fsx                    # 4-layer pyramid — red ball frontal Z-axis impact
+├── 05_MarbleRain.fsx                      # 50 mixed shapes (spheres, crates, capsules, cylinders, dice) — color-coded
+├── 06_DominoRow.fsx                       # 20 dominoes with blue→purple color gradient
+├── 07_SpinningTops.fsx                    # 6 spinning objects (spheres, capsules, cylinders) in colored ring
+├── 08_GravityFlip.fsx                     # Mixed shapes incl. triangles + convex hull octahedra — 4 gravity directions
+├── 09_Billiards.fsx                       # 16 colored balls with slippery material + red cue ball break
+├── 10_ChaosScene.fsx                      # Full showcase with cylinder pillars, colored formations, fixed boulder targeting
+├── 11_BodyScaling.fsx                     # Stress: 5 shape types (sphere, box, capsule, cylinder, compound dumbbell), 50–500 tiers
+├── 12_CollisionPit.fsx                    # Stress: 3 colored waves + convex hull tetrahedra + compound bodies
+├── 13_ForceFrenzy.fsx                     # Stress: 80 bodies — bouncy (yellow) vs sticky (purple) material contrast
+├── 14_DominoCascade.fsx                   # Stress: 120 dominoes with blue→red color gradient along semicircle
+├── 15_Overload.fsx                        # Stress: 200+ mixed shapes (spheres, capsules, cylinders) with colors
+├── 16_Constraints.fsx                     # NEW: pendulum chain (ball-socket + distance-limit), hinged bridge, weld cluster — 4 constraint types
+├── 17_QueryRange.fsx                      # NEW: raycast, overlap sphere, sweep sphere queries with printed results
+├── 18_KinematicSweep.fsx                  # NEW: kinematic bulldozer plows through 30 dynamic bodies
+├── AllDemos.fsx                           # All 18 demos as inline functions (loaded by RunAll + AutoRun)
 ├── AutoRun.fsx                            # Non-interactive runner (loads AllDemos.fsx — no code duplication)
 └── RunAll.fsx                             # Interactive runner (space/enter to advance)
 
-└── demos_py/                                # Python scripts — demo suite (15 demos + runners)
-├── prelude.py                               # Shared helpers: session, commands, presets, generators, steering, display, batch, ID gen
-├── demo01_hello_drop.py – demo15_overload.py # 15 demos mirroring F# suite
+└── demos_py/                                # Python scripts — demo suite (18 demos + runners)
+├── prelude.py                               # Shared helpers: session, commands, presets, generators, steering, display, batch, ID gen, color palette, advanced shape builders (triangle, convex hull, compound, kinematic), constraint helpers, query helpers, set_body_pose
+├── demo01_hello_drop.py – demo18_kinematic_sweep.py # 18 demos mirroring F# suite
 ├── all_demos.py                             # Demo registry (name, description, run) tuples
 ├── auto_run.py                              # Automated runner with pass/fail summary
 ├── run_all.py                               # Interactive runner with keypress advancement
@@ -254,3 +257,5 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - Batch commands limited to 100 per request. Server enforces this in `sendBatchCommand`/`sendBatchViewCommand`. [Source: specs/002-performance-diagnostics]
 - Stress tests run in MCP server process as background tasks; only one test at a time (guarded by lock). Results stored in-memory, lost on MCP restart. [Source: specs/002-performance-diagnostics]
 - Pipeline diagnostics: viewer render time (`ViewerRenderMs`) not yet populated — remains 0.0. Simulation tick, serialization, and transfer times are measured correctly. [Source: specs/002-performance-diagnostics]
+- PhysicsClient NuGet repacked to 0.2.0 (from 0.1.0) to expose raycast, sweepCast, overlap, setBodyPose APIs to demo scripts. Prelude.fsx pins `#r "nuget: PhysicsClient, 0.2.0"`. ServiceDefaults and Contracts also repacked to 0.2.0 as transitive dependencies. [Source: specs/005-enhance-demos]
+- Demo Prelude weld/distance-limit constraints are built inline (not from Prelude helpers) because only ball-socket and hinge are in the Prelude constraint section. Promoting all constraint builders to Prelude is a future improvement. [Source: specs/005-enhance-demos]
