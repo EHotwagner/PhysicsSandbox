@@ -468,9 +468,91 @@ def launch(session: Session, body_id: str,
 
 
 def get_state(session: Session) -> pb.SimulationState | None:
+    """Get current simulation state by merging TickState + PropertySnapshot."""
     try:
+        # Get property snapshot (semi-static body properties, constraints, shapes)
+        props_cache: dict[str, pb.BodyProperties] = {}
+        constraints = []
+        registered_shapes = []
+        try:
+            prop_stream = session.stub.StreamProperties(pb.StateRequest())
+            evt = next(prop_stream)
+            if evt.HasField("snapshot"):
+                for bp in evt.snapshot.bodies:
+                    props_cache[bp.id] = bp
+                constraints = list(evt.snapshot.constraints)
+                registered_shapes = list(evt.snapshot.registered_shapes)
+        except Exception:
+            pass
+
+        # Get lean tick state (dynamic body poses + velocity)
         stream = session.stub.StreamState(pb.StateRequest())
-        return next(stream)
+        tick = next(stream)
+
+        # Reconstruct full SimulationState
+        state = pb.SimulationState()
+        state.time = tick.time
+        state.running = tick.running
+        state.tick_ms = tick.tick_ms
+        state.serialize_ms = tick.serialize_ms
+
+        dynamic_ids = set()
+        for pose in tick.bodies:
+            dynamic_ids.add(pose.id)
+            body = pb.Body()
+            body.id = pose.id
+            body.position.CopyFrom(pose.position)
+            body.orientation.CopyFrom(pose.orientation)
+            if pose.HasField("velocity"):
+                body.velocity.CopyFrom(pose.velocity)
+            if pose.HasField("angular_velocity"):
+                body.angular_velocity.CopyFrom(pose.angular_velocity)
+            # Merge semi-static properties from cache
+            if pose.id in props_cache:
+                p = props_cache[pose.id]
+                if p.HasField("shape"):
+                    body.shape.CopyFrom(p.shape)
+                if p.HasField("color"):
+                    body.color.CopyFrom(p.color)
+                body.mass = p.mass
+                body.is_static = p.is_static
+                body.motion_type = p.motion_type
+                body.collision_group = p.collision_group
+                body.collision_mask = p.collision_mask
+                if p.HasField("material"):
+                    body.material.CopyFrom(p.material)
+            state.bodies.append(body)
+
+        # Add static bodies from property cache
+        for bid, p in props_cache.items():
+            if p.is_static and bid not in dynamic_ids:
+                body = pb.Body()
+                body.id = p.id
+                body.is_static = True
+                body.motion_type = p.motion_type
+                body.mass = p.mass
+                if p.HasField("shape"):
+                    body.shape.CopyFrom(p.shape)
+                if p.HasField("color"):
+                    body.color.CopyFrom(p.color)
+                if p.HasField("position"):
+                    body.position.CopyFrom(p.position)
+                if p.HasField("orientation"):
+                    body.orientation.CopyFrom(p.orientation)
+                if p.HasField("material"):
+                    body.material.CopyFrom(p.material)
+                body.collision_group = p.collision_group
+                body.collision_mask = p.collision_mask
+                state.bodies.append(body)
+
+        for cs in constraints:
+            state.constraints.append(cs)
+        for rs in registered_shapes:
+            state.registered_shapes.append(rs)
+        for qr in tick.query_responses:
+            state.query_responses.append(qr)
+
+        return state
     except Exception:
         return None
 

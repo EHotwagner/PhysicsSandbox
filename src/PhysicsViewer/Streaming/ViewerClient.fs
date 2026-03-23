@@ -37,24 +37,42 @@ let private runWithReconnect (action: GrpcChannel -> CancellationToken -> Task<u
     }
 
 /// <summary>
-/// Opens a gRPC server-streaming call to receive simulation state snapshots, enqueuing each
-/// received snapshot into the provided queue. Automatically reconnects with exponential backoff on failure.
+/// Opens a gRPC server-streaming call to receive lean tick state updates, enqueuing each
+/// received TickState into the provided queue. Automatically reconnects with exponential backoff on failure.
 /// </summary>
 /// <param name="serverAddress">The gRPC server address (e.g., "https://localhost:7180").</param>
-/// <param name="stateQueue">The concurrent queue where received SimulationState messages are enqueued.</param>
+/// <param name="stateQueue">The concurrent queue where received TickState messages are enqueued.</param>
+/// <param name="excludeVelocity">If true, requests tick state without velocity fields.</param>
 /// <param name="ct">Cancellation token to stop the streaming loop.</param>
 /// <returns>A task that runs until cancellation, continuously streaming state updates.</returns>
-let streamState (serverAddress: string) (stateQueue: ConcurrentQueue<SimulationState>) (ct: CancellationToken) : Task<unit> =
+let streamState (serverAddress: string) (stateQueue: ConcurrentQueue<TickState>) (excludeVelocity: bool) (ct: CancellationToken) : Task<unit> =
     runWithReconnect (fun channel ct ->
         task {
             let client = PhysicsHub.PhysicsHubClient(channel)
-            use call = client.StreamState(StateRequest(), cancellationToken = ct)
+            use call = client.StreamState(StateRequest(ExcludeVelocity = excludeVelocity), cancellationToken = ct)
             let stream = call.ResponseStream
 
             while not ct.IsCancellationRequested do
                 let! hasNext = stream.MoveNext(ct)
                 if hasNext then
                     stateQueue.Enqueue(stream.Current)
+        }) serverAddress ct
+
+/// <summary>
+/// Opens a gRPC server-streaming call to receive property events (body lifecycle, semi-static changes),
+/// enqueuing each received PropertyEvent into the provided queue. Automatically reconnects with exponential backoff.
+/// </summary>
+let streamProperties (serverAddress: string) (eventQueue: ConcurrentQueue<PropertyEvent>) (ct: CancellationToken) : Task<unit> =
+    runWithReconnect (fun channel ct ->
+        task {
+            let client = PhysicsHub.PhysicsHubClient(channel)
+            use call = client.StreamProperties(StateRequest(), cancellationToken = ct)
+            let stream = call.ResponseStream
+
+            while not ct.IsCancellationRequested do
+                let! hasNext = stream.MoveNext(ct)
+                if hasNext then
+                    eventQueue.Enqueue(stream.Current)
         }) serverAddress ct
 
 /// <summary>

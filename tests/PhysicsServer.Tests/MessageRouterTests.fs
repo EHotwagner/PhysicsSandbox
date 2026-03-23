@@ -19,13 +19,14 @@ let ``SubmitCommand succeeds with no simulation connected`` () =
 let ``State fanout delivers to multiple subscribers`` () =
     task {
         let router = create ()
-        let received1 = ResizeArray<SimulationState>()
-        let received2 = ResizeArray<SimulationState>()
+        let received1 = ResizeArray<TickState>()
+        let received2 = ResizeArray<TickState>()
         use cts = new CancellationTokenSource()
 
         let sub1 = subscribe router (fun state -> received1.Add(state); Task.CompletedTask)
         let sub2 = subscribe router (fun state -> received2.Add(state); Task.CompletedTask)
 
+        // publishState takes SimulationState and decomposes to TickState + PropertyEvents
         let state = SimulationState(Time = 1.0, Running = true)
         do! publishState router state
 

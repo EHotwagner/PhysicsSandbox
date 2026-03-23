@@ -104,7 +104,7 @@ public class SimulationConnectionTests
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         var stream = client.StreamState(new StateRequest(), cancellationToken: cts.Token);
 
-        SimulationState? stateWithBodies = null;
+        TickState? stateWithBodies = null;
         try
         {
             while (await stream.ResponseStream.MoveNext(cts.Token))
@@ -169,7 +169,7 @@ public class SimulationConnectionTests
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         var stream = client.StreamState(new StateRequest(), cancellationToken: cts.Token);
 
-        Body? body = null;
+        BodyPose? body = null;
         try
         {
             while (await stream.ResponseStream.MoveNext(cts.Token))

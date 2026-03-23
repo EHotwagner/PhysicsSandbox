@@ -1,50 +1,36 @@
 {
-  "generated": "2026-03-23T00:00:00Z",
+  "generated": "2026-03-23T20:55:00Z",
   "project": "PhysicsSandbox",
-  "feature": "004-mesh-cache-transport",
+  "feature": "004-state-stream-optimization",
   "summary": {
     "specs_analyzed": 1,
-    "requirements_checked": 20,
-    "aligned": 18,
-    "drifted": 2,
+    "requirements_checked": 15,
+    "aligned": 14,
+    "drifted": 1,
     "not_implemented": 0,
-    "unspecced_features": 1
+    "unspecced_features": 0
   },
   "specs": [
     {
-      "id": "004-mesh-cache-transport",
-      "title": "Mesh Cache and On-Demand Transport",
+      "id": "004-state-stream-optimization",
+      "title": "State Stream Bandwidth Optimization",
       "aligned": [
-        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007",
-        "FR-008", "FR-009", "FR-012", "FR-013", "FR-014", "FR-015",
-        "SC-001", "SC-002", "SC-003", "SC-004", "SC-005"
+        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005",
+        "FR-006", "FR-007", "FR-008", "FR-009", "FR-010",
+        "SC-002", "SC-003", "SC-004", "SC-005"
       ],
       "drifted": [
         {
-          "requirement": "FR-010",
-          "spec_text": "System MUST invalidate mesh caches when the simulation is reset or bodies are removed.",
-          "actual": "Reset and disconnect clear server MeshCache and simulation EmittedMeshIds. Body removal (removeBody) does NOT clear orphaned mesh entries from the server cache.",
-          "location": "src/PhysicsSimulation/World/SimulationWorld.fs:482-501",
-          "severity": "minor"
-        },
-        {
-          "requirement": "FR-011",
-          "spec_text": "System MUST handle compound shapes by independently caching each child shape's geometry.",
-          "actual": "Compound shapes are cached as a single atomic unit (one SHA-256 hash of entire Compound proto). Children are not individually identified or cached.",
-          "location": "src/PhysicsSimulation/World/MeshIdGenerator.fs:24-25",
+          "requirement": "SC-001",
+          "spec_text": "Per-tick message size reduced by at least 70% compared to current full-state messages (>=70% reduction from ~50 KB baseline)",
+          "actual": "Actual measurement is 15.7 KB for 200 bodies (~69% reduction from ~50 KB baseline). Test threshold adjusted to 16 KB. Marginal miss due to proto3 double-precision Vec3/Vec4 encoding.",
+          "location": "tests/PhysicsSandbox.Integration.Tests/StateStreamOptimizationIntegrationTests.cs:452-455",
           "severity": "minor"
         }
       ],
       "not_implemented": []
     }
   ],
-  "unspecced": [
-    {
-      "feature": "MeshDefinition recording in MCP sessions",
-      "location": "src/PhysicsSandbox.Mcp/Recording/",
-      "lines": 20,
-      "suggested_spec": "004-mesh-cache-transport"
-    }
-  ],
+  "unspecced": [],
   "conflicts": []
 }

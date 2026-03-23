@@ -20,7 +20,13 @@ type Session =
       mutable LatestState: SimulationState option
       mutable LastStateUpdate: DateTime
       mutable IsConnected: bool
-      MeshResolver: MeshResolver.MeshResolverState }
+      MeshResolver: MeshResolver.MeshResolverState
+      /// Cached semi-static body properties from the property event stream.
+      BodyPropertiesCache: ConcurrentDictionary<string, BodyProperties>
+      /// Cached constraints from the property event stream.
+      mutable CachedConstraints: ConstraintState list
+      /// Cached registered shapes from the property event stream.
+      mutable CachedRegisteredShapes: RegisteredShapeState list }
 
 let private createChannel (address: string) =
     let handler = new SocketsHttpHandler(EnableMultipleHttp2Connections = true)
@@ -33,6 +39,125 @@ let private createChannel (address: string) =
         options.HttpVersionPolicy <- System.Net.Http.HttpVersionPolicy.RequestVersionExact
     GrpcChannel.ForAddress(address, options)
 
+/// Reconstruct a full Body from a BodyPose (tick data) + cached BodyProperties.
+let private mergeBodyPoseWithProps (pose: BodyPose) (props: BodyProperties option) =
+    let b = Body()
+    b.Id <- pose.Id
+    b.Position <- pose.Position
+    b.Orientation <- pose.Orientation
+    b.Velocity <- pose.Velocity
+    b.AngularVelocity <- pose.AngularVelocity
+    match props with
+    | Some p ->
+        b.Shape <- p.Shape
+        b.Color <- p.Color
+        b.Mass <- p.Mass
+        b.IsStatic <- p.IsStatic
+        b.MotionType <- p.MotionType
+        b.CollisionGroup <- p.CollisionGroup
+        b.CollisionMask <- p.CollisionMask
+        b.Material <- p.Material
+    | None -> ()
+    b
+
+/// Reconstruct a full Body from a cached static BodyProperties (not in tick stream).
+let private staticBodyFromProps (props: BodyProperties) =
+    let b = Body()
+    b.Id <- props.Id
+    b.Shape <- props.Shape
+    b.Color <- props.Color
+    b.Mass <- props.Mass
+    b.IsStatic <- props.IsStatic
+    b.MotionType <- props.MotionType
+    b.CollisionGroup <- props.CollisionGroup
+    b.CollisionMask <- props.CollisionMask
+    b.Material <- props.Material
+    b.Position <- props.Position
+    b.Orientation <- props.Orientation
+    b.Velocity <- Vec3()
+    b.AngularVelocity <- Vec3()
+    b
+
+/// Reconstruct a full SimulationState from a lean TickState + cached BodyProperties.
+let private reconstructState (session: Session) (tick: TickState) =
+    let state = SimulationState()
+    state.Time <- tick.Time
+    state.Running <- tick.Running
+    state.TickMs <- tick.TickMs
+    state.SerializeMs <- tick.SerializeMs
+    // Dynamic bodies: merge pose from tick + properties from cache
+    let dynamicIds = System.Collections.Generic.HashSet<string>()
+    for pose in tick.Bodies do
+        dynamicIds.Add(pose.Id) |> ignore
+        let props =
+            match session.BodyPropertiesCache.TryGetValue(pose.Id) with
+            | true, p -> Some p
+            | _ -> None
+        state.Bodies.Add(mergeBodyPoseWithProps pose props)
+    // Static bodies: from cache only (not in tick stream)
+    for kvp in session.BodyPropertiesCache do
+        if kvp.Value.IsStatic && not (dynamicIds.Contains(kvp.Key)) then
+            state.Bodies.Add(staticBodyFromProps kvp.Value)
+    // Constraints and registered shapes from cache
+    for cs in session.CachedConstraints do
+        state.Constraints.Add(cs)
+    for rs in session.CachedRegisteredShapes do
+        state.RegisteredShapes.Add(rs)
+    // Query responses
+    for qr in tick.QueryResponses do
+        state.QueryResponses.Add(qr)
+    state
+
+/// Process a PropertyEvent and update the session's caches.
+let private processPropertyEvent (session: Session) (evt: PropertyEvent) =
+    match evt.EventCase with
+    | PropertyEvent.EventOneofCase.BodyCreated ->
+        session.BodyPropertiesCache.[evt.BodyCreated.Id] <- evt.BodyCreated
+    | PropertyEvent.EventOneofCase.BodyUpdated ->
+        session.BodyPropertiesCache.[evt.BodyUpdated.Id] <- evt.BodyUpdated
+    | PropertyEvent.EventOneofCase.BodyRemoved ->
+        session.BodyPropertiesCache.TryRemove(evt.BodyRemoved) |> ignore
+    | PropertyEvent.EventOneofCase.Snapshot ->
+        session.BodyPropertiesCache.Clear()
+        for bp in evt.Snapshot.Bodies do
+            session.BodyPropertiesCache.[bp.Id] <- bp
+        session.CachedConstraints <- evt.Snapshot.Constraints |> Seq.toList
+        session.CachedRegisteredShapes <- evt.Snapshot.RegisteredShapes |> Seq.toList
+    | PropertyEvent.EventOneofCase.ConstraintsSnapshot ->
+        session.CachedConstraints <- evt.ConstraintsSnapshot.Constraints |> Seq.toList
+    | PropertyEvent.EventOneofCase.RegisteredShapesSnapshot ->
+        session.CachedRegisteredShapes <- evt.RegisteredShapesSnapshot.RegisteredShapes |> Seq.toList
+    | _ -> ()
+    // Process new mesh definitions piggyback
+    if evt.NewMeshes.Count > 0 then
+        MeshResolver.processNewMeshes evt.NewMeshes session.MeshResolver
+
+let private startPropertyStream (session: Session) =
+    Task.Run(fun () ->
+        task {
+            let mutable delay = 1000
+            while not session.Cts.Token.IsCancellationRequested && session.IsConnected do
+                try
+                    use call = session.Client.StreamProperties(StateRequest(), cancellationToken = session.Cts.Token)
+                    let stream = call.ResponseStream
+                    delay <- 1000
+                    while not session.Cts.Token.IsCancellationRequested do
+                        let! hasNext = stream.MoveNext(session.Cts.Token)
+                        if hasNext then
+                            processPropertyEvent session stream.Current
+                with
+                | :? OperationCanceledException -> ()
+                | :? RpcException when session.Cts.Token.IsCancellationRequested -> ()
+                | :? RpcException ->
+                    if not session.Cts.Token.IsCancellationRequested then
+                        do! Task.Delay(delay, session.Cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
+                        delay <- min (delay * 2) 10000
+                | _ ->
+                    if not session.Cts.Token.IsCancellationRequested then
+                        do! Task.Delay(delay, session.Cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
+                        delay <- min (delay * 2) 10000
+        } :> Task) |> ignore
+
 let private startStateStream (session: Session) =
     Task.Run(fun () ->
         task {
@@ -41,14 +166,13 @@ let private startStateStream (session: Session) =
                 try
                     use call = session.Client.StreamState(StateRequest(), cancellationToken = session.Cts.Token)
                     let stream = call.ResponseStream
-                    delay <- 1000 // reset backoff on successful connection
+                    delay <- 1000
                     while not session.Cts.Token.IsCancellationRequested do
                         let! hasNext = stream.MoveNext(session.Cts.Token)
                         if hasNext then
-                            let state = stream.Current
-                            // Process new meshes from state update
-                            if state.NewMeshes.Count > 0 then
-                                MeshResolver.processNewMeshes state.NewMeshes session.MeshResolver
+                            let tick = stream.Current
+                            // Reconstruct full SimulationState from lean tick + cached properties
+                            let state = reconstructState session tick
                             // Fetch any unresolved CachedShapeRef mesh IDs
                             let missingIds =
                                 state.Bodies
@@ -68,7 +192,6 @@ let private startStateStream (session: Session) =
                 | :? OperationCanceledException -> ()
                 | :? RpcException when session.Cts.Token.IsCancellationRequested -> ()
                 | :? RpcException ->
-                    // Stream error — retry with backoff (don't mark disconnected)
                     if not session.Cts.Token.IsCancellationRequested then
                         do! Task.Delay(delay, session.Cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
                         delay <- min (delay * 2) 10000
@@ -78,7 +201,7 @@ let private startStateStream (session: Session) =
                         delay <- min (delay * 2) 10000
         } :> Task) |> ignore
 
-/// <summary>Connects to the physics server at the given address and starts a background state stream.</summary>
+/// <summary>Connects to the physics server at the given address and starts background state + property streams.</summary>
 /// <param name="serverAddress">The server URL (e.g., "http://localhost:5180" or "https://localhost:7180").</param>
 /// <returns>Ok with the connected session, or Error with a failure message.</returns>
 let connect (serverAddress: string) : Result<Session, string> =
@@ -94,7 +217,11 @@ let connect (serverAddress: string) : Result<Session, string> =
               LatestState = None
               LastStateUpdate = DateTime.UtcNow
               IsConnected = true
-              MeshResolver = MeshResolver.create grpcClient }
+              MeshResolver = MeshResolver.create grpcClient
+              BodyPropertiesCache = ConcurrentDictionary<string, BodyProperties>()
+              CachedConstraints = []
+              CachedRegisteredShapes = [] }
+        startPropertyStream session
         startStateStream session
         Ok session
     with ex ->

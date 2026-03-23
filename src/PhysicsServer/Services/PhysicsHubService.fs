@@ -23,29 +23,82 @@ type PhysicsHubService(router: MessageRouter) =
         let ack = submitViewCommand router request
         Task.FromResult(ack)
 
-    /// <summary>Stream live simulation state updates to the client. Sends the cached state immediately for late joiners, then subscribes to live updates until the client disconnects.</summary>
-    override _.StreamState
-        (request: StateRequest, responseStream: IServerStreamWriter<SimulationState>, context: ServerCallContext)
+    /// <summary>Strip velocity fields from a TickState for exclude_velocity subscribers.</summary>
+    static member private StripVelocity(tickState: TickState) =
+        let stripped = TickState()
+        stripped.Time <- tickState.Time
+        stripped.Running <- tickState.Running
+        stripped.TickMs <- tickState.TickMs
+        stripped.SerializeMs <- tickState.SerializeMs
+        for pose in tickState.Bodies do
+            let bp = BodyPose()
+            bp.Id <- pose.Id
+            bp.Position <- pose.Position
+            bp.Orientation <- pose.Orientation
+            // velocity and angular_velocity deliberately omitted
+            stripped.Bodies.Add(bp)
+        for qr in tickState.QueryResponses do
+            stripped.QueryResponses.Add(qr)
+        stripped
+
+    /// <summary>Stream lean tick state updates (60 Hz, dynamic body poses). Sends cached tick for late joiners, then subscribes to live updates. If exclude_velocity is set, velocity fields are stripped.</summary>
+    override this.StreamState
+        (request: StateRequest, responseStream: IServerStreamWriter<TickState>, context: ServerCallContext)
         =
         task {
-            // Send cached state immediately for late joiners
+            let excludeVelocity = request.ExcludeVelocity
+
+            // Send cached tick state immediately for late joiners
             match getLatestState router with
-            | Some state -> do! responseStream.WriteAsync(state)
+            | Some state ->
+                let toSend = if excludeVelocity then PhysicsHubService.StripVelocity(state) else state
+                do! responseStream.WriteAsync(toSend)
             | None -> ()
 
-            // Subscribe and stream live updates
+            // Subscribe and stream live tick updates
             let tcs = TaskCompletionSource()
 
             let subId =
-                subscribe router (fun state ->
+                subscribe router (fun tickState ->
                     task {
                         if not context.CancellationToken.IsCancellationRequested then
-                            do! responseStream.WriteAsync(state)
+                            let toSend = if excludeVelocity then PhysicsHubService.StripVelocity(tickState) else tickState
+                            do! responseStream.WriteAsync(toSend)
                     })
 
             use _registration =
                 context.CancellationToken.Register(fun () ->
                     unsubscribe router subId
+                    tcs.TrySetResult() |> ignore)
+
+            do! tcs.Task
+        }
+
+    /// <summary>Stream property events (body lifecycle, semi-static changes). Sends PropertySnapshot backfill for late joiners, then subscribes to live events.</summary>
+    override _.StreamProperties
+        (request: StateRequest, responseStream: IServerStreamWriter<PropertyEvent>, context: ServerCallContext)
+        =
+        task {
+            // Send property snapshot backfill for late joiners
+            match getPropertySnapshot router with
+            | Some snapshot ->
+                let backfillEvent = PropertyEvent(Snapshot = snapshot)
+                do! responseStream.WriteAsync(backfillEvent)
+            | None -> ()
+
+            // Subscribe and stream live property events
+            let tcs = TaskCompletionSource()
+
+            let subId =
+                subscribeProperties router (fun evt ->
+                    task {
+                        if not context.CancellationToken.IsCancellationRequested then
+                            do! responseStream.WriteAsync(evt)
+                    })
+
+            use _registration =
+                context.CancellationToken.Register(fun () ->
+                    unsubscribeProperties router subId
                     tcs.TrySetResult() |> ignore)
 
             do! tcs.Task

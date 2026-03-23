@@ -76,23 +76,34 @@ public class StaticBodyTests
         // Small delay for state propagation
         await Task.Delay(500);
 
-        // Check state
+        // Static bodies are no longer in the tick stream (TickState only has dynamic BodyPose).
+        // Use StreamProperties to get the PropertySnapshot backfill which includes all bodies.
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        using var call = client.StreamState(new StateRequest(), cancellationToken: cts.Token);
-        var stream = call.ResponseStream;
+        using var propCall = client.StreamProperties(new StateRequest(), cancellationToken: cts.Token);
+        var propStream = propCall.ResponseStream;
 
-        if (await stream.MoveNext(cts.Token))
+        Assert.True(await propStream.MoveNext(cts.Token));
+        var backfill = propStream.Current;
+        Assert.NotNull(backfill.Snapshot);
+        var snapshot = backfill.Snapshot;
+
+        Assert.True(snapshot.Bodies.Count >= 2, $"Expected at least 2 bodies in snapshot, got {snapshot.Bodies.Count}");
+
+        var plane = snapshot.Bodies.FirstOrDefault(b => b.Id == "ground-plane");
+        Assert.NotNull(plane);
+        Assert.True(plane.IsStatic, "Plane should have IsStatic=true");
+
+        var sphere = snapshot.Bodies.FirstOrDefault(b => b.Id == "falling-sphere");
+        Assert.NotNull(sphere);
+        Assert.False(sphere.IsStatic, "Sphere should have IsStatic=false");
+
+        // Also verify that the tick stream does NOT contain the static body
+        using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var tickCall = client.StreamState(new StateRequest(), cancellationToken: cts2.Token);
+        if (await tickCall.ResponseStream.MoveNext(cts2.Token))
         {
-            var state = stream.Current;
-            Assert.True(state.Bodies.Count >= 2, $"Expected at least 2 bodies, got {state.Bodies.Count}");
-
-            var plane = state.Bodies.FirstOrDefault(b => b.Id == "ground-plane");
-            Assert.NotNull(plane);
-            Assert.True(plane.IsStatic, "Plane should have IsStatic=true");
-
-            var sphere = state.Bodies.FirstOrDefault(b => b.Id == "falling-sphere");
-            Assert.NotNull(sphere);
-            Assert.False(sphere.IsStatic, "Sphere should have IsStatic=false");
+            var tickState = tickCall.ResponseStream.Current;
+            Assert.DoesNotContain(tickState.Bodies, b => b.Id == "ground-plane");
         }
     }
 }

@@ -14,5 +14,7 @@ module MetricsCounter =
     val incrementReceived : count: int -> bytes: int64 -> state: MetricsState -> unit
     val incrementMeshesCached : count: int -> state: MetricsState -> unit
     val incrementFetchRequest : hits: int -> misses: int -> state: MetricsState -> unit
+    val incrementTickSent : count: int -> bytes: int64 -> state: MetricsState -> unit
+    val incrementPropertySent : count: int -> bytes: int64 -> state: MetricsState -> unit
     val snapshot : state: MetricsState -> ServiceMetricsReport
     val startPeriodicLogging : intervalSeconds: int -> logger: ILogger -> state: MetricsState -> IDisposable

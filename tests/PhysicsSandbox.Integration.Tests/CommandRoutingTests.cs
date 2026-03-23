@@ -42,12 +42,12 @@ public class CommandRoutingTests
         return (app, channel);
     }
 
-    private static async Task<SimulationState?> ReadLatestState(PhysicsHub.PhysicsHubClient client, CancellationToken ct, int timeoutSeconds = 15)
+    private static async Task<TickState?> ReadLatestState(PhysicsHub.PhysicsHubClient client, CancellationToken ct, int timeoutSeconds = 15)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
         var stream = client.StreamState(new StateRequest(), cancellationToken: cts.Token);
-        SimulationState? latest = null;
+        TickState? latest = null;
         try
         {
             while (await stream.ResponseStream.MoveNext(cts.Token))
@@ -380,7 +380,7 @@ public class CommandRoutingTests
         // require bodies to be present (since the state may now be empty).
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var stream = client.StreamState(new StateRequest(), cancellationToken: cts.Token);
-        SimulationState? stateAfterRemove = null;
+        TickState? stateAfterRemove = null;
         try
         {
             while (await stream.ResponseStream.MoveNext(cts.Token))

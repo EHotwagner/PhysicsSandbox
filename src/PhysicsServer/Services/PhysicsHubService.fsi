@@ -18,7 +18,13 @@ type PhysicsHubService =
 
     override StreamState:
         request: StateRequest *
-        responseStream: IServerStreamWriter<SimulationState> *
+        responseStream: IServerStreamWriter<TickState> *
+        context: ServerCallContext ->
+            System.Threading.Tasks.Task
+
+    override StreamProperties:
+        request: StateRequest *
+        responseStream: IServerStreamWriter<PropertyEvent> *
         context: ServerCallContext ->
             System.Threading.Tasks.Task
 

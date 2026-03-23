@@ -5,11 +5,20 @@ open System.Threading
 open System.Threading.Tasks
 open PhysicsSandbox.Shared.Contracts
 
-/// Start streaming simulation state from the server.
-/// Enqueues received states into the provided queue.
+/// Start streaming lean tick state from the server.
+/// Enqueues received TickState messages into the provided queue.
 val streamState:
     serverAddress: string ->
-    stateQueue: ConcurrentQueue<SimulationState> ->
+    stateQueue: ConcurrentQueue<TickState> ->
+    excludeVelocity: bool ->
+    ct: CancellationToken ->
+    Task<unit>
+
+/// Start streaming property events from the server.
+/// Enqueues received PropertyEvent messages into the provided queue.
+val streamProperties:
+    serverAddress: string ->
+    eventQueue: ConcurrentQueue<PropertyEvent> ->
     ct: CancellationToken ->
     Task<unit>
 

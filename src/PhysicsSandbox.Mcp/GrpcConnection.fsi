@@ -21,5 +21,7 @@ type GrpcConnection =
     member LocalMetrics : ServiceMetricsReport
     member OnStateReceived : (SimulationState -> unit) option with get, set
     member OnCommandReceived : (CommandEvent -> unit) option with get, set
+    member OnPropertyEventReceived : (PropertyEvent -> unit) option with get, set
+    member PropertyStreamConnected : bool
     member Start : unit -> unit
     interface IDisposable

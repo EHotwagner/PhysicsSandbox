@@ -30,6 +30,7 @@ type GrpcConnection(serverAddress: string) =
     let mutable latestState: SimulationState option = None
     let mutable lastUpdateTime = DateTimeOffset.UtcNow
     let mutable streamConnected = false
+    let mutable propertyStreamConnected = false
     let mutable viewStreamConnected = false
     let mutable auditStreamConnected = false
     let mutable latestViewCommand: ViewCommand option = None
@@ -42,12 +43,124 @@ type GrpcConnection(serverAddress: string) =
     let mutable mcpBytesRecv = 0L
     let mutable onStateReceived: (SimulationState -> unit) option = None
     let mutable onCommandReceived: (CommandEvent -> unit) option = None
+    let mutable onPropertyEventReceived: (PropertyEvent -> unit) option = None
+    /// Cached semi-static body properties from the property event stream.
+    let bodyPropsCache = System.Collections.Concurrent.ConcurrentDictionary<string, BodyProperties>()
+    let mutable cachedConstraints: ConstraintState list = []
+    let mutable cachedRegisteredShapes: RegisteredShapeState list = []
+
+    let processPropertyEvent (evt: PropertyEvent) =
+        match evt.EventCase with
+        | PropertyEvent.EventOneofCase.BodyCreated ->
+            bodyPropsCache.[evt.BodyCreated.Id] <- evt.BodyCreated
+        | PropertyEvent.EventOneofCase.BodyUpdated ->
+            bodyPropsCache.[evt.BodyUpdated.Id] <- evt.BodyUpdated
+        | PropertyEvent.EventOneofCase.BodyRemoved ->
+            bodyPropsCache.TryRemove(evt.BodyRemoved) |> ignore
+        | PropertyEvent.EventOneofCase.Snapshot ->
+            bodyPropsCache.Clear()
+            for bp in evt.Snapshot.Bodies do
+                bodyPropsCache.[bp.Id] <- bp
+            cachedConstraints <- evt.Snapshot.Constraints |> Seq.toList
+            cachedRegisteredShapes <- evt.Snapshot.RegisteredShapes |> Seq.toList
+        | PropertyEvent.EventOneofCase.ConstraintsSnapshot ->
+            cachedConstraints <- evt.ConstraintsSnapshot.Constraints |> Seq.toList
+        | PropertyEvent.EventOneofCase.RegisteredShapesSnapshot ->
+            cachedRegisteredShapes <- evt.RegisteredShapesSnapshot.RegisteredShapes |> Seq.toList
+        | _ -> ()
+
+    let reconstructState (tick: TickState) =
+        let state = SimulationState()
+        state.Time <- tick.Time
+        state.Running <- tick.Running
+        state.TickMs <- tick.TickMs
+        state.SerializeMs <- tick.SerializeMs
+        let dynamicIds = System.Collections.Generic.HashSet<string>()
+        for pose in tick.Bodies do
+            dynamicIds.Add(pose.Id) |> ignore
+            let b = Body()
+            b.Id <- pose.Id
+            b.Position <- pose.Position
+            b.Orientation <- pose.Orientation
+            b.Velocity <- pose.Velocity
+            b.AngularVelocity <- pose.AngularVelocity
+            match bodyPropsCache.TryGetValue(pose.Id) with
+            | true, p ->
+                b.Shape <- p.Shape
+                b.Color <- p.Color
+                b.Mass <- p.Mass
+                b.IsStatic <- p.IsStatic
+                b.MotionType <- p.MotionType
+                b.CollisionGroup <- p.CollisionGroup
+                b.CollisionMask <- p.CollisionMask
+                b.Material <- p.Material
+            | _ -> ()
+            state.Bodies.Add(b)
+        // Static bodies from cache
+        for kvp in bodyPropsCache do
+            if kvp.Value.IsStatic && not (dynamicIds.Contains(kvp.Key)) then
+                let b = Body()
+                b.Id <- kvp.Value.Id
+                b.Shape <- kvp.Value.Shape
+                b.Color <- kvp.Value.Color
+                b.Mass <- kvp.Value.Mass
+                b.IsStatic <- kvp.Value.IsStatic
+                b.MotionType <- kvp.Value.MotionType
+                b.CollisionGroup <- kvp.Value.CollisionGroup
+                b.CollisionMask <- kvp.Value.CollisionMask
+                b.Material <- kvp.Value.Material
+                b.Position <- kvp.Value.Position
+                b.Orientation <- kvp.Value.Orientation
+                b.Velocity <- Vec3()
+                b.AngularVelocity <- Vec3()
+                state.Bodies.Add(b)
+        for cs in cachedConstraints do
+            state.Constraints.Add(cs)
+        for rs in cachedRegisteredShapes do
+            state.RegisteredShapes.Add(rs)
+        for qr in tick.QueryResponses do
+            state.QueryResponses.Add(qr)
+        state
 
     let addToCommandLog (evt: CommandEvent) =
         lock commandLogLock (fun () ->
             commandLog.AddLast(evt) |> ignore
             while commandLog.Count > commandLogMax do
                 commandLog.RemoveFirst())
+
+    let startPropertyStream (logger: ILogger) =
+        Task.Run(fun () ->
+            task {
+                let mutable delay = 1000
+                while not cts.Token.IsCancellationRequested do
+                    try
+                        use call = client.StreamProperties(StateRequest(), cancellationToken = cts.Token)
+                        let stream = call.ResponseStream
+                        propertyStreamConnected <- true
+                        delay <- 1000
+                        logger.LogInformation("Property stream connected to {Address}", serverAddress)
+                        while not cts.Token.IsCancellationRequested do
+                            let! hasNext = stream.MoveNext(cts.Token)
+                            if hasNext then
+                                processPropertyEvent stream.Current
+                                match onPropertyEventReceived with
+                                | Some cb -> try cb stream.Current with _ -> ()
+                                | None -> ()
+                    with
+                    | :? OperationCanceledException -> ()
+                    | :? RpcException when cts.Token.IsCancellationRequested -> ()
+                    | :? RpcException ->
+                        propertyStreamConnected <- false
+                        if not cts.Token.IsCancellationRequested then
+                            logger.LogWarning("Property stream disconnected, retrying in {Delay}ms", delay)
+                            do! Task.Delay(delay, cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
+                            delay <- min (delay * 2) 10000
+                    | _ ->
+                        propertyStreamConnected <- false
+                        if not cts.Token.IsCancellationRequested then
+                            do! Task.Delay(delay, cts.Token) |> Async.AwaitTask |> Async.Catch |> Async.Ignore
+                            delay <- min (delay * 2) 10000
+            } :> Task) |> ignore
 
     let startStateStream (logger: ILogger) =
         Task.Run(fun () ->
@@ -63,12 +176,14 @@ type GrpcConnection(serverAddress: string) =
                         while not cts.Token.IsCancellationRequested do
                             let! hasNext = stream.MoveNext(cts.Token)
                             if hasNext then
-                                latestState <- Some stream.Current
+                                let tick = stream.Current
+                                let state = reconstructState tick
+                                latestState <- Some state
                                 lastUpdateTime <- DateTimeOffset.UtcNow
                                 Threading.Interlocked.Increment(&mcpMsgRecv) |> ignore
-                                Threading.Interlocked.Add(&mcpBytesRecv, int64 (stream.Current.CalculateSize())) |> ignore
+                                Threading.Interlocked.Add(&mcpBytesRecv, int64 (tick.CalculateSize())) |> ignore
                                 match onStateReceived with
-                                | Some cb -> try cb stream.Current with _ -> ()
+                                | Some cb -> try cb state with _ -> ()
                                 | None -> ()
                     with
                     | :? OperationCanceledException -> ()
@@ -204,7 +319,7 @@ type GrpcConnection(serverAddress: string) =
         Threading.Interlocked.Increment(&mcpMsgSent) |> ignore
         Threading.Interlocked.Add(&mcpBytesSent, bytes) |> ignore
 
-    /// <summary>Optional callback invoked for each SimulationState received from the state stream. Must not block.</summary>
+    /// <summary>Optional callback invoked for each reconstructed SimulationState received from the state stream. Must not block.</summary>
     member _.OnStateReceived
         with get() = onStateReceived
         and set(v) = onStateReceived <- v
@@ -213,6 +328,14 @@ type GrpcConnection(serverAddress: string) =
     member _.OnCommandReceived
         with get() = onCommandReceived
         and set(v) = onCommandReceived <- v
+
+    /// <summary>Optional callback invoked for each PropertyEvent received from the property stream. Must not block.</summary>
+    member _.OnPropertyEventReceived
+        with get() = onPropertyEventReceived
+        and set(v) = onPropertyEventReceived <- v
+
+    /// <summary>Whether the property event stream is currently connected to the server.</summary>
+    member _.PropertyStreamConnected = propertyStreamConnected
 
     /// <summary>Returns a ServiceMetricsReport for the MCP server's own message and byte counters.</summary>
     member _.LocalMetrics =
@@ -224,10 +347,11 @@ type GrpcConnection(serverAddress: string) =
         report.BytesReceived <- Threading.Interlocked.Read(&mcpBytesRecv)
         report
 
-    /// <summary>Starts background streams for simulation state, view commands, and command audit events. Each stream reconnects automatically on failure.</summary>
+    /// <summary>Starts background streams for simulation state, property events, view commands, and command audit events. Each stream reconnects automatically on failure.</summary>
     member this.Start() =
         let loggerFactory = LoggerFactory.Create(fun b -> b.AddConsole(fun opts -> opts.LogToStandardErrorThreshold <- LogLevel.Trace) |> ignore)
         let logger = loggerFactory.CreateLogger("GrpcConnection")
+        startPropertyStream logger
         startStateStream logger
         startViewCommandStream logger
         startCommandAuditStream logger
