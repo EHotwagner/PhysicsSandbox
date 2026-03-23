@@ -63,3 +63,30 @@ let ``DebugRenderer public API matches baseline`` () =
     let expected = [| "create"; "isEnabled"; "setEnabled"; "updateConstraints"; "updateShapes" |]
     for name in expected do
         Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+
+[<Fact>]
+let ``ViewerSettings public API matches baseline`` () =
+    let t = viewerAssembly.GetType("PhysicsViewer.Settings.ViewerSettings")
+    Assert.NotNull(t)
+    let members = getPublicMembers t
+    let expected = [| "defaultSettings"; "load"; "save" |]
+    for name in expected do
+        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+
+[<Fact>]
+let ``DisplayManager public API matches baseline`` () =
+    let t = viewerAssembly.GetType("PhysicsViewer.Settings.DisplayManager")
+    Assert.NotNull(t)
+    let members = getPublicMembers t
+    let expected = [| "applySettings"; "create"; "currentSettings"; "toggleFullscreen" |]
+    for name in expected do
+        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+
+[<Fact>]
+let ``SettingsOverlay public API matches baseline`` () =
+    let t = viewerAssembly.GetType("PhysicsViewer.Settings.SettingsOverlay")
+    Assert.NotNull(t)
+    let members = getPublicMembers t
+    let expected = [| "create"; "handleInput"; "isVisible"; "render"; "toggle" |]
+    for name in expected do
+        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")

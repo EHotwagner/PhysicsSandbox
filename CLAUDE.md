@@ -1,6 +1,6 @@
 # PhysicsSandbox Development Guidelines
 
-Last updated: 2026-03-22
+Last updated: 2026-03-23
 
 ## Active Technologies
 - F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts)
@@ -24,6 +24,8 @@ Last updated: 2026-03-22
 - N/A (stateless scripts communicating with running physics server) (004-improve-demos)
 - F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0→0.2.0 (local NuGet), Stride.CommunityToolkit.Bepu 1.0.0-preview.62 (already includes Stride.BepuPhysics 4.3.0.2507 + Stride.BepuPhysics.Debug 4.3.0.2507 transitively), Spectre.Console, ModelContextProtocol.AspNetCore 1.1.* (005-stride-bepu-integration)
 - In-memory (physics world, shape cache, constraint registry, metrics counters) (005-stride-bepu-integration)
+- F# on .NET 10.0 (PhysicsViewer project) + Stride.CommunityToolkit 1.0.0-preview.62 (rendering), Stride.CommunityToolkit.Bepu 1.0.0-preview.62 (Bepu3DPhysicsOptions, Create3DPrimitive), Grpc.Net.Client 2.x (server communication), System.Text.Json (settings persistence) (005-viewer-settings-sizing-fix)
+- JSON file at `~/.config/PhysicsSandbox/viewer-settings.json` (005-viewer-settings-sizing-fix)
 
 ## Project Structure
 
@@ -85,9 +87,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 005-viewer-settings-sizing-fix: Added F# on .NET 10.0 (PhysicsViewer project) + Stride.CommunityToolkit 1.0.0-preview.62 (rendering), Stride.CommunityToolkit.Bepu 1.0.0-preview.62 (Bepu3DPhysicsOptions, Create3DPrimitive), Grpc.Net.Client 2.x (server communication), System.Text.Json (settings persistence)
 - 005-stride-bepu-integration: Extended physics sandbox — 10 shape types (sphere, box, plane, capsule, cylinder, triangle, convex hull, compound, mesh, shape reference), 10 constraint types (ball socket, hinge, weld, distance limit/spring, swing/twist limits, linear/angular motors, point-on-line), per-body color + material properties, collision layer filtering, kinematic bodies, physics queries (raycast, sweep cast, overlap) via dedicated RPCs, debug wireframe visualization (F3 toggle). BepuFSharp 0.1.0→0.2.0-beta.1. New modules: QueryHandler, ShapeGeometry, DebugRenderer.
 - 004-improve-demos: Improved all 15 F# + Python demos for richer physics. AutoRun refactored to load AllDemos (no duplication). Prelude.fsx refactored to top-level bindings with runStandalone helper. Viewer shape sizing fix (Bepu3DPhysicsOptions.Size) — pending validation
-- 004-scripting-nuget-package: Published PhysicsSandbox.Shared.Contracts, PhysicsSandbox.ServiceDefaults, PhysicsClient, and PhysicsSandbox.Scripting as local NuGet packages (0.1.0) to ~/.local/share/nuget-local/. Migrated MCP server and Scripting.Tests from ProjectReference to PackageReference. Converted all F# script/demo DLL paths to version-agnostic `#r "nuget: ..."` references. Fixed port consistency: replaced all localhost:5000 with canonical 5180 (HTTP) / 7180 (HTTPS). 38 tasks completed.
 
 ## Environment
 
@@ -122,6 +124,9 @@ Do not use Stride's `Add3DCameraController()` alongside a custom CameraControlle
 
 ### Stride3D Linux Dependencies
 Viewer needs `openal`, `freetype2`, `sdl2`, `ttf-liberation` system packages. FreeImage requires `freeimage.so` symlink (`ln -sf /usr/lib/libfreeimage.so /usr/lib/freeimage.so`). GLSL shader compiler binary must be at `linux-x64/glslangValidator.bin`.
+
+### Viewer Debug Wireframes for Complex Shapes
+Convex hull, mesh, and triangle shapes are rendered as bounding-box approximations in both the solid view and debug wireframe overlay. Procedural mesh wireframes that trace the actual collision geometry are not implemented — significant scope requiring custom vertex buffer generation from proto vertex/triangle data. Compound shapes render per-child wireframes correctly.
 
 ### Stride3D Asset Compiler
 `StrideCompilerSkipBuild=true` skips asset compilation for CI/headless builds. For live GPU runs, build without this flag (requires fonts + FreeImage). The viewer's `.fsproj` defaults to `false` unless overridden.

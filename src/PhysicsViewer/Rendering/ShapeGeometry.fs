@@ -23,14 +23,17 @@ let primitiveType (shape: Shape) =
         | Shape.ShapeOneofCase.ShapeRef -> PrimitiveModelType.Sphere // resolved at render time
         | _ -> PrimitiveModelType.Sphere
 
+/// Clamp a dimension to a visible minimum (prevents invisible bodies).
+let private clampMin (v: float32) = max v 0.01f
+
 /// Compute the visual size for a primitive based on the physics shape dimensions.
 let shapeSize (shape: Shape) =
     if isNull shape then System.Nullable<Vector3>()
     else
         match shape.ShapeCase with
         | Shape.ShapeOneofCase.Sphere ->
-            let d = float32 shape.Sphere.Radius * 2.0f
-            System.Nullable(Vector3(d, d, d))
+            let r = clampMin (float32 shape.Sphere.Radius)
+            System.Nullable(Vector3(r, r, r))
         | Shape.ShapeOneofCase.Box ->
             let he = shape.Box.HalfExtents
             if isNull he then System.Nullable<Vector3>()
@@ -41,12 +44,12 @@ let shapeSize (shape: Shape) =
         | Shape.ShapeOneofCase.Capsule ->
             let r = float32 shape.Capsule.Radius
             let l = float32 shape.Capsule.Length
-            // Capsule primitive: diameter = Size.X, total height = Size.Y
-            System.Nullable(Vector3(r * 2.0f, l + r * 2.0f, r * 2.0f))
+            // Capsule primitive: radius = Size.X, cylindrical length = Size.Y
+            System.Nullable(Vector3(r, l, r))
         | Shape.ShapeOneofCase.Cylinder ->
             let r = float32 shape.Cylinder.Radius
             let l = float32 shape.Cylinder.Length
-            System.Nullable(Vector3(r * 2.0f, l, r * 2.0f))
+            System.Nullable(Vector3(r, l, r))
         | Shape.ShapeOneofCase.Triangle ->
             // Bounding box of the 3 triangle vertices
             let a = shape.Triangle.A

@@ -142,11 +142,13 @@ let ``defaultColor returns teal for MeshShape`` () =
 // ---------------------------------------------------------------------------
 
 [<Fact>]
-let ``shapeSize returns diameter for sphere`` () =
+let ``shapeSize returns radius for sphere`` () =
     let shape = Shape(Sphere = ProtoSphere(Radius = 2.0))
     let size = shapeSize shape
     Assert.True(size.HasValue)
-    Assert.Equal(4.0f, size.Value.X)
+    Assert.Equal(2.0f, size.Value.X)
+    Assert.Equal(2.0f, size.Value.Y)
+    Assert.Equal(2.0f, size.Value.Z)
 
 [<Fact>]
 let ``shapeSize returns doubled extents for box`` () =
@@ -156,6 +158,24 @@ let ``shapeSize returns doubled extents for box`` () =
     Assert.Equal(2.0f, size.Value.X)
     Assert.Equal(4.0f, size.Value.Y)
     Assert.Equal(6.0f, size.Value.Z)
+
+[<Fact>]
+let ``shapeSize returns radius and length for capsule`` () =
+    let shape = Shape(Capsule = PhysicsSandbox.Shared.Contracts.Capsule(Radius = 0.3, Length = 1.0))
+    let size = shapeSize shape
+    Assert.True(size.HasValue)
+    Assert.Equal(0.3f, size.Value.X)
+    Assert.Equal(1.0f, size.Value.Y)
+    Assert.Equal(0.3f, size.Value.Z)
+
+[<Fact>]
+let ``shapeSize returns radius and length for cylinder`` () =
+    let shape = Shape(Cylinder = PhysicsSandbox.Shared.Contracts.Cylinder(Radius = 0.5, Length = 2.0))
+    let size = shapeSize shape
+    Assert.True(size.HasValue)
+    Assert.Equal(0.5f, size.Value.X)
+    Assert.Equal(2.0f, size.Value.Y)
+    Assert.Equal(0.5f, size.Value.Z)
 
 // ---------------------------------------------------------------------------
 // SceneState initial values
