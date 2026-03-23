@@ -159,3 +159,44 @@ let ``size tracking accuracy`` () =
         Assert.Equal(totalFileSize, writer.CurrentSizeBytes)
     finally
         cleanUp dir
+
+[<Fact>]
+let ``MeshFetchEvent write and read round-trip`` () =
+    let dir = makeTempDir ()
+    try
+        let config = { SessionDir = dir; TimeLimitMinutes = 60; SizeLimitBytes = 100_000_000L }
+        let writer = create config
+        writer.Start()
+
+        let ts = recentTs ()
+        let entry = LogEntry.MeshFetchEvent(ts, ["mesh-001"; "mesh-002"; "mesh-003"], 2, 1, ["mesh-003"])
+        writer.Enqueue(entry)
+
+        writer.Stop() |> Async.RunSynchronously
+
+        let chunkFiles = Directory.GetFiles(dir, "chunk-*.bin")
+        Assert.NotEmpty(chunkFiles)
+
+        // Read back and verify via ChunkReader
+        let startTime = ts.AddSeconds(-1.0)
+        let endTime = ts.AddSeconds(1.0)
+        let entries = PhysicsSandbox.Mcp.Recording.ChunkReader.readEntries dir startTime endTime
+
+        let fetchEvents =
+            entries |> List.choose (fun e ->
+                match e with
+                | LogEntry.MeshFetchEvent(_, ids, h, m, missed) -> Some (ids, h, m, missed)
+                | _ -> None)
+
+        Assert.Single(fetchEvents) |> ignore
+        let (ids, hits, misses, missed) = fetchEvents.[0]
+        Assert.Equal(3, ids.Length)
+        Assert.Contains("mesh-001", ids)
+        Assert.Contains("mesh-002", ids)
+        Assert.Contains("mesh-003", ids)
+        Assert.Equal(2, hits)
+        Assert.Equal(1, misses)
+        Assert.Single(missed) |> ignore
+        Assert.Equal("mesh-003", missed.[0])
+    finally
+        cleanUp dir

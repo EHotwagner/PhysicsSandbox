@@ -106,6 +106,13 @@ type ChunkWriter(config: ChunkWriterConfig) =
             | LogEntry.MeshDefinition(ts, meshId, shape) ->
                 let mg = MeshGeometry(MeshId = meshId, Shape = shape)
                 ts.ToUnixTimeMilliseconds(), EntryType.MeshDefinition, mg.ToByteArray()
+            | LogEntry.MeshFetchEvent(ts, requestedIds, hits, misses, missedIds) ->
+                let log = MeshFetchLog()
+                for id in requestedIds do log.RequestedIds.Add(id)
+                log.Hits <- hits
+                log.Misses <- misses
+                for id in missedIds do log.MissedIds.Add(id)
+                ts.ToUnixTimeMilliseconds(), EntryType.MeshFetchEvent, log.ToByteArray()
 
         let entryMinute = truncateToMinute timestampMs
 
