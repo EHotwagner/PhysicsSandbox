@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-23
-**Revision**: Updated with 004-state-stream-optimization archival
+**Revision**: Updated with 004-backlog-fix-test-progress archival
 
 ## Overview
 
@@ -292,6 +292,21 @@ The REPL client and MCP server continue receiving velocity data on every tick fo
 ### US-094: Constraints and Registered Shapes via Property Channel (P3)
 Constraints and registered shapes are transmitted via the property event stream on add/remove/modify — not in every tick. TickState contains no constraint or shape registry data. [Source: specs/004-state-stream-optimization]
 
+### US-095: Test Suite Progress and Time Estimates (P1)
+A developer runs the full test suite (362+ tests across 7 projects) and sees real-time per-project progress (`[3/7]`), ETA after first project completes, and immediate failure surfacing — instead of silent terminal until completion. Works with headless build flags. [Source: specs/004-backlog-fix-test-progress]
+
+### US-096: Fix Silent TryAdd/TryRemove Failures (P2)
+A developer using PhysicsClient API receives explicit `Result.Error` when body registry operations fail (6 single-body ops) and structured `Trace.TraceWarning` for benign cache inconsistencies (3 cache ops + 1 bulk clearAll). No more silent failures. [Source: specs/004-backlog-fix-test-progress]
+
+### US-097: Pending Query Expiration (P3)
+The PhysicsServer MessageRouter automatically expires pending queries after 30 seconds with 10-second sweep cleanup, preventing unbounded memory growth in long-running sessions. Callers receive `TimeoutException`. [Source: specs/004-backlog-fix-test-progress]
+
+### US-098: Complete Constraint Builder Coverage (P4)
+A developer scripting physics constraints has typed builder functions for all 10 constraint types (was 4). New builders: DistanceSpring, SwingLimit, TwistLimit, LinearAxisMotor, AngularMotor, PointOnLine. [Source: specs/004-backlog-fix-test-progress]
+
+### US-099: Shared Test Helpers (P5)
+Test utility functions (`getPublicMembers`, `assertContains`, `StartAppAndConnect`) consolidated into shared locations — `tests/SharedTestHelpers.fs` (F#, 6 projects) and `IntegrationTestHelpers.cs` (C#, 14 test files). Zero duplicates. [Source: specs/004-backlog-fix-test-progress]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -536,6 +551,15 @@ Constraints and registered shapes are transmitted via the property event stream 
 - **FR-240**: Constraints and registered shapes MUST be delivered via the property event stream on add/remove/modify — not on every tick. [Source: specs/004-state-stream-optimization]
 - **FR-241**: All clients (PhysicsClient, Viewer, MCP) MUST merge continuous tick data with cached semi-static property data to reconstruct full body state locally. [Source: specs/004-state-stream-optimization]
 - **FR-242**: The system MUST ensure that a slow consumer who drops ticks eventually converges to correct state via PropertySnapshot backfill on reconnect, without requiring a manual restart. [Source: specs/004-state-stream-optimization]
+- **FR-243**: System MUST provide a test runner wrapper (`test-progress.sh`) that displays per-project progress (projects completed / total), updated as each project finishes. [Source: specs/004-backlog-fix-test-progress]
+- **FR-244**: System MUST display an estimated time to completion once at least one test project has completed, based on elapsed time and remaining projects. [Source: specs/004-backlog-fix-test-progress]
+- **FR-245**: System MUST surface test project failure summaries immediately in the progress output as each project completes. [Source: specs/004-backlog-fix-test-progress]
+- **FR-246**: System MUST return `Result.Error` with a descriptive message when PhysicsClient single-body registry operations fail, covering the 6 single-body operations (addSphere, addBox, addCapsule, addCylinder, addPlane, removeBody). The `clearAll` bulk operation MUST emit `Trace.TraceWarning` for registry cleanup failures. [Source: specs/004-backlog-fix-test-progress]
+- **FR-247**: System MUST emit structured warnings (`Trace.TraceWarning`) when PhysicsClient cache operations encounter duplicates or missing entries, covering 3 instances (MeshResolver ×2, Session ×1). [Source: specs/004-backlog-fix-test-progress]
+- **FR-248**: System MUST expire pending queries in the MessageRouter after 30-second timeout with 10-second sweep interval. [Source: specs/004-backlog-fix-test-progress]
+- **FR-249**: System MUST provide Scripting library builder functions for all 10 constraint types supported by BepuFSharp. [Source: specs/004-backlog-fix-test-progress]
+- **FR-250**: System MUST consolidate duplicated test helper functions into shared locations referenced by all test projects. [Source: specs/004-backlog-fix-test-progress]
+- **FR-251**: The test progress display MUST work with both standard and headless build configurations. [Source: specs/004-backlog-fix-test-progress]
 
 ## Key Entities
 
@@ -599,6 +623,8 @@ Constraints and registered shapes are transmitted via the property event stream 
 - **BodyProperties**: Full semi-static properties for a body — id, shape, color, mass, is_static, motion_type, collision_group, collision_mask, material, position, orientation (pose included for static bodies). [Source: specs/004-state-stream-optimization]
 - **PropertyEvent**: Server→client event wrapper — oneof body_created (BodyProperties), body_removed (string), body_updated (BodyProperties), constraints_snapshot, registered_shapes_snapshot, new_meshes. [Source: specs/004-state-stream-optimization]
 - **PropertySnapshot**: Late-joiner backfill message — all existing BodyProperties + constraints + registered shapes + mesh geometries. [Source: specs/004-state-stream-optimization]
+- **PendingQueryEntry**: Wrapper for `TaskCompletionSource<QueryResponse>` with `CreatedAt: DateTime` timestamp. Keyed by CorrelationId. States: Created → Resolved | Expired (TimeoutException) | Cancelled. [Source: specs/004-backlog-fix-test-progress]
+- **Constraint Builder**: Stateless typed function in Scripting library that constructs proto `SimulationCommand → AddConstraint → ConstraintType` from domain parameters. 10 types: BallSocket, Hinge, Weld, DistanceLimit, DistanceSpring, SwingLimit, TwistLimit, LinearAxisMotor, AngularMotor, PointOnLine. [Source: specs/004-backlog-fix-test-progress]
 
 ## Edge Cases
 
@@ -776,3 +802,10 @@ Constraints and registered shapes are transmitted via the property event stream 
 - **SC-097**: All existing tests pass — no functional regression in client display, live watch, steering, MCP tools, or recording. [Source: specs/004-state-stream-optimization]
 - **SC-098**: New clients joining a running simulation see correct, complete state within 1 tick of connecting (via PropertySnapshot backfill + cached TickState). [Source: specs/004-state-stream-optimization]
 - **SC-099**: Body property changes visible to all clients within 1 tick of the change being applied (event-driven, no batching). [Source: specs/004-state-stream-optimization]
+- **SC-100**: Developers see test progress (projects completed/total) within 2 seconds of first project completing. [Source: specs/004-backlog-fix-test-progress]
+- **SC-101**: ETA accurate within 20% of actual remaining time after 25% of tests complete. [Source: specs/004-backlog-fix-test-progress]
+- **SC-102**: All 10 silent TryAdd/TryRemove failures replaced with explicit reporting — 6 Result.Error, 1 Trace.TraceWarning (clearAll), 3 cache warnings. [Source: specs/004-backlog-fix-test-progress]
+- **SC-103**: Pending queries cleaned up within 30s timeout, preventing unbounded memory growth. [Source: specs/004-backlog-fix-test-progress]
+- **SC-104**: All 10 constraint types have Scripting library builders (up from 4). [Source: specs/004-backlog-fix-test-progress]
+- **SC-105**: Duplicated test helpers exist in exactly one shared location, zero copy-pasted instances. [Source: specs/004-backlog-fix-test-progress]
+- **SC-106**: All existing tests continue to pass after all changes (362+ tests). [Source: specs/004-backlog-fix-test-progress]

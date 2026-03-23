@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-23
-**Revision**: Updated with 004-state-stream-optimization archival
+**Revision**: Updated with 004-backlog-fix-test-progress archival
 
 ## Technical Context
 
@@ -90,7 +90,7 @@ src/
 │   ├── Helpers.fsi/.fs                # ok, sleep, timed
 │   ├── Vec3Builders.fsi/.fs           # toVec3, toTuple
 │   ├── CommandBuilders.fsi/.fs        # makeSphereCmd, makeBoxCmd, makeCapsuleCmd, makeCylinderCmd, makeImpulseCmd, makeTorqueCmd, makeColor, makeMaterialProperties, makeSetBodyPoseCmd
-│   ├── ConstraintBuilders.fsi/.fs    # makeBallSocketCmd, makeHingeCmd, makeWeldCmd, makeDistanceLimitCmd, makeRemoveConstraintCmd
+│   ├── ConstraintBuilders.fsi/.fs    # makeBallSocketCmd, makeHingeCmd, makeWeldCmd, makeDistanceLimitCmd, makeDistanceSpringCmd, makeSwingLimitCmd, makeTwistLimitCmd, makeLinearAxisMotorCmd, makeAngularMotorCmd, makePointOnLineCmd, makeRemoveConstraintCmd
 │   ├── QueryBuilders.fsi/.fs         # raycast, raycastAll, sweepSphere, overlapSphere
 │   ├── BatchOperations.fsi/.fs        # batchAdd (auto-chunking at 100)
 │   ├── SimulationLifecycle.fsi/.fs    # resetSimulation, runFor, nextId
@@ -125,6 +125,7 @@ src/
 
 tests/
 ├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests (56 tests)
+│   ├── IntegrationTestHelpers.cs       # Shared: StartAppAndConnect, StartAppAndConnectWithSimulation, StartServerOnly
 │   ├── ServerHubTests.cs               # 6 tests (SendCommand, StreamState, SendViewCommand, StreamViewCommands)
 │   ├── SimulationConnectionTests.cs    # 7 tests (connection lifecycle, physics verification, 30s stability)
 │   ├── CommandRoutingTests.cs          # 10 tests (all 9 command types + ClearForces end-to-end)
@@ -141,12 +142,14 @@ tests/
 │   ├── ComparisonIntegrationTests.cs  # MCP-vs-scripting comparison tests
 │   ├── StateStreamOptimizationIntegrationTests.cs  # 12 tests: split channels, backfill, bandwidth, velocity
 │   └── xunit.runner.json              # Test runner configuration
-├── PhysicsServer.Tests/                 # F# — unit tests (41 tests)
+├── SharedTestHelpers.fs                  # F# — shared getPublicMembers, assertContains (linked by all F# test projects)
+├── PhysicsServer.Tests/                 # F# — unit tests (45 tests)
 │   ├── StateCacheTests.fs
 │   ├── MessageRouterTests.fs            # Includes readViewCommand tests
 │   ├── BatchRoutingTests.fs             # Batch command routing tests
 │   ├── MetricsCounterTests.fs           # MetricsCounter unit tests
 │   ├── StateStreamOptimizationTests.fs  # Split channel routing, property events, backfill tests
+│   ├── QueryExpirationTests.fs          # Pending query timeout tests (4 tests)
 │   └── PublicApiBaseline.txt            # Surface-area baseline
 ├── PhysicsSimulation.Tests/             # F# — unit tests (114 tests)
 │   ├── SimulationWorldTests.fs          # Lifecycle, bodies, forces, gravity, stress
@@ -163,16 +166,18 @@ tests/
 │   ├── DisplayManagerTests.fs           # Display manager logic tests
 │   ├── SurfaceAreaTests.fs              # Public API baseline (8 modules incl. Settings)
 │   └── PublicApiBaseline.txt            # Surface-area baseline
-├── PhysicsSandbox.Scripting.Tests/     # F# — unit + surface area tests (20 tests)
+├── PhysicsSandbox.Scripting.Tests/     # F# — unit + surface area tests (26 tests)
 │   ├── HelpersTests.fs
 │   ├── Vec3BuildersTests.fs
 │   ├── CommandBuildersTests.fs
+│   ├── ConstraintBuilderTests.fs        # 6 new constraint builder tests
 │   ├── SurfaceAreaTests.fs
 │   └── SurfaceAreaBaseline.txt
-├── PhysicsClient.Tests/                 # F# — unit tests (56 tests)
+├── PhysicsClient.Tests/                 # F# — unit tests (63 tests)
 │   ├── IdGeneratorTests.fs              # Sequential IDs, reset, thread safety
 │   ├── SessionTests.fs                  # Connection lifecycle
 │   ├── SimulationCommandsTests.fs       # Proto message construction, Vec3 conversion
+│   ├── RegistryErrorTests.fs            # TryAdd/TryRemove error return tests (7 tests)
 │   ├── PresetsTests.fs                  # Preset parameters, mass values
 │   ├── GeneratorsTests.fs               # Scene builder validation, count checks
 │   ├── SteeringTests.fs                 # Direction-to-Vec3 mapping
@@ -183,6 +188,8 @@ tests/
 │   ├── ChunkReaderTests.fs
 │   ├── SessionStoreTests.fs
 │   └── RecordingEngineTests.fs
+
+test-progress.sh                                 # Bash test runner with per-project progress, ETA, failure surfacing
 
 Scripting/                                   # All scripting folders consolidated
 ├── scratch/                                 # Gitignored experimentation folder (.gitkeep only)
@@ -297,3 +304,6 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - Proto Vec3/Vec4 use `double` (8 bytes per component), not `float` (4 bytes). This contributes to slightly higher-than-estimated TickState size (~80 bytes/body with collisions vs theoretical ~56 bytes with float). Switching to float would be a cross-cutting change. [Source: specs/004-state-stream-optimization]
 - SC-001 bandwidth target is marginally missed (69% reduction vs 70% target) due to double-precision Vec3/Vec4. Test threshold set at 16 KB. [Source: specs/004-state-stream-optimization]
 - T041 integration test (PropertyEvent.body_updated on color change) deferred — requires a SetColor command not yet implemented. Server-side detection logic is in place. [Source: specs/004-state-stream-optimization]
+- MessageRouter `disposeExpirationTimer()` is exported but never called during server shutdown. Timer resource may not be cleaned up on graceful exit. [Source: specs/004-backlog-fix-test-progress]
+- Pending query timeout (30s) is hardcoded in MessageRouter. Not configurable without code change. [Source: specs/004-backlog-fix-test-progress]
+- Demo Prelude.fsx still only has ball-socket and hinge constraint helpers. The 6 new Scripting library builders are not yet promoted to Prelude. [Source: specs/004-backlog-fix-test-progress]

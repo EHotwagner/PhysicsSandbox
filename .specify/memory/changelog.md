@@ -1,5 +1,39 @@
 # Merged Features Log
 
+## Backlog Fixes and Test Progress Reporting — 2026-03-23
+**Branch:** 004-backlog-fix-test-progress
+**Spec:** specs/004-backlog-fix-test-progress
+
+**What was added:**
+- Test progress script (`test-progress.sh`) with per-project `[3/7]` progress, ETA, immediate failure surfacing, headless build support
+- Fixed 10 silent TryAdd/TryRemove failures: 6 single-body registry ops → `Result.Error`, 1 bulk clearAll → `Trace.TraceWarning`, 3 cache ops → `Trace.TraceWarning`
+- Pending query expiration in MessageRouter (30s timeout, 10s sweep via `System.Threading.Timer`)
+- 6 new constraint builders completing all 10 types: DistanceSpring, SwingLimit, TwistLimit, LinearAxisMotor, AngularMotor, PointOnLine
+- Shared test helpers: `tests/SharedTestHelpers.fs` (F#, linked by 6 projects) + `IntegrationTestHelpers.cs` (C#, used by 14 test files)
+- Spec drift resolution: FR-004a backfilled to match clearAll warning pattern
+
+**New Components:**
+- `test-progress.sh` — Bash test runner with progress display
+- `tests/SharedTestHelpers.fs` — F# shared test helpers (getPublicMembers, assertContains)
+- `tests/PhysicsSandbox.Integration.Tests/IntegrationTestHelpers.cs` — C# shared integration helpers
+- `tests/PhysicsClient.Tests/RegistryErrorTests.fs` — 7 TryAdd/TryRemove error tests
+- `tests/PhysicsServer.Tests/QueryExpirationTests.fs` — 4 query expiration tests
+- `tests/PhysicsSandbox.Scripting.Tests/ConstraintBuilderTests.fs` — 6 new builder tests
+
+**Modified Components:**
+- `src/PhysicsClient/Commands/SimulationCommands.fs` — Result.Error returns for 6 body ops + TraceWarning for clearAll
+- `src/PhysicsClient/Connection/MeshResolver.fs` — Trace.TraceWarning for cache duplicates (2 instances)
+- `src/PhysicsClient/Connection/Session.fs` — Trace.TraceWarning for missing cache entry
+- `src/PhysicsServer/Hub/MessageRouter.fs/.fsi` — PendingQueryEntry type, expireStaleQueries, sweep timer
+- `src/PhysicsSandbox.Scripting/ConstraintBuilders.fs/.fsi` — 6 new builders + defaultMotor helper
+- `src/PhysicsSandbox.Scripting/Prelude.fs/.fsi` — Re-export new builders
+- 14 integration test files — migrated to IntegrationTestHelpers
+- 6 F# test projects — migrated to SharedTestHelpers.fs
+
+**Tasks Completed:** 77/78 tasks
+
+---
+
 ## State Stream Bandwidth Optimization — 2026-03-23
 **Branch:** 004-state-stream-optimization
 **Spec:** specs/004-state-stream-optimization

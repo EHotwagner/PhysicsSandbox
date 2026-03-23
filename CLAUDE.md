@@ -100,7 +100,7 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
-- 004-backlog-fix-test-progress: Test progress script (test-progress.sh) with per-project progress, ETA, failure reporting. Fixed 10 silent TryAdd/TryRemove failures (7 → Result.Error, 3 → Trace.TraceWarning). Pending query expiration (30s timeout, 10s sweep). 6 new constraint builders completing all 10 types. Shared test helpers (F# SharedTestHelpers.fs, C# IntegrationTestHelpers.cs). 77 tasks, 17 new tests.
+- 004-backlog-fix-test-progress: Test progress script (test-progress.sh) with per-project progress, ETA, failure reporting. Fixed 10 silent TryAdd/TryRemove failures (6 → Result.Error, 1 clearAll → Trace.TraceWarning, 3 cache → Trace.TraceWarning). Pending query expiration (30s timeout, 10s sweep). 6 new constraint builders completing all 10 types. Shared test helpers (F# SharedTestHelpers.fs, C# IntegrationTestHelpers.cs). 77 tasks, 17 new tests.
 - 004-state-stream-optimization: Split SimulationState into lean TickState (pose-only, dynamic bodies) + PropertyEvent stream (semi-static on change/backfill). StreamProperties RPC, ExcludeVelocity opt-out, constraints/shapes via property channel. ~69% bandwidth reduction at 200 bodies. 108/109 tasks, 306+ unit tests, 12 integration tests.
 - 004-mcp-mesh-logging: MCP recording for FetchMeshes RPC — MeshFetchEvent (EntryType=3) records requested IDs, hits/misses. Published via CommandEvent audit stream. New query_mesh_fetches tool. 17 tasks.
 
