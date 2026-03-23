@@ -118,6 +118,24 @@ val makeWeldCmd : id: string -> bodyA: string -> bodyB: string -> SimulationComm
 /// <param name="maxDist">Maximum distance in meters.</param>
 val makeDistanceLimitCmd : id: string -> bodyA: string -> bodyB: string -> minDist: float -> maxDist: float -> SimulationCommand
 
+/// <summary>Builds a distance-spring constraint — pulls bodies toward a target distance.</summary>
+val makeDistanceSpringCmd : id: string -> bodyA: string -> bodyB: string -> offsetA: (float * float * float) -> offsetB: (float * float * float) -> targetDistance: float -> SimulationCommand
+
+/// <summary>Builds a swing-limit constraint — limits angle between two axes.</summary>
+val makeSwingLimitCmd : id: string -> bodyA: string -> bodyB: string -> axisA: (float * float * float) -> axisB: (float * float * float) -> maxAngle: float -> SimulationCommand
+
+/// <summary>Builds a twist-limit constraint — limits rotation around an axis to an angle range.</summary>
+val makeTwistLimitCmd : id: string -> bodyA: string -> bodyB: string -> axisA: (float * float * float) -> axisB: (float * float * float) -> minAngle: float -> maxAngle: float -> SimulationCommand
+
+/// <summary>Builds a linear-axis-motor constraint — drives linear motion along an axis.</summary>
+val makeLinearAxisMotorCmd : id: string -> bodyA: string -> bodyB: string -> offsetA: (float * float * float) -> offsetB: (float * float * float) -> axis: (float * float * float) -> targetVelocity: float -> maxForce: float -> SimulationCommand
+
+/// <summary>Builds an angular-motor constraint — drives rotation.</summary>
+val makeAngularMotorCmd : id: string -> bodyA: string -> bodyB: string -> targetVelocity: (float * float * float) -> maxForce: float -> SimulationCommand
+
+/// <summary>Builds a point-on-line constraint — constrains a point to slide along a line.</summary>
+val makePointOnLineCmd : id: string -> bodyA: string -> bodyB: string -> origin: (float * float * float) -> direction: (float * float * float) -> offset: (float * float * float) -> SimulationCommand
+
 /// <summary>Builds a remove-constraint command.</summary>
 /// <param name="constraintId">ID of the constraint to remove.</param>
 val makeRemoveConstraintCmd : constraintId: string -> SimulationCommand

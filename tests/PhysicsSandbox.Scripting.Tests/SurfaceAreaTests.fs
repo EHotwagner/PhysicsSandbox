@@ -1,18 +1,9 @@
 module PhysicsSandbox.Scripting.Tests.SurfaceAreaTests
 
-open System
 open System.IO
 open System.Reflection
 open Xunit
-
-let private getPublicMembers (moduleType: Type) =
-    moduleType.GetMembers(BindingFlags.Public ||| BindingFlags.Static)
-    |> Array.filter (fun m -> m.MemberType = MemberTypes.Method || m.MemberType = MemberTypes.Property)
-    |> Array.map (fun m -> m.Name)
-    |> Array.sort
-
-let private assertContains (members: string[]) (name: string) =
-    Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+open TestHelpers
 
 let private getAssembly () =
     Assembly.Load("PhysicsSandbox.Scripting")

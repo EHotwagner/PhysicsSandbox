@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="PhysicsServer.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="Hub/StateCache.fsi" />
     <Compile Include="Hub/StateCache.fs" />
     <Compile Include="Hub/MetricsCounter.fsi" />

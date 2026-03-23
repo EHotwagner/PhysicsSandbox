@@ -13,12 +13,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../SharedTestHelpers.fs" Link="SharedTestHelpers.fs" />
     <Compile Include="StateCacheTests.fs" />
     <Compile Include="MetricsCounterTests.fs" />
     <Compile Include="BatchRoutingTests.fs" />
     <Compile Include="MeshCacheTests.fs" />
     <Compile Include="MessageRouterTests.fs" />
     <Compile Include="StateStreamOptimizationTests.fs" />
+    <Compile Include="QueryExpirationTests.fs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -12,6 +12,11 @@ type MessageRouter
 /// Opaque handle to a state stream subscription.
 type SubscriptionId
 
+/// A pending query entry with its TCS and creation timestamp for timeout tracking.
+type PendingQueryEntry =
+    { Tcs: TaskCompletionSource<QueryResponse>
+      CreatedAt: DateTime }
+
 /// Create a new message router with an internal state cache.
 val create: unit -> MessageRouter
 
@@ -81,6 +86,15 @@ val submitQuery: MessageRouter -> QueryRequest -> CancellationToken -> Task<Quer
 
 /// Process query responses from a simulation state update.
 val processQueryResponses: SimulationState -> unit
+
+/// Remove pending queries older than 30 seconds and set TimeoutException on their TCS.
+val expireStaleQueries: unit -> unit
+
+/// Dispose the query expiration timer.
+val disposeExpirationTimer: unit -> unit
+
+/// Pending query completions, keyed by correlation ID.
+val internal pendingQueries: System.Collections.Concurrent.ConcurrentDictionary<string, PendingQueryEntry>
 
 /// Read a pending view command.
 val readViewCommand: MessageRouter -> CancellationToken -> Task<ViewCommand option>

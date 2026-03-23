@@ -67,8 +67,10 @@ let addSphere
     cmd.AddBody <- addBody
     match sendCommand session cmd with
     | Ok () ->
-        (bodyRegistry session).TryAdd(bodyId, "sphere") |> ignore
-        Ok bodyId
+        if not ((bodyRegistry session).TryAdd(bodyId, "sphere")) then
+            Error $"Body '{bodyId}' already exists in registry"
+        else
+            Ok bodyId
     | Error e -> Error e
 
 /// <summary>Adds a box body to the simulation and registers it in the local body registry.</summary>
@@ -110,8 +112,10 @@ let addBox
     cmd.AddBody <- addBody
     match sendCommand session cmd with
     | Ok () ->
-        (bodyRegistry session).TryAdd(bodyId, "box") |> ignore
-        Ok bodyId
+        if not ((bodyRegistry session).TryAdd(bodyId, "box")) then
+            Error $"Body '{bodyId}' already exists in registry"
+        else
+            Ok bodyId
     | Error e -> Error e
 
 /// <summary>Adds a capsule body to the simulation and registers it in the local body registry.</summary>
@@ -138,8 +142,10 @@ let addCapsule (session: Session) (position: float * float * float) (radius: flo
     cmd.AddBody <- addBody
     match sendCommand session cmd with
     | Ok () ->
-        (bodyRegistry session).TryAdd(bodyId, "capsule") |> ignore
-        Ok bodyId
+        if not ((bodyRegistry session).TryAdd(bodyId, "capsule")) then
+            Error $"Body '{bodyId}' already exists in registry"
+        else
+            Ok bodyId
     | Error e -> Error e
 
 /// <summary>Adds a cylinder body to the simulation and registers it in the local body registry.</summary>
@@ -166,8 +172,10 @@ let addCylinder (session: Session) (position: float * float * float) (radius: fl
     cmd.AddBody <- addBody
     match sendCommand session cmd with
     | Ok () ->
-        (bodyRegistry session).TryAdd(bodyId, "cylinder") |> ignore
-        Ok bodyId
+        if not ((bodyRegistry session).TryAdd(bodyId, "cylinder")) then
+            Error $"Body '{bodyId}' already exists in registry"
+        else
+            Ok bodyId
     | Error e -> Error e
 
 /// <summary>Adds a constraint between two bodies in the simulation.</summary>
@@ -256,8 +264,10 @@ let addPlane (session: Session) (normal: (float * float * float) option) (id: st
     cmd.AddBody <- addBody
     match sendCommand session cmd with
     | Ok () ->
-        (bodyRegistry session).TryAdd(bodyId, "plane") |> ignore
-        Ok bodyId
+        if not ((bodyRegistry session).TryAdd(bodyId, "plane")) then
+            Error $"Body '{bodyId}' already exists in registry"
+        else
+            Ok bodyId
     | Error e -> Error e
 
 /// <summary>Removes a body from the simulation by its ID and unregisters it locally.</summary>
@@ -270,8 +280,11 @@ let removeBody (session: Session) (bodyId: string) : Result<unit, string> =
     cmd.RemoveBody <- remove
     match sendCommand session cmd with
     | Ok () ->
-        (bodyRegistry session).TryRemove(bodyId) |> ignore
-        Ok ()
+        let mutable _removed = ""
+        if not ((bodyRegistry session).TryRemove(bodyId, &_removed)) then
+            Error $"Body '{bodyId}' not found in registry"
+        else
+            Ok ()
     | Error e -> Error e
 
 /// <summary>Removes all registered bodies from the simulation one by one.</summary>
@@ -282,17 +295,26 @@ let clearAll (session: Session) : Result<int, string> =
     let keys = registry.Keys |> Seq.toList
     let count = keys.Length
     let mutable lastError = None
+    let mutable registryWarnings = 0
     for key in keys do
         let remove = RemoveBody()
         remove.BodyId <- key
         let cmd = SimulationCommand()
         cmd.RemoveBody <- remove
         match sendCommand session cmd with
-        | Ok () -> registry.TryRemove(key) |> ignore
+        | Ok () ->
+            let mutable _removed = ""
+            if not (registry.TryRemove(key, &_removed)) then
+                System.Diagnostics.Trace.TraceWarning($"SimulationCommands.clearAll: body '{key}' not found in registry during cleanup")
+                registryWarnings <- registryWarnings + 1
         | Error e -> lastError <- Some e
     match lastError with
     | Some e -> Error e
-    | None -> Ok count
+    | None ->
+        if registryWarnings > 0 then
+            Ok count // still succeed, but warnings were counted internally
+        else
+            Ok count
 
 /// <summary>Applies a continuous force to a body. The force persists until cleared.</summary>
 /// <param name="session">The active server session.</param>

@@ -13,7 +13,8 @@ let create (client: PhysicsHub.PhysicsHubClient) =
 
 let processNewMeshes (meshes: MeshGeometry seq) (state: MeshResolverState) =
     for mg in meshes do
-        state.Cache.TryAdd(mg.MeshId, mg.Shape) |> ignore
+        if not (state.Cache.TryAdd(mg.MeshId, mg.Shape)) then
+            System.Diagnostics.Trace.TraceWarning($"MeshResolver: mesh {mg.MeshId} already cached")
 
 let resolve (meshId: string) (state: MeshResolverState) =
     match state.Cache.TryGetValue(meshId) with
@@ -29,5 +30,6 @@ let fetchMissingSync (meshIds: string list) (state: MeshResolverState) =
                 request.MeshIds.Add(id)
             let response = state.Client.FetchMeshes(request)
             for mg in response.Meshes do
-                state.Cache.TryAdd(mg.MeshId, mg.Shape) |> ignore
+                if not (state.Cache.TryAdd(mg.MeshId, mg.Shape)) then
+                    System.Diagnostics.Trace.TraceWarning($"MeshResolver: mesh {mg.MeshId} already cached")
         with _ -> ()

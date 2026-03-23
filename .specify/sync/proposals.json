@@ -1,50 +1,32 @@
 {
   "generated": "2026-03-23T00:00:00Z",
   "based_on": "drift-report from 2026-03-23",
-  "feature": "004-mesh-cache-transport",
+  "feature": "004-backlog-fix-test-progress",
   "summary": {
-    "backfill": 3,
+    "backfill": 1,
     "align": 0,
     "human_decision": 0,
     "new_specs": 0,
-    "remove": 0
+    "remove_from_spec": 0
   },
   "proposals": [
     {
       "id": 1,
-      "spec_id": "004-mesh-cache-transport",
-      "requirement": "FR-010",
+      "spec_id": "004-backlog-fix-test-progress",
+      "requirement": "FR-004a",
+      "title": "clearAll registry warning",
       "direction": "BACKFILL",
-      "spec_text": "System MUST invalidate mesh caches when the simulation is reset or bodies are removed.",
-      "actual": "Reset and disconnect clear caches. Body removal does not evict orphaned mesh entries.",
-      "proposed_text": "FR-010: System MUST invalidate all mesh caches when the simulation is reset or the simulation disconnects. Individual body removal does not evict mesh entries — shared mesh IDs may still be referenced by other bodies, and orphaned entries are reclaimed on the next reset or disconnect.",
-      "rationale": "Spec assumptions section states cache eviction not needed for typical sandbox usage. Per-body eviction requires reference counting with no practical benefit at sandbox scale. Content-addressed IDs prevent correctness issues from orphaned entries.",
       "confidence": "HIGH",
-      "status": "approved"
-    },
-    {
-      "id": 2,
-      "spec_id": "004-mesh-cache-transport",
-      "requirement": "FR-011",
-      "direction": "BACKFILL",
-      "spec_text": "System MUST handle compound shapes by independently caching each child shape's geometry.",
-      "actual": "Compound shapes cached as single atomic unit with one content-addressed hash.",
-      "proposed_text": "FR-011: System MUST handle compound shapes as cacheable units. A compound shape receives a single content-addressed identifier derived from the serialized representation of all its children (shapes and local poses). Identical compound structures produce the same identifier. Individual children are not independently cached.",
-      "rationale": "Per-child caching requires multiple MeshIds per BodyRecord, hierarchical cache lookup, and complex partial-resolution. Atomic approach deduplicates identical whole compounds, which is the common case. Design documented in research.md R1.",
-      "confidence": "HIGH",
-      "status": "approved"
-    },
-    {
-      "id": 3,
-      "spec_id": "004-mesh-cache-transport",
-      "requirement": "FR-016 (new)",
-      "direction": "BACKFILL",
-      "spec_text": null,
-      "actual": "LogEntry.MeshDefinition entries written to MCP recording sessions for self-contained replay.",
-      "proposed_text": "FR-016: The MCP recording system MUST persist mesh geometry definitions alongside state snapshots so that recording sessions are self-contained and can be replayed without requiring a live server to resolve mesh identifiers.",
-      "rationale": "Without mesh definitions, replayed sessions with CachedShapeRef bodies would show only bounding box placeholders. Follows existing StateSnapshot/CommandEvent recording pattern.",
-      "confidence": "HIGH",
-      "status": "approved"
+      "spec_text": "All 7 body registry TryAdd/TryRemove in SimulationCommands return Result.Error",
+      "actual_behavior": "6/7 return Result.Error. clearAll silently counts TryRemove failures and returns Ok count.",
+      "proposed_spec_change": "FR-004a: 6 single-body operations return Result.Error. clearAll bulk operation emits Trace.TraceWarning for registry cleanup failures but returns Ok.",
+      "proposed_code_change": "Add Trace.TraceWarning to clearAll TryRemove failure path (SimulationCommands.fs:307-308)",
+      "rationale": "Server-side removal succeeds; local registry TryRemove failure is a cache inconsistency, not a command failure. Consistent with FR-004b cache warning pattern.",
+      "affected_files": [
+        "specs/004-backlog-fix-test-progress/spec.md",
+        "src/PhysicsClient/Commands/SimulationCommands.fs"
+      ],
+      "status": "applied"
     }
   ]
 }

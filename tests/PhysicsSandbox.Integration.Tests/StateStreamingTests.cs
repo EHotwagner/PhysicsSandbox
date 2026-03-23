@@ -8,40 +8,6 @@ namespace PhysicsSandbox.Integration.Tests;
 
 public class StateStreamingTests
 {
-    private static async Task<(DistributedApplication App, GrpcChannel Channel)> StartAppAndConnect()
-    {
-        var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.PhysicsSandbox_AppHost>();
-
-        var app = await appHost.BuildAsync();
-        await app.StartAsync();
-
-        await app.ResourceNotifications
-            .WaitForResourceHealthyAsync("server")
-            .WaitAsync(TimeSpan.FromSeconds(30));
-
-        await app.ResourceNotifications
-            .WaitForResourceAsync("simulation", "Running")
-            .WaitAsync(TimeSpan.FromSeconds(30));
-        // Give the simulation time to establish gRPC connection to server
-        await Task.Delay(3000);
-
-        var httpClient = app.CreateHttpClient("server", "https");
-        var channel = GrpcChannel.ForAddress(httpClient.BaseAddress!, new GrpcChannelOptions
-        {
-            HttpHandler = new SocketsHttpHandler
-            {
-                EnableMultipleHttp2Connections = true,
-                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
-                {
-                    RemoteCertificateValidationCallback = (_, _, _, _) => true
-                }
-            }
-        });
-
-        return (app, channel);
-    }
-
     private static SimulationCommand MakeAddBodyCommand(string id = "test-body") =>
         new()
         {
@@ -64,7 +30,7 @@ public class StateStreamingTests
     [Fact]
     public async Task MultipleConcurrentSubscribers_ReceiveSameState()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
 
         var client = new PhysicsHub.PhysicsHubClient(channel);
@@ -103,7 +69,7 @@ public class StateStreamingTests
     [Fact]
     public async Task LateJoiner_ReceivesCachedState()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
 
         var client = new PhysicsHub.PhysicsHubClient(channel);
@@ -143,7 +109,7 @@ public class StateStreamingTests
     [Fact]
     public async Task StateStream_DeliversUpdatesWithin1s()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
 
         var client = new PhysicsHub.PhysicsHubClient(channel);
@@ -168,7 +134,7 @@ public class StateStreamingTests
     [Fact]
     public async Task StreamViewCommands_ReceivesForwardedSetCamera()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
 
         var client = new PhysicsHub.PhysicsHubClient(channel);

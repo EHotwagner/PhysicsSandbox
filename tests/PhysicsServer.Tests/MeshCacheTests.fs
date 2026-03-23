@@ -1,8 +1,7 @@
 module PhysicsServer.Tests.MeshCacheTests
 
-open System
-open System.Reflection
 open Xunit
+open TestHelpers
 open PhysicsSandbox.Shared.Contracts
 open PhysicsServer.Hub.MeshCache
 
@@ -72,12 +71,6 @@ let ``duplicate add does not overwrite`` () =
     Assert.Equal(1, count cache)
 
 // ─── Surface Area ────────────────────────────────────────────────────────────
-
-let private getPublicMembers (moduleType: Type) =
-    moduleType.GetMembers(BindingFlags.Public ||| BindingFlags.Static)
-    |> Array.filter (fun m -> m.MemberType = MemberTypes.Method || m.MemberType = MemberTypes.Property)
-    |> Array.map (fun m -> m.Name)
-    |> Array.sort
 
 [<Fact>]
 let ``MeshCache public API matches baseline`` () =
