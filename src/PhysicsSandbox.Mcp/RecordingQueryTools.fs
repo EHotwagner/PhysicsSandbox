@@ -9,8 +9,10 @@ open PhysicsSandbox.Mcp.Recording.Types
 open PhysicsSandbox.Mcp.Recording.SessionStore
 open PhysicsSandbox.Mcp.Recording.ChunkReader
 
+let private nullSafe (s: string) = if isNull s then "" else s
+
 let private resolveSession (engine: RecordingEngine) (sessionId: string) =
-    if String.IsNullOrWhiteSpace(sessionId) then
+    if String.IsNullOrWhiteSpace(nullSafe sessionId) then
         engine.ActiveSession
     else
         loadSession sessionId
@@ -48,13 +50,14 @@ type RecordingQueryTools() =
     static member query_body_trajectory
         (
             engine: RecordingEngine,
-            [<Description("Body ID to track")>] body_id: int,
+            [<Description("Body ID to track (e.g. 'sphere-1', 'box-2')")>] body_id: string,
             [<Description("Session ID (empty for active session)")>] session_id: string,
             [<Description("Start time as Unix epoch seconds (0 for session start)")>] start_time: double,
             [<Description("End time as Unix epoch seconds (0 for session end/now)")>] end_time: double,
             [<Description("Number of results per page (default 100, max 500)")>] page_size: int,
             [<Description("Pagination cursor from previous query")>] cursor: string
         ) : string =
+        try
         let sb = StringBuilder()
         match resolveSession engine session_id with
         | None ->
@@ -64,12 +67,12 @@ type RecordingQueryTools() =
             let startT, endT = resolveTimeRange session start_time end_time
             let ps = defaultPageSize page_size
             let cur =
-                if String.IsNullOrWhiteSpace(cursor) then None
+                if String.IsNullOrWhiteSpace(nullSafe cursor) then None
                 else WireFormat.decodeCursor cursor
 
             let entries, nextCursor = readPage sessionDir startT endT cur ps
 
-            let bodyIdStr = string body_id
+            let bodyIdStr = nullSafe body_id
 
             let snapshots =
                 entries
@@ -106,6 +109,7 @@ type RecordingQueryTools() =
 
             appendCursorInfo sb nextCursor
             sb.ToString()
+        with ex -> $"Error in query_body_trajectory: {ex.Message}"
 
     [<McpServerTool>]
     [<Description("Query recorded simulation state snapshots, returning a summary of each snapshot including body count, sim time, and tick duration")>]
@@ -118,6 +122,7 @@ type RecordingQueryTools() =
             [<Description("Number of results per page (default 100, max 500)")>] page_size: int,
             [<Description("Pagination cursor from previous query")>] cursor: string
         ) : string =
+        try
         let sb = StringBuilder()
         match resolveSession engine session_id with
         | None ->
@@ -127,7 +132,7 @@ type RecordingQueryTools() =
             let startT, endT = resolveTimeRange session start_time end_time
             let ps = defaultPageSize page_size
             let cur =
-                if String.IsNullOrWhiteSpace(cursor) then None
+                if String.IsNullOrWhiteSpace(nullSafe cursor) then None
                 else WireFormat.decodeCursor cursor
 
             let entries, nextCursor = readPage sessionDir startT endT cur ps
@@ -156,6 +161,7 @@ type RecordingQueryTools() =
 
             appendCursorInfo sb nextCursor
             sb.ToString()
+        with ex -> $"Error in query_snapshots: {ex.Message}"
 
     [<McpServerTool>]
     [<Description("Query recorded command events from a recording session, optionally filtered by command type")>]
@@ -169,6 +175,7 @@ type RecordingQueryTools() =
             [<Description("Number of results per page (default 100, max 500)")>] page_size: int,
             [<Description("Pagination cursor from previous query")>] cursor: string
         ) : string =
+        try
         let sb = StringBuilder()
         match resolveSession engine session_id with
         | None ->
@@ -178,7 +185,7 @@ type RecordingQueryTools() =
             let startT, endT = resolveTimeRange session start_time end_time
             let ps = defaultPageSize page_size
             let cur =
-                if String.IsNullOrWhiteSpace(cursor) then None
+                if String.IsNullOrWhiteSpace(nullSafe cursor) then None
                 else WireFormat.decodeCursor cursor
 
             let entries, nextCursor = readPage sessionDir startT endT cur ps
@@ -214,7 +221,7 @@ type RecordingQueryTools() =
                         Some (ts, evtType, detail)
                     | _ -> None)
                 |> List.filter (fun (_, evtType, _) ->
-                    if String.IsNullOrWhiteSpace(event_type) then true
+                    if String.IsNullOrWhiteSpace(nullSafe event_type) then true
                     else evtType.Equals(event_type, StringComparison.OrdinalIgnoreCase))
 
             if events.IsEmpty then
@@ -228,6 +235,7 @@ type RecordingQueryTools() =
 
             appendCursorInfo sb nextCursor
             sb.ToString()
+        with ex -> $"Error in query_events: {ex.Message}"
 
     [<McpServerTool>]
     [<Description("Get a summary of a recording session metadata without scanning chunk files")>]
@@ -236,6 +244,7 @@ type RecordingQueryTools() =
             engine: RecordingEngine,
             [<Description("Session ID (empty for active session)")>] session_id: string
         ) : string =
+        try
         let sb = StringBuilder()
         match resolveSession engine session_id with
         | None ->
@@ -273,3 +282,4 @@ type RecordingQueryTools() =
             sb.AppendLine($"  Snapshots: {session.SnapshotCount}") |> ignore
             sb.AppendLine($"  Events: {session.EventCount}") |> ignore
             sb.ToString()
+        with ex -> $"Error in query_summary: {ex.Message}"

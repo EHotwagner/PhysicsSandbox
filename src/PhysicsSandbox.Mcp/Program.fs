@@ -42,6 +42,9 @@ builder.Services
 
 let app = builder.Build()
 
+// Eagerly resolve GrpcConnection to start streams and recording
+app.Services.GetRequiredService<GrpcConnection>() |> ignore
+
 app.MapMcp() |> ignore
 app.MapDefaultEndpoints() |> ignore
 

@@ -86,7 +86,13 @@ type RecordingEngine() =
 
     member this.OnStateReceived(state: SimulationState) =
         if not started && not isRecording then
-            this.Start()
+            try
+                eprintfn "[Recording] Auto-starting recording on first state received"
+                this.Start()
+                eprintfn "[Recording] Auto-start succeeded, session: %s" (match currentSession with Some s -> s.Id | None -> "?")
+            with ex ->
+                eprintfn "[Recording] Auto-start FAILED: %s" ex.Message
+                started <- true // prevent retrying on every state update
 
         match currentWriter with
         | Some writer when isRecording ->
@@ -110,6 +116,7 @@ type RecordingEngine() =
                 this.Stop()
 
 let create () =
+    eprintfn "[Recording] Initializing RecordingEngine, recordings dir: %s" (getRecordingsDir())
     // Restart recovery: mark any interrupted sessions as Completed
     try
         let sessions = SessionStore.listSessions ()

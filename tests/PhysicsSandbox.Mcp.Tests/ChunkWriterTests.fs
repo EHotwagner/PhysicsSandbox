@@ -27,6 +27,10 @@ let cleanUp (dir: string) =
             Directory.Delete(dir, true)
     with _ -> ()
 
+// Use recent timestamps to avoid pruning by the time-based pruner
+let recentTs () = DateTimeOffset.UtcNow
+let recentTsOffset (seconds: float) = DateTimeOffset.UtcNow.AddSeconds(seconds)
+
 [<Fact>]
 let ``write and read binary format`` () =
     let dir = makeTempDir ()
@@ -35,7 +39,7 @@ let ``write and read binary format`` () =
         let writer = create config
         writer.Start()
 
-        let ts = DateTimeOffset(2026, 3, 23, 12, 0, 0, TimeSpan.Zero)
+        let ts = recentTs ()
         let state = makeState 1.5
         let entry = LogEntry.StateSnapshot(ts, state)
         writer.Enqueue(entry)
@@ -48,23 +52,18 @@ let ``write and read binary format`` () =
         use stream = new FileStream(chunkFiles.[0], FileMode.Open, FileAccess.Read)
         use reader = new BinaryReader(stream)
 
-        // Read the uint32 length prefix
         let totalSize = reader.ReadUInt32()
         Assert.True(totalSize > 0u, "Total size should be > 0")
 
-        // Read int64 timestamp
         let timestampMs = reader.ReadInt64()
         Assert.Equal(ts.ToUnixTimeMilliseconds(), timestampMs)
 
-        // Read byte entry type
         let entryTypeByte = reader.ReadByte()
         Assert.Equal(byte EntryType.StateSnapshot, entryTypeByte)
 
-        // Payload size = totalSize - 8 (timestamp) - 1 (entryType)
         let payloadSize = int totalSize - 8 - 1
         let payload = reader.ReadBytes(payloadSize)
 
-        // Deserialize payload back to SimulationState
         let deserialized = SimulationState.Parser.ParseFrom(payload)
         Assert.Equal(1.5, deserialized.Time)
         Assert.True(deserialized.Running)
@@ -79,9 +78,12 @@ let ``chunk rotation on minute boundary`` () =
         let writer = create config
         writer.Start()
 
-        // Two entries 1 minute apart — should land in different chunks
-        let ts1 = DateTimeOffset(2026, 3, 23, 12, 0, 0, TimeSpan.Zero)
-        let ts2 = DateTimeOffset(2026, 3, 23, 12, 1, 0, TimeSpan.Zero)
+        // Two entries: one now, one 61 seconds from now — different minute boundaries
+        let ts1 = recentTs ()
+        // Ensure ts2 is in a different minute by adding enough to cross the boundary
+        let minuteMs = ts1.ToUnixTimeMilliseconds() / 60000L * 60000L
+        let nextMinuteStart = DateTimeOffset.FromUnixTimeMilliseconds(minuteMs + 60000L)
+        let ts2 = nextMinuteStart.AddSeconds(1.0)
         writer.Enqueue(makeLogEntry ts1)
         writer.Enqueue(makeLogEntry ts2)
 
@@ -100,10 +102,9 @@ let ``multiple entries per chunk`` () =
         let writer = create config
         writer.Start()
 
-        // 5 entries all within the same minute
-        let baseTs = DateTimeOffset(2026, 3, 23, 12, 0, 0, TimeSpan.Zero)
+        let baseTs = recentTs ()
         for i in 0..4 do
-            let ts = baseTs.AddSeconds(float i * 10.0)
+            let ts = baseTs.AddSeconds(float i * 1.0)
             writer.Enqueue(makeLogEntry ts)
 
         writer.Stop() |> Async.RunSynchronously
@@ -112,7 +113,6 @@ let ``multiple entries per chunk`` () =
         Assert.Equal(1, chunkFiles.Length)
 
         let fileSize = FileInfo(chunkFiles.[0]).Length
-        // Each entry has at least HeaderSize (13) bytes, so 5 entries > 5 * 13
         Assert.True(fileSize > int64 (5 * WireFormat.HeaderSize), $"File size {fileSize} should be > {5 * WireFormat.HeaderSize}")
     finally
         cleanUp dir
@@ -125,7 +125,7 @@ let ``flush on stop`` () =
         let writer = create config
         writer.Start()
 
-        let ts = DateTimeOffset(2026, 3, 23, 12, 0, 0, TimeSpan.Zero)
+        let ts = recentTs ()
         for i in 0..2 do
             writer.Enqueue(makeLogEntry (ts.AddSeconds(float i)))
 
@@ -146,7 +146,7 @@ let ``size tracking accuracy`` () =
         let writer = create config
         writer.Start()
 
-        let ts = DateTimeOffset(2026, 3, 23, 12, 0, 0, TimeSpan.Zero)
+        let ts = recentTs ()
         for i in 0..9 do
             writer.Enqueue(makeLogEntry (ts.AddSeconds(float i)))
 
@@ -156,7 +156,6 @@ let ``size tracking accuracy`` () =
             Directory.GetFiles(dir, "chunk-*.bin")
             |> Array.sumBy (fun f -> FileInfo(f).Length)
 
-        // CurrentSizeBytes should match the actual file size on disk
         Assert.Equal(totalFileSize, writer.CurrentSizeBytes)
     finally
         cleanUp dir
