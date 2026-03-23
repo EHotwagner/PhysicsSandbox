@@ -54,6 +54,8 @@
     <Compile Include="RecordingTools.fs" />
     <Compile Include="RecordingQueryTools.fsi" />
     <Compile Include="RecordingQueryTools.fs" />
+    <Compile Include="MeshFetchQueryTools.fsi" />
+    <Compile Include="MeshFetchQueryTools.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

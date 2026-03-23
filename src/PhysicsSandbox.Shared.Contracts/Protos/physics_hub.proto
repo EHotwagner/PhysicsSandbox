@@ -307,6 +307,13 @@ message MeshResponse {
   repeated MeshGeometry meshes = 1;
 }
 
+message MeshFetchLog {
+  repeated string requested_ids = 1;
+  int32 hits = 2;
+  int32 misses = 3;
+  repeated string missed_ids = 4;
+}
+
 // ─── Shape Registration ─────────────────────────────────────────────────────
 
 message RegisterShape {
@@ -566,6 +573,7 @@ message CommandEvent {
   oneof command {
     SimulationCommand simulation_command = 1;
     ViewCommand view_command = 2;
+    MeshFetchLog mesh_fetch_log = 3;
   }
 }
 

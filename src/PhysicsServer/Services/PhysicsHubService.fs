@@ -79,6 +79,17 @@ type PhysicsHubService(router: MessageRouter) =
         let hits = meshes.Length
         let misses = ids.Length - hits
         PhysicsServer.Hub.MetricsCounter.incrementFetchRequest hits misses (metricsState router)
+        // Publish mesh fetch observation to the audit stream for MCP recording
+        let fetchLog = MeshFetchLog()
+        for id in ids do fetchLog.RequestedIds.Add(id)
+        fetchLog.Hits <- hits
+        fetchLog.Misses <- misses
+        let hitIds = meshes |> List.map (fun mg -> mg.MeshId) |> Set.ofList
+        for id in ids do
+            if not (Set.contains id hitIds) then
+                fetchLog.MissedIds.Add(id)
+        let evt = CommandEvent(MeshFetchLog = fetchLog)
+        publishCommandEvent router evt |> ignore
         let response = MeshResponse()
         for mg in meshes do
             response.Meshes.Add(mg)

@@ -8,6 +8,7 @@ type EntryType =
     | StateSnapshot    = 0uy
     | CommandEvent     = 1uy
     | MeshDefinition   = 2uy
+    | MeshFetchEvent   = 3uy
 
 [<RequireQualifiedAccess>]
 type SessionStatus =
@@ -44,6 +45,7 @@ type LogEntry =
     | StateSnapshot    of timestamp: DateTimeOffset * state: PhysicsSandbox.Shared.Contracts.SimulationState
     | CommandEvent     of timestamp: DateTimeOffset * event: PhysicsSandbox.Shared.Contracts.CommandEvent
     | MeshDefinition   of timestamp: DateTimeOffset * meshId: string * shape: PhysicsSandbox.Shared.Contracts.Shape
+    | MeshFetchEvent   of timestamp: DateTimeOffset * requestedIds: string list * hits: int * misses: int * missedIds: string list
 
 module WireFormat =
     let HeaderSize = 4 + 8 + 1 // uint32 totalSize + int64 timestampMs + byte entryType

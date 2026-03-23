@@ -43,6 +43,9 @@ let private deserializeEntry (timestampMs: int64) (entryType: byte) (payload: by
         | b when b = byte EntryType.MeshDefinition ->
             let mg = MeshGeometry.Parser.ParseFrom(payload)
             Some (LogEntry.MeshDefinition(ts, mg.MeshId, mg.Shape))
+        | b when b = byte EntryType.MeshFetchEvent ->
+            let log = MeshFetchLog.Parser.ParseFrom(payload)
+            Some (LogEntry.MeshFetchEvent(ts, log.RequestedIds |> Seq.toList, log.Hits, log.Misses, log.MissedIds |> Seq.toList))
         | _ -> None
     with _ -> None
 

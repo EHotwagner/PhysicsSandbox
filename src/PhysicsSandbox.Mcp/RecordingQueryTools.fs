@@ -281,5 +281,13 @@ type RecordingQueryTools() =
             sb.AppendLine($"  Chunk count: {session.ChunkCount}") |> ignore
             sb.AppendLine($"  Snapshots: {session.SnapshotCount}") |> ignore
             sb.AppendLine($"  Events: {session.EventCount}") |> ignore
+            // Count mesh fetch events from chunk files
+            let sessionDir = resolveSessionDir session
+            let startT = session.StartTime
+            let endT = match session.EndTime with Some e -> e | None -> DateTimeOffset.UtcNow
+            let allEntries = readEntries sessionDir startT endT
+            let fetchCount = allEntries |> List.filter (fun e -> match e with LogEntry.MeshFetchEvent _ -> true | _ -> false) |> List.length
+            if fetchCount > 0 then
+                sb.AppendLine($"  Mesh Fetches: {fetchCount}") |> ignore
             sb.ToString()
         with ex -> $"Error in query_summary: {ex.Message}"

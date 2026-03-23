@@ -111,6 +111,10 @@ type RecordingEngine() =
         | Some writer ->
             let ts = DateTimeOffset.UtcNow
             writer.Enqueue(LogEntry.CommandEvent(ts, event))
+            // Detect mesh fetch observations in the audit stream and record as MeshFetchEvent
+            if event.CommandCase = CommandEvent.CommandOneofCase.MeshFetchLog then
+                let log = event.MeshFetchLog
+                writer.Enqueue(LogEntry.MeshFetchEvent(ts, log.RequestedIds |> Seq.toList, log.Hits, log.Misses, log.MissedIds |> Seq.toList))
         | None -> ()
 
     interface IDisposable with
