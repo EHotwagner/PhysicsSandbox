@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../SharedTestHelpers.fs" Link="SharedTestHelpers.fs" />
     <Compile Include="ChunkWriterTests.fs" />
     <Compile Include="SessionStoreTests.fs" />
     <Compile Include="RecordingEngineTests.fs" />

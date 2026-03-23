@@ -13,39 +13,6 @@ namespace PhysicsSandbox.Integration.Tests;
 /// </summary>
 public class StateStreamOptimizationIntegrationTests
 {
-    private static async Task<(DistributedApplication App, GrpcChannel Channel)> StartAppAndConnect()
-    {
-        var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.PhysicsSandbox_AppHost>();
-
-        var app = await appHost.BuildAsync();
-        await app.StartAsync();
-
-        await app.ResourceNotifications
-            .WaitForResourceHealthyAsync("server")
-            .WaitAsync(TimeSpan.FromSeconds(30));
-
-        await app.ResourceNotifications
-            .WaitForResourceAsync("simulation", "Running")
-            .WaitAsync(TimeSpan.FromSeconds(60));
-        await Task.Delay(3000);
-
-        var httpClient = app.CreateHttpClient("server", "https");
-        var channel = GrpcChannel.ForAddress(httpClient.BaseAddress!, new GrpcChannelOptions
-        {
-            HttpHandler = new SocketsHttpHandler
-            {
-                EnableMultipleHttp2Connections = true,
-                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
-                {
-                    RemoteCertificateValidationCallback = (_, _, _, _) => true
-                }
-            }
-        });
-
-        return (app, channel);
-    }
-
     private static SimulationCommand MakeAddBody(string id, bool isStatic = false, double mass = 1.0) =>
         new()
         {
@@ -72,7 +39,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T037_StreamState_ReturnsTickState_WithOnlyBodyPoseData()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -114,7 +81,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T038_StreamProperties_DeliversBodyCreated_OnBodyAdd()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -158,7 +125,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T039_StreamProperties_DeliversBodyRemoved_OnBodyRemove()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -201,7 +168,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T040_LateJoiner_ReceivesPropertySnapshot_WithExistingBodies()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -244,7 +211,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T074_ExcludeVelocity_OmitsVelocityFromTickState()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -296,7 +263,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T093_TickState_DoesNotContainConstraints()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -352,7 +319,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T094_PropertyEvent_ConstraintsSnapshot_DeliveredOnConstraintAdd()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -414,7 +381,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T098_TickState_BandwidthUnder15KB_With200Bodies()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -460,7 +427,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T099_TickStateWithoutVelocity_BandwidthUnder11KB_With200Bodies()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -504,7 +471,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T100_SlowConsumer_Convergence_BackfillOnReconnect()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -574,7 +541,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T082_ClientLiveWatch_MinVelocityFilter_WorksWithSplitChannels()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 
@@ -633,7 +600,7 @@ public class StateStreamOptimizationIntegrationTests
     [Fact]
     public async Task T083_McpTrajectoryRecording_IncludesVelocityData()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
         var client = new PhysicsHub.PhysicsHubClient(channel);
 

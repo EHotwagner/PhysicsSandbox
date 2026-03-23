@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="../SharedTestHelpers.fs" Link="SharedTestHelpers.fs" />
     <Compile Include="IdGeneratorTests.fs" />
     <Compile Include="SessionTests.fs" />
     <Compile Include="SimulationCommandsTests.fs" />
@@ -15,6 +16,7 @@
     <Compile Include="SteeringTests.fs" />
     <Compile Include="StateDisplayTests.fs" />
     <Compile Include="MeshResolverTests.fs" />
+    <Compile Include="RegistryErrorTests.fs" />
     <Compile Include="SurfaceAreaTests.fs" />
   </ItemGroup>
 

@@ -36,6 +36,8 @@ Last updated: 2026-03-23
 - Append-only protobuf binary files at `~/.config/PhysicsSandbox/recordings/` (existing recording infrastructure) (004-mcp-mesh-logging)
 - F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console (004-state-stream-optimization)
 - In-memory (physics world, mesh caches, state caches). Append-only protobuf binary files for MCP recordings. (004-state-stream-optimization)
+- F# on .NET 10.0 (PhysicsClient, PhysicsServer, Scripting), C# on .NET 10.0 (Integration Tests), Bash (test progress script) + xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x, Google.Protobuf 3.x (004-backlog-fix-test-progress)
+- N/A (in-memory ConcurrentDictionary for pending queries) (004-backlog-fix-test-progress)
 
 ## Project Structure
 
@@ -98,9 +100,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 004-backlog-fix-test-progress: Test progress script (test-progress.sh) with per-project progress, ETA, failure reporting. Fixed 10 silent TryAdd/TryRemove failures (7 → Result.Error, 3 → Trace.TraceWarning). Pending query expiration (30s timeout, 10s sweep). 6 new constraint builders completing all 10 types. Shared test helpers (F# SharedTestHelpers.fs, C# IntegrationTestHelpers.cs). 77 tasks, 17 new tests.
 - 004-state-stream-optimization: Split SimulationState into lean TickState (pose-only, dynamic bodies) + PropertyEvent stream (semi-static on change/backfill). StreamProperties RPC, ExcludeVelocity opt-out, constraints/shapes via property channel. ~69% bandwidth reduction at 200 bodies. 108/109 tasks, 306+ unit tests, 12 integration tests.
 - 004-mcp-mesh-logging: MCP recording for FetchMeshes RPC — MeshFetchEvent (EntryType=3) records requested IDs, hits/misses. Published via CommandEvent audit stream. New query_mesh_fetches tool. 17 tasks.
-- 004-mesh-cache-transport: Mesh cache and on-demand transport — complex shapes (ConvexHull, MeshShape, Compound) use CachedShapeRef (mesh_id + bbox) instead of inline geometry after first tick. Server MeshCache + FetchMeshes RPC. MeshResolver in viewer/client/MCP. Viewer bounding box placeholders. MeshDefinition recording. 75 tasks, 262+ tests.
 
 ## Environment
 

@@ -116,7 +116,9 @@ let private processPropertyEvent (session: Session) (evt: PropertyEvent) =
     | PropertyEvent.EventOneofCase.BodyUpdated ->
         session.BodyPropertiesCache.[evt.BodyUpdated.Id] <- evt.BodyUpdated
     | PropertyEvent.EventOneofCase.BodyRemoved ->
-        session.BodyPropertiesCache.TryRemove(evt.BodyRemoved) |> ignore
+        let mutable _removed = Unchecked.defaultof<BodyProperties>
+        if not (session.BodyPropertiesCache.TryRemove(evt.BodyRemoved, &_removed)) then
+            System.Diagnostics.Trace.TraceWarning($"Session: body {evt.BodyRemoved} not found in properties cache")
     | PropertyEvent.EventOneofCase.Snapshot ->
         session.BodyPropertiesCache.Clear()
         for bp in evt.Snapshot.Bodies do

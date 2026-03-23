@@ -8,45 +8,10 @@ namespace PhysicsSandbox.Integration.Tests;
 
 public class ErrorConditionTests
 {
-    private static async Task<(DistributedApplication App, GrpcChannel Channel)> StartServerOnly()
-    {
-        var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.PhysicsSandbox_AppHost>();
-        var app = await appHost.BuildAsync();
-        await app.StartAsync();
-        await app.ResourceNotifications
-            .WaitForResourceHealthyAsync("server")
-            .WaitAsync(TimeSpan.FromSeconds(30));
-        var httpClient = app.CreateHttpClient("server", "https");
-        var channel = GrpcChannel.ForAddress(httpClient.BaseAddress!, new GrpcChannelOptions
-        {
-            HttpHandler = new SocketsHttpHandler
-            {
-                EnableMultipleHttp2Connections = true,
-                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
-                {
-                    RemoteCertificateValidationCallback = (_, _, _, _) => true
-                }
-            }
-        });
-        return (app, channel);
-    }
-
-    private static async Task<(DistributedApplication App, GrpcChannel Channel)> StartAppAndConnect()
-    {
-        var (app, channel) = await StartServerOnly();
-        await app.ResourceNotifications
-            .WaitForResourceAsync("simulation", "Running")
-            .WaitAsync(TimeSpan.FromSeconds(60));
-        // Give the simulation time to establish gRPC connection to server
-        await Task.Delay(3000);
-        return (app, channel);
-    }
-
     [Fact]
     public async Task SendCommand_WithoutSimulation_ReturnsDroppedMessage()
     {
-        var (app, channel) = await StartServerOnly();
+        var (app, channel) = await IntegrationTestHelpers.StartServerOnly();
         await using var _ = app;
 
         var client = new PhysicsHub.PhysicsHubClient(channel);
@@ -71,7 +36,7 @@ public class ErrorConditionTests
     [Fact]
     public async Task SendCommand_WithEmptyCommand_ReturnsAppropriateResponse()
     {
-        var (app, channel) = await StartServerOnly();
+        var (app, channel) = await IntegrationTestHelpers.StartServerOnly();
         await using var _ = app;
 
         var client = new PhysicsHub.PhysicsHubClient(channel);
@@ -88,7 +53,7 @@ public class ErrorConditionTests
     [Fact]
     public async Task StreamState_WithoutSimulation_ReturnsEmptyOrCachedState()
     {
-        var (app, channel) = await StartServerOnly();
+        var (app, channel) = await IntegrationTestHelpers.StartServerOnly();
         await using var _ = app;
 
         var client = new PhysicsHub.PhysicsHubClient(channel);
@@ -117,7 +82,7 @@ public class ErrorConditionTests
     [Fact]
     public async Task RapidCommands_DoNotCrashServer()
     {
-        var (app, channel) = await StartAppAndConnect();
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnectWithSimulation();
         await using var _ = app;
 
         var client = new PhysicsHub.PhysicsHubClient(channel);

@@ -1,38 +1,30 @@
 # Sync Apply Report
 
 Applied: 2026-03-23
-Feature: 004-mesh-cache-transport
+Feature: 004-backlog-fix-test-progress
 
 ## Changes Made
 
 ### Specs Updated
 
-| Spec | Requirement | Change Type | Description |
-|------|-------------|-------------|-------------|
-| 004-mesh-cache-transport | FR-010 | Modified | Narrowed cache invalidation to reset/disconnect; removed body-removal eviction requirement |
-| 004-mesh-cache-transport | FR-011 | Modified | Changed from per-child caching to atomic compound caching |
-| 004-mesh-cache-transport | FR-016 | Added | MCP recording must persist mesh geometry definitions for self-contained replay |
-| 004-mesh-cache-transport | Edge Case | Modified | Updated compound shape edge case to match FR-011 |
-| 004-mesh-cache-transport | Status | Modified | Changed from "Draft" to "Implemented" |
+| Spec | Requirement | Change Type | Detail |
+|------|-------------|-------------|--------|
+| 004-backlog-fix-test-progress | FR-004a | Modified | Split "7 body registry → Result.Error" into "6 single-body → Result.Error + 1 bulk cleanup → Trace.TraceWarning" |
+| 004-backlog-fix-test-progress | SC-003 | Modified | Updated counts to reflect 6 Error + 1 Warning + 3 cache warnings |
+| 004-backlog-fix-test-progress | US2-3 (acceptance) | Modified | Updated to reflect clearAll uses TraceWarning pattern |
 
-### Backup
+### Code Updated
 
-Original spec backed up to: `.specify/sync/backups/004-mesh-cache-transport-spec-2026-03-23.md`
+| File | Change | Detail |
+|------|--------|--------|
+| src/PhysicsClient/Commands/SimulationCommands.fs:308 | Added `Trace.TraceWarning` | clearAll now emits structured warning when registry TryRemove fails during cleanup |
 
-### New Specs Created
+### Backups
 
-(none)
-
-### Implementation Tasks Generated
-
-(none -- all proposals were BACKFILL, no code changes needed)
-
-### Not Applied
-
-(none -- all 3 proposals approved and applied)
+- `specs/004-backlog-fix-test-progress/spec.md` → `.specify/sync/backups/004-backlog-fix-test-progress/spec.md.bak`
 
 ## Next Steps
 
-1. Review updated spec: `specs/004-mesh-cache-transport/spec.md`
-2. Commit changes
-3. Feature is ready for merge
+1. Verify build: `dotnet build PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true`
+2. Run tests: `dotnet test PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true`
+3. Commit changes when ready

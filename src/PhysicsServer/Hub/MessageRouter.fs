@@ -43,8 +43,13 @@ type MessageRouter =
       /// Tracks the previous registered shape count for change detection.
       mutable PreviousRegisteredShapeCount: int }
 
+/// <summary>A pending query entry with its TCS and creation timestamp for timeout tracking.</summary>
+type PendingQueryEntry =
+    { Tcs: TaskCompletionSource<QueryResponse>
+      CreatedAt: DateTime }
+
 /// <summary>Pending query completions, keyed by correlation ID.</summary>
-let internal pendingQueries = ConcurrentDictionary<string, TaskCompletionSource<QueryResponse>>()
+let internal pendingQueries = ConcurrentDictionary<string, PendingQueryEntry>()
 
 /// <summary>Create a new message router with empty subscriber lists, bounded command channels (1024), and fresh metrics.</summary>
 let create () =
@@ -157,8 +162,28 @@ let processQueryResponses (state: SimulationState) =
     if not (isNull state) && state.QueryResponses.Count > 0 then
         for qr in state.QueryResponses do
             match pendingQueries.TryRemove(qr.CorrelationId) with
-            | true, tcs -> tcs.TrySetResult(qr) |> ignore
+            | true, entry -> entry.Tcs.TrySetResult(qr) |> ignore
             | _ -> ()
+
+/// <summary>Remove pending queries older than 30 seconds and set TimeoutException on their TCS.</summary>
+let expireStaleQueries () =
+    let cutoff = TimeSpan.FromSeconds(30.0)
+    for kvp in pendingQueries do
+        if DateTime.UtcNow - kvp.Value.CreatedAt > cutoff then
+            kvp.Value.Tcs.TrySetException(TimeoutException("Query expired after 30s")) |> ignore
+            pendingQueries.TryRemove(kvp.Key) |> ignore
+
+/// <summary>Timer that sweeps pending queries every 10 seconds.</summary>
+let private queryExpirationTimer =
+    new Timer(
+        (fun _ -> expireStaleQueries ()),
+        null,
+        TimeSpan.FromSeconds(10.0),
+        TimeSpan.FromSeconds(10.0))
+
+/// <summary>Dispose the query expiration timer.</summary>
+let disposeExpirationTimer () =
+    queryExpirationTimer.Dispose()
 
 // ─── Internal: State Decomposition ──────────────────────────────────────────
 
@@ -426,7 +451,8 @@ let submitQuery (router: MessageRouter) (queryRequest: QueryRequest) (ct: Cancel
     task {
         let tcs = TaskCompletionSource<QueryResponse>(TaskCreationOptions.RunContinuationsAsynchronously)
         use _reg = ct.Register(fun () -> tcs.TrySetCanceled() |> ignore)
-        pendingQueries.TryAdd(queryRequest.CorrelationId, tcs) |> ignore
+        let entry = { Tcs = tcs; CreatedAt = DateTime.UtcNow }
+        pendingQueries.TryAdd(queryRequest.CorrelationId, entry) |> ignore
         try
             let cmd = SimulationCommand(QueryRequest = queryRequest)
             let _ack = submitCommand router cmd

@@ -138,6 +138,24 @@ let makeWeldCmd id bodyA bodyB = PhysicsSandbox.Scripting.ConstraintBuilders.mak
 /// <summary>Builds an <c>AddConstraint</c> command for a distance limit.</summary>
 let makeDistanceLimitCmd id bodyA bodyB minDist maxDist = PhysicsSandbox.Scripting.ConstraintBuilders.makeDistanceLimitCmd id bodyA bodyB minDist maxDist
 
+/// <summary>Builds an <c>AddConstraint</c> command for a distance spring.</summary>
+let makeDistanceSpringCmd id bodyA bodyB offsetA offsetB targetDistance = PhysicsSandbox.Scripting.ConstraintBuilders.makeDistanceSpringCmd id bodyA bodyB offsetA offsetB targetDistance
+
+/// <summary>Builds an <c>AddConstraint</c> command for a swing limit.</summary>
+let makeSwingLimitCmd id bodyA bodyB axisA axisB maxAngle = PhysicsSandbox.Scripting.ConstraintBuilders.makeSwingLimitCmd id bodyA bodyB axisA axisB maxAngle
+
+/// <summary>Builds an <c>AddConstraint</c> command for a twist limit.</summary>
+let makeTwistLimitCmd id bodyA bodyB axisA axisB minAngle maxAngle = PhysicsSandbox.Scripting.ConstraintBuilders.makeTwistLimitCmd id bodyA bodyB axisA axisB minAngle maxAngle
+
+/// <summary>Builds an <c>AddConstraint</c> command for a linear axis motor.</summary>
+let makeLinearAxisMotorCmd id bodyA bodyB offsetA offsetB axis targetVelocity maxForce = PhysicsSandbox.Scripting.ConstraintBuilders.makeLinearAxisMotorCmd id bodyA bodyB offsetA offsetB axis targetVelocity maxForce
+
+/// <summary>Builds an <c>AddConstraint</c> command for an angular motor.</summary>
+let makeAngularMotorCmd id bodyA bodyB targetVelocity maxForce = PhysicsSandbox.Scripting.ConstraintBuilders.makeAngularMotorCmd id bodyA bodyB targetVelocity maxForce
+
+/// <summary>Builds an <c>AddConstraint</c> command for a point-on-line constraint.</summary>
+let makePointOnLineCmd id bodyA bodyB origin direction offset = PhysicsSandbox.Scripting.ConstraintBuilders.makePointOnLineCmd id bodyA bodyB origin direction offset
+
 /// <summary>Builds a <c>RemoveConstraint</c> command.</summary>
 let makeRemoveConstraintCmd constraintId = PhysicsSandbox.Scripting.ConstraintBuilders.makeRemoveConstraintCmd constraintId
 

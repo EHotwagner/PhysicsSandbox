@@ -1,30 +1,35 @@
 {
-  "generated": "2026-03-23T20:55:00Z",
+  "generated": "2026-03-23T00:00:00Z",
   "project": "PhysicsSandbox",
-  "feature": "004-state-stream-optimization",
+  "feature": "004-backlog-fix-test-progress",
   "summary": {
     "specs_analyzed": 1,
-    "requirements_checked": 15,
-    "aligned": 14,
+    "requirements_checked": 9,
+    "aligned": 8,
     "drifted": 1,
     "not_implemented": 0,
     "unspecced_features": 0
   },
   "specs": [
     {
-      "id": "004-state-stream-optimization",
-      "title": "State Stream Bandwidth Optimization",
+      "id": "004-backlog-fix-test-progress",
+      "title": "Backlog Fixes and Test Progress Reporting",
       "aligned": [
-        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005",
-        "FR-006", "FR-007", "FR-008", "FR-009", "FR-010",
-        "SC-002", "SC-003", "SC-004", "SC-005"
+        "FR-001",
+        "FR-002",
+        "FR-003",
+        "FR-004b",
+        "FR-005",
+        "FR-006",
+        "FR-007",
+        "FR-009"
       ],
       "drifted": [
         {
-          "requirement": "SC-001",
-          "spec_text": "Per-tick message size reduced by at least 70% compared to current full-state messages (>=70% reduction from ~50 KB baseline)",
-          "actual": "Actual measurement is 15.7 KB for 200 bodies (~69% reduction from ~50 KB baseline). Test threshold adjusted to 16 KB. Marginal miss due to proto3 double-precision Vec3/Vec4 encoding.",
-          "location": "tests/PhysicsSandbox.Integration.Tests/StateStreamOptimizationIntegrationTests.cs:452-455",
+          "requirement": "FR-004a",
+          "spec_text": "All 7 body registry TryAdd/TryRemove in SimulationCommands return Result.Error with descriptive message",
+          "actual": "6/7 fixed. clearAll function silently counts TryRemove failures into registryWarnings counter instead of returning Result.Error",
+          "location": "src/PhysicsClient/Commands/SimulationCommands.fs:307-308",
           "severity": "minor"
         }
       ],
@@ -32,5 +37,17 @@
     }
   ],
   "unspecced": [],
-  "conflicts": []
+  "conflicts": [],
+  "observations": [
+    {
+      "area": "MessageRouter timer disposal",
+      "detail": "disposeExpirationTimer() exported but never called during shutdown",
+      "severity": "info"
+    },
+    {
+      "area": "Timeout configurability",
+      "detail": "FR-005 mentions configurable timeout but 30s is hardcoded. Matches spec assumption default.",
+      "severity": "info"
+    }
+  ]
 }
