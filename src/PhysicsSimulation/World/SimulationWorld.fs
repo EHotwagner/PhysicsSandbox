@@ -13,6 +13,7 @@ type ProtoCylinder = PhysicsSandbox.Shared.Contracts.Cylinder
 type ProtoTriangle = PhysicsSandbox.Shared.Contracts.Triangle
 type ProtoColor = PhysicsSandbox.Shared.Contracts.Color
 type ProtoMaterialProperties = PhysicsSandbox.Shared.Contracts.MaterialProperties
+type ProtoCachedShapeRef = PhysicsSandbox.Shared.Contracts.CachedShapeRef
 
 /// Internal record tracking a single rigid body in the simulation.
 type BodyRecord =
@@ -29,7 +30,9 @@ type BodyRecord =
       Color: ProtoColor option
       Material: ProtoMaterialProperties option
       CollisionGroup: uint32
-      CollisionMask: uint32 }
+      CollisionMask: uint32
+      MeshId: string option
+      BoundingBox: (Vec3 * Vec3) option }
 
 /// Internal record tracking a constraint between two bodies.
 type ConstraintRecord =
@@ -51,7 +54,8 @@ type World =
       mutable SimulationTime: double
       mutable Running: bool
       TimeStep: float32
-      mutable PendingQueryResponses: QueryResponse list }
+      mutable PendingQueryResponses: QueryResponse list
+      mutable EmittedMeshIds: Set<string> }
 
 let private toVector3 (v: Vec3) =
     Vector3(float32 v.X, float32 v.Y, float32 v.Z)
@@ -79,7 +83,16 @@ let private buildBodyProto (world: World) (record: BodyRecord) =
     let b = Body()
     b.Id <- record.Id
     b.Mass <- double record.Mass
-    b.Shape <- record.ShapeProto
+    // For complex shapes with a MeshId, emit CachedShapeRef instead of inline geometry
+    match record.MeshId, record.BoundingBox with
+    | Some meshId, Some (bboxMin, bboxMax) ->
+        let cached = ProtoCachedShapeRef()
+        cached.MeshId <- meshId
+        cached.BboxMin <- bboxMin
+        cached.BboxMax <- bboxMax
+        b.Shape <- Shape(CachedRef = cached)
+    | _ ->
+        b.Shape <- record.ShapeProto
     b.IsStatic <- record.IsStatic
     b.MotionType <- record.MotionType
     b.CollisionGroup <- record.CollisionGroup
@@ -116,8 +129,20 @@ let private buildState (world: World) =
     let state = SimulationState()
     state.Time <- world.SimulationTime
     state.Running <- world.Running
+    // Collect mesh IDs not yet emitted for new_meshes
+    let mutable newMeshIds = Set.empty<string>
     for kvp in world.Bodies do
         state.Bodies.Add(buildBodyProto world kvp.Value)
+        match kvp.Value.MeshId with
+        | Some meshId when not (Set.contains meshId world.EmittedMeshIds) && not (Set.contains meshId newMeshIds) ->
+            let mg = MeshGeometry()
+            mg.MeshId <- meshId
+            mg.Shape <- kvp.Value.ShapeProto
+            state.NewMeshes.Add(mg)
+            newMeshIds <- Set.add meshId newMeshIds
+        | _ -> ()
+    // Update emitted set
+    world.EmittedMeshIds <- Set.union world.EmittedMeshIds newMeshIds
     for kvp in world.Constraints do
         state.Constraints.Add(buildConstraintStateProto kvp.Value)
     for kvp in world.RegisteredShapes do
@@ -227,6 +252,8 @@ let rec internal convertShape (world: World) (s: Shape) =
                     (a, b, c))
                 |> Seq.toArray
             Ok (PhysicsShape.Mesh(triangles), s)
+    | s when s.ShapeCase = Shape.ShapeOneofCase.CachedRef ->
+        Error "CachedShapeRef cannot be used in simulation commands"
     | s when s.ShapeCase = Shape.ShapeOneofCase.ShapeRef ->
         let handle = s.ShapeRef.ShapeHandle
         match Map.tryFind handle world.RegisteredShapes with
@@ -256,7 +283,8 @@ let create () =
       SimulationTime = 0.0
       Running = false
       TimeStep = 1.0f / 60.0f
-      PendingQueryResponses = [] }
+      PendingQueryResponses = []
+      EmittedMeshIds = Set.empty }
 
 // Pipeline timing (module-level, updated each step)
 let mutable private lastTickMs = 0.0
@@ -334,6 +362,10 @@ let addBody (world: World) (cmd: AddBody) =
         CommandAck(Success = false, Message = msg)
     | Ok (physShape, shapeProto) ->
 
+    // Compute mesh ID and bounding box for complex shapes (one-time on addition)
+    let meshId = MeshIdGenerator.computeMeshId shapeProto
+    let boundingBox = MeshIdGenerator.computeBoundingBox shapeProto
+
     let mass = float32 cmd.Mass
     let pos = if cmd.Position <> null then toVector3 cmd.Position else Vector3.Zero
     let vel = if cmd.Velocity <> null then toVector3 cmd.Velocity else Vector3.Zero
@@ -384,7 +416,9 @@ let addBody (world: World) (cmd: AddBody) =
               Color = color
               Material = material
               CollisionGroup = collisionGroup
-              CollisionMask = collisionMask }
+              CollisionMask = collisionMask
+              MeshId = meshId
+              BoundingBox = boundingBox }
         world.Bodies <- Map.add cmd.Id record world.Bodies
         CommandAck(Success = true, Message = $"Static body '{cmd.Id}' added")
 
@@ -410,7 +444,9 @@ let addBody (world: World) (cmd: AddBody) =
               Color = color
               Material = material
               CollisionGroup = collisionGroup
-              CollisionMask = collisionMask }
+              CollisionMask = collisionMask
+              MeshId = meshId
+              BoundingBox = boundingBox }
         world.Bodies <- Map.add cmd.Id record world.Bodies
         CommandAck(Success = true, Message = $"Kinematic body '{cmd.Id}' added")
 
@@ -436,7 +472,9 @@ let addBody (world: World) (cmd: AddBody) =
               Color = color
               Material = material
               CollisionGroup = collisionGroup
-              CollisionMask = collisionMask }
+              CollisionMask = collisionMask
+              MeshId = meshId
+              BoundingBox = boundingBox }
         world.Bodies <- Map.add cmd.Id record world.Bodies
         CommandAck(Success = true, Message = $"Body '{cmd.Id}' added")
 
@@ -664,6 +702,7 @@ let resetSimulation (world: World) =
     world.Bodies <- Map.empty
     world.RegisteredShapes <- Map.empty
     world.ActiveForces <- Map.empty
+    world.EmittedMeshIds <- Set.empty
     world.SimulationTime <- 0.0
     world.Running <- false
     CommandAck(Success = true, Message = "Simulation reset")

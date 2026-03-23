@@ -19,7 +19,8 @@ type Session =
       BodyRegistry: ConcurrentDictionary<string, string>
       mutable LatestState: SimulationState option
       mutable LastStateUpdate: DateTime
-      mutable IsConnected: bool }
+      mutable IsConnected: bool
+      MeshResolver: MeshResolver.MeshResolverState }
 
 let private createChannel (address: string) =
     let handler = new SocketsHttpHandler(EnableMultipleHttp2Connections = true)
@@ -44,7 +45,24 @@ let private startStateStream (session: Session) =
                     while not session.Cts.Token.IsCancellationRequested do
                         let! hasNext = stream.MoveNext(session.Cts.Token)
                         if hasNext then
-                            session.LatestState <- Some stream.Current
+                            let state = stream.Current
+                            // Process new meshes from state update
+                            if state.NewMeshes.Count > 0 then
+                                MeshResolver.processNewMeshes state.NewMeshes session.MeshResolver
+                            // Fetch any unresolved CachedShapeRef mesh IDs
+                            let missingIds =
+                                state.Bodies
+                                |> Seq.choose (fun b ->
+                                    if not (isNull b.Shape) && b.Shape.ShapeCase = Shape.ShapeOneofCase.CachedRef then
+                                        let id = b.Shape.CachedRef.MeshId
+                                        match MeshResolver.resolve id session.MeshResolver with
+                                        | None -> Some id
+                                        | Some _ -> None
+                                    else None)
+                                |> Seq.distinct |> Seq.toList
+                            if not missingIds.IsEmpty then
+                                MeshResolver.fetchMissingSync missingIds session.MeshResolver
+                            session.LatestState <- Some state
                             session.LastStateUpdate <- DateTime.UtcNow
                 with
                 | :? OperationCanceledException -> ()
@@ -75,7 +93,8 @@ let connect (serverAddress: string) : Result<Session, string> =
               BodyRegistry = ConcurrentDictionary<string, string>()
               LatestState = None
               LastStateUpdate = DateTime.UtcNow
-              IsConnected = true }
+              IsConnected = true
+              MeshResolver = MeshResolver.create grpcClient }
         startStateStream session
         Ok session
     with ex ->
@@ -116,6 +135,10 @@ let internal latestState (session: Session) : SimulationState option =
 /// <summary>Gets the UTC timestamp of the last state update received from the server.</summary>
 let internal lastStateUpdate (session: Session) : DateTime =
     session.LastStateUpdate
+
+/// <summary>Gets the mesh resolver state for resolving CachedShapeRef.</summary>
+let internal meshResolver (session: Session) : MeshResolver.MeshResolverState =
+    session.MeshResolver
 
 /// <summary>Sends a simulation command to the server and returns the acknowledgement result. Marks the session as disconnected on gRPC transport errors.</summary>
 let internal sendCommand (session: Session) (cmd: SimulationCommand) : Result<unit, string> =

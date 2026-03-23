@@ -33,6 +33,9 @@ service PhysicsHub {
   // Metrics: query service performance counters and pipeline timings
   rpc GetMetrics (MetricsRequest) returns (MetricsResponse);
 
+  // Mesh cache: on-demand geometry fetch (separate from state stream)
+  rpc FetchMeshes (MeshRequest) returns (MeshResponse);
+
   // Physics queries
   rpc Raycast (RaycastRequest) returns (RaycastResponse);
   rpc RaycastBatch (RaycastBatchRequest) returns (RaycastBatchResponse);
@@ -159,6 +162,7 @@ message SimulationState {
   repeated ConstraintState constraints = 6;
   repeated RegisteredShapeState registered_shapes = 7;
   repeated QueryResponse query_responses = 8;
+  repeated MeshGeometry new_meshes = 9;
 }
 
 message Body {
@@ -222,6 +226,7 @@ message Shape {
     Compound compound = 8;
     MeshShape mesh = 9;
     ShapeReference shape_ref = 10;
+    CachedShapeRef cached_ref = 11;
   }
 }
 
@@ -279,6 +284,27 @@ message MeshShape {
 
 message ShapeReference {
   string shape_handle = 1;
+}
+
+message CachedShapeRef {
+  string mesh_id = 1;
+  Vec3 bbox_min = 2;
+  Vec3 bbox_max = 3;
+}
+
+// ─── Mesh Cache ────────────────────────────────────────────────────────────
+
+message MeshGeometry {
+  string mesh_id = 1;
+  Shape shape = 2;
+}
+
+message MeshRequest {
+  repeated string mesh_ids = 1;
+}
+
+message MeshResponse {
+  repeated MeshGeometry meshes = 1;
 }
 
 // ─── Shape Registration ─────────────────────────────────────────────────────

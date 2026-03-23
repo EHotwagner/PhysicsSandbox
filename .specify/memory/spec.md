@@ -262,6 +262,18 @@ An AI assistant wants to query recorded physics data — body trajectories, stat
 ### US-084: Recording Session Management (P2)
 A user wants to manage multiple recording sessions — starting, stopping, listing, and deleting — to organize analysis work across simulation experiments. [Source: specs/005-mcp-data-logging]
 
+### US-085: Bandwidth-Efficient State Streaming (P1)
+Running complex physics simulations with many mesh-based bodies, the system avoids resending unchanged mesh geometry every tick. State updates use lightweight identifiers instead of full vertex data for previously-transmitted complex shapes (ConvexHull, MeshShape, Compound), reducing bandwidth by 80%+. [Source: specs/004-mesh-cache-transport]
+
+### US-086: Server-Side Mesh Cache and Distribution (P1)
+Late-joining viewers or clients can request mesh geometry they don't have cached locally via a FetchMeshes RPC. The server maintains an authoritative cache of all mesh geometries keyed by content-addressed identifier. [Source: specs/004-mesh-cache-transport]
+
+### US-087: Bounding Box Placeholder While Mesh Loads (P2)
+The viewer displays correctly-sized bounding box placeholders for bodies whose mesh geometry hasn't been resolved yet, replacing them with full shape representations once geometry arrives via on-demand fetch. [Source: specs/004-mesh-cache-transport]
+
+### US-088: Separate Mesh Channel (P2)
+Mesh geometry exchange happens on a dedicated FetchMeshes RPC separate from the main state stream, so mesh fetching does not block or degrade the 60 Hz state updates. [Source: specs/004-mesh-cache-transport]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -474,6 +486,22 @@ A user wants to manage multiple recording sessions — starting, stopping, listi
 - **FR-208**: System MUST report current storage usage and configured limits via recording_status tool. [Source: specs/005-mcp-data-logging]
 - **FR-209**: All query tools MUST support cursor-based pagination with configurable page size (default 100, max 500). [Source: specs/005-mcp-data-logging]
 - **FR-210**: Recording MUST auto-start when MCP server first receives a simulation state update, without explicit user command. [Source: specs/005-mcp-data-logging]
+- **FR-211**: System MUST assign a unique, stable content-addressed identifier (SHA-256 truncated to 128 bits, 32 hex chars) to each distinct mesh geometry (ConvexHull, MeshShape, Compound). Single Triangle shapes are primitives. [Source: specs/004-mesh-cache-transport]
+- **FR-212**: State update messages MUST use CachedShapeRef (mesh_id + bbox) instead of inline geometry for complex shapes that have been previously transmitted. [Source: specs/004-mesh-cache-transport]
+- **FR-213**: System MUST include full mesh geometry in SimulationState.new_meshes on the first tick a shape identifier appears. [Source: specs/004-mesh-cache-transport]
+- **FR-214**: Server MUST maintain a ConcurrentDictionary mesh cache of all mesh geometries keyed by identifier, serving on-demand FetchMeshes requests. [Source: specs/004-mesh-cache-transport]
+- **FR-215**: Subscribers MUST be able to request mesh geometry by identifier via the FetchMeshes unary RPC at any time. [Source: specs/004-mesh-cache-transport]
+- **FR-216**: Subscribers (viewer, client, MCP) MUST maintain a local ConcurrentDictionary cache of received mesh geometries. [Source: specs/004-mesh-cache-transport]
+- **FR-217**: Mesh geometry exchange MUST occur on a FetchMeshes RPC channel separate from the StreamState server-streaming RPC. [Source: specs/004-mesh-cache-transport]
+- **FR-218**: Viewer MUST display a bounding box placeholder (Cube primitive, semi-transparent magenta) for bodies whose mesh geometry has not yet been resolved locally. [Source: specs/004-mesh-cache-transport]
+- **FR-219**: Viewer MUST replace bounding box placeholders with actual shape representations once geometry is received, by recreating the entity. [Source: specs/004-mesh-cache-transport]
+- **FR-220**: System MUST invalidate all mesh caches when the simulation is reset or the simulation disconnects. Individual body removal does not evict mesh entries. [Source: specs/004-mesh-cache-transport]
+- **FR-221**: Compound shapes are cached as atomic units — a single content-addressed identifier for the entire compound (all children + local poses). Identical compounds produce the same identifier. [Source: specs/004-mesh-cache-transport]
+- **FR-222**: Bodies sharing identical geometry MUST reuse the same mesh identifier and cached geometry. [Source: specs/004-mesh-cache-transport]
+- **FR-223**: Primitive shapes (Sphere, Box, Capsule, Cylinder, Plane, Triangle) MUST continue to be transported inline without identifiers. [Source: specs/004-mesh-cache-transport]
+- **FR-224**: System MUST precompute axis-aligned bounding box extents when a mesh geometry is first seen, stored in BodyRecord. [Source: specs/004-mesh-cache-transport]
+- **FR-225**: CachedShapeRef messages MUST include precomputed bbox_min and bbox_max alongside mesh_id. [Source: specs/004-mesh-cache-transport]
+- **FR-226**: MCP recording MUST persist MeshDefinition log entries alongside state snapshots for self-contained session replay. [Source: specs/004-mesh-cache-transport]
 
 ## Key Entities
 
@@ -525,6 +553,12 @@ A user wants to manage multiple recording sessions — starting, stopping, listi
 - **QueryHandler**: Simulation-side query dispatch — converts proto RaycastRequest/SweepCastRequest/OverlapRequest to BepuFSharp calls, resolves BodyId→string IDs. [Source: specs/005-stride-bepu-integration]
 - **QueryBuilders (Scripting)**: Convenience wrappers returning typed F# results — raycast, raycastAll, sweepSphere, overlapSphere. [Source: specs/005-stride-bepu-integration]
 - **Python Prelude**: Shared Python module providing 40+ functions mirroring the F# PhysicsClient + Prelude: session management, all simulation/view commands, 7 body presets, 5 generators, steering (push/launch), display (list_bodies/status), timing (timed context manager), batch helpers, ID generation. [Source: specs/004-python-demo-scripts]
+- **MeshId**: Content-addressed identifier (32 hex chars) for a unique mesh geometry. SHA-256 of proto-serialized geometry bytes, truncated to 128 bits. [Source: specs/004-mesh-cache-transport]
+- **CachedShapeRef**: Proto message (mesh_id + bbox_min + bbox_max) replacing inline geometry in Body.Shape oneof for complex shapes after first transmission. ~56 bytes vs 1200+ bytes for a 50-point ConvexHull. [Source: specs/004-mesh-cache-transport]
+- **MeshGeometry**: Proto message (mesh_id + full Shape) for transmitting complete geometry via SimulationState.new_meshes or FetchMeshes response. [Source: specs/004-mesh-cache-transport]
+- **MeshCache (Server)**: ConcurrentDictionary<string, Shape> in MessageRouter, populated from state updates, cleared on reset/disconnect. [Source: specs/004-mesh-cache-transport]
+- **MeshResolver (Subscriber)**: Local ConcurrentDictionary<string, Shape> cache on each subscriber (viewer, client, MCP) with processNewMeshes/resolve/fetchMissing interface. [Source: specs/004-mesh-cache-transport]
+- **MeshIdGenerator**: Simulation-side module computing content-addressed mesh IDs and axis-aligned bounding boxes for ConvexHull, MeshShape, and Compound shapes. [Source: specs/004-mesh-cache-transport]
 
 ## Edge Cases
 
@@ -589,6 +623,12 @@ A user wants to manage multiple recording sessions — starting, stopping, listi
 - Resolution exceeds display bounds: should clamp to maximum supported. [Source: specs/005-viewer-settings-sizing-fix]
 - GPU does not support selected MSAA level: should fall back to nearest supported level. [Source: specs/005-viewer-settings-sizing-fix]
 - Settings file missing or corrupt: returns defaults, no crash. [Source: specs/005-viewer-settings-sizing-fix]
+- Mesh identifier references evicted geometry: server returns partial response (found meshes only). No error for unknown IDs. [Source: specs/004-mesh-cache-transport]
+- Simulation reset: EmittedMeshIds cleared (simulation), MeshCache cleared (server). Next state re-emits all mesh geometry. Content-addressed IDs prevent stale data conflicts. [Source: specs/004-mesh-cache-transport]
+- Compound shape with mesh children: cached as atomic unit (single ID for whole compound). Children not independently cached. [Source: specs/004-mesh-cache-transport]
+- Two bodies share identical geometry: same content-addressed mesh ID, single cache entry, single new_meshes transmission. [Source: specs/004-mesh-cache-transport]
+- CachedShapeRef received in simulation commands: rejected with error (only valid in state output, not command input). [Source: specs/004-mesh-cache-transport]
+- Mesh fetch fails or times out in viewer: bounding box placeholder persists, viewer does not crash. [Source: specs/004-mesh-cache-transport]
 
 ## Success Criteria
 
@@ -679,3 +719,8 @@ A user wants to manage multiple recording sessions — starting, stopping, listi
 - **SC-085**: Resolution changes apply within 1 second without requiring a restart. [Source: specs/005-viewer-settings-sizing-fix]
 - **SC-086**: Settings persist across viewer restarts. [Source: specs/005-viewer-settings-sizing-fix]
 - **SC-087**: Viewer maintains above 30 FPS at minimum quality settings with 100 active bodies. [Source: specs/005-viewer-settings-sizing-fix]
+- **SC-088**: State update message size for scenes with 10+ mesh-based bodies reduced by at least 80% after initial geometry exchange. [Source: specs/004-mesh-cache-transport]
+- **SC-089**: Late-joining subscribers can fully resolve all mesh geometries within 5 seconds of connecting. [Source: specs/004-mesh-cache-transport]
+- **SC-090**: 60 Hz state delivery maintained with <5% jitter during concurrent mesh transfers. [Source: specs/004-mesh-cache-transport]
+- **SC-091**: Identical shapes used by multiple bodies result in only one cached copy. [Source: specs/004-mesh-cache-transport]
+- **SC-092**: Viewers display placeholder bounding boxes for unresolved meshes within one frame of state receipt. [Source: specs/004-mesh-cache-transport]

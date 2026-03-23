@@ -21,6 +21,7 @@ let primitiveType (shape: Shape) =
         | Shape.ShapeOneofCase.Compound -> PrimitiveModelType.Cube // bounding box of children
         | Shape.ShapeOneofCase.Mesh -> PrimitiveModelType.Cube // bounding box of triangles
         | Shape.ShapeOneofCase.ShapeRef -> PrimitiveModelType.Sphere // resolved at render time
+        | Shape.ShapeOneofCase.CachedRef -> PrimitiveModelType.Cube // bounding box placeholder
         | _ -> PrimitiveModelType.Sphere
 
 /// Clamp a dimension to a visible minimum (prevents invisible bodies).
@@ -134,6 +135,15 @@ let shapeSize (shape: Shape) =
                 let sy = max (float32 (maxY - minY)) 0.01f
                 let sz = max (float32 (maxZ - minZ)) 0.01f
                 System.Nullable(Vector3(sx, sy, sz))
+        | Shape.ShapeOneofCase.CachedRef ->
+            let bMin = shape.CachedRef.BboxMin
+            let bMax = shape.CachedRef.BboxMax
+            if isNull bMin || isNull bMax then System.Nullable(Vector3(1.0f, 1.0f, 1.0f))
+            else
+                let sx = max (float32 (bMax.X - bMin.X)) 0.01f
+                let sy = max (float32 (bMax.Y - bMin.Y)) 0.01f
+                let sz = max (float32 (bMax.Z - bMin.Z)) 0.01f
+                System.Nullable(Vector3(sx, sy, sz))
         | _ -> System.Nullable<Vector3>()
 
 /// Default color palette by shape type.
@@ -150,4 +160,5 @@ let defaultColor (shape: Shape) : StrideColor =
         | Shape.ShapeOneofCase.ConvexHull -> StrideColor.Purple
         | Shape.ShapeOneofCase.Compound -> StrideColor.White
         | Shape.ShapeOneofCase.Mesh -> StrideColor(0uy, 128uy, 128uy, 255uy)
+        | Shape.ShapeOneofCase.CachedRef -> StrideColor(255uy, 0uy, 255uy, 128uy) // semi-transparent magenta placeholder
         | _ -> StrideColor.Red

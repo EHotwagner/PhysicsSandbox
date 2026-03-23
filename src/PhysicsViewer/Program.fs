@@ -20,6 +20,7 @@ open PhysicsViewer.CameraController
 open PhysicsViewer.Rendering
 open Stride.Rendering.Lights
 open PhysicsViewer.Settings
+open PhysicsViewer.Streaming
 
 let game = new Game()
 
@@ -39,6 +40,9 @@ let mutable latestSimState: SimulationState = null
 let mutable latestViewCmd: ViewCommand = null
 let mutable stateVersion = 0
 let mutable lastAppliedVersion = 0
+
+// Mesh resolver for on-demand geometry fetch
+let mutable meshResolverState: MeshResolver.MeshResolverState option = None
 
 // Viewer metrics counters
 let mutable viewerMsgRecv = 0L
@@ -80,13 +84,37 @@ let startStateStream (serverAddress: string) =
                     let stream = call.ResponseStream
                     delay <- 1000
                     logger.LogInformation("State stream connected to {Address}", serverAddress)
+                    // Initialize mesh resolver with this channel's client
+                    if meshResolverState.IsNone then
+                        meshResolverState <- Some (MeshResolver.create client)
+
                     while not cts.Token.IsCancellationRequested do
                         let! hasNext = stream.MoveNext(cts.Token)
                         if hasNext then
-                            Volatile.Write(&latestSimState, stream.Current)
+                            let state = stream.Current
+                            // Process new meshes from state update
+                            match meshResolverState with
+                            | Some resolver ->
+                                if state.NewMeshes.Count > 0 then
+                                    MeshResolver.processNewMeshes state.NewMeshes resolver
+                                // Collect unresolved CachedShapeRef mesh IDs and fetch asynchronously
+                                let missingIds =
+                                    state.Bodies
+                                    |> Seq.choose (fun b ->
+                                        if not (isNull b.Shape) && b.Shape.ShapeCase = Shape.ShapeOneofCase.CachedRef then
+                                            let id = b.Shape.CachedRef.MeshId
+                                            match MeshResolver.resolve id resolver with
+                                            | None -> Some id
+                                            | Some _ -> None
+                                        else None)
+                                    |> Seq.distinct |> Seq.toList
+                                if not missingIds.IsEmpty then
+                                    Async.Start(MeshResolver.fetchMissing missingIds resolver)
+                            | None -> ()
+                            Volatile.Write(&latestSimState, state)
                             Interlocked.Increment(&stateVersion) |> ignore
                             Interlocked.Increment(&viewerMsgRecv) |> ignore
-                            Interlocked.Add(&viewerBytesRecv, int64 (stream.Current.CalculateSize())) |> ignore
+                            Interlocked.Add(&viewerBytesRecv, int64 (state.CalculateSize())) |> ignore
                 with
                 | :? OperationCanceledException -> ()
                 | ex when not cts.Token.IsCancellationRequested ->
@@ -179,7 +207,7 @@ let update (scene: Scene) (time: GameTime) =
     if currentVersion <> lastAppliedVersion then
         let simState = Volatile.Read(&latestSimState)
         if not (isNull simState) then
-            sceneState <- SceneManager.applyState game scene sceneState simState
+            sceneState <- SceneManager.applyState game scene sceneState simState meshResolverState
             debugState <- DebugRenderer.updateShapes game scene debugState simState
             debugState <- DebugRenderer.updateConstraints game scene debugState simState
             lastAppliedVersion <- currentVersion

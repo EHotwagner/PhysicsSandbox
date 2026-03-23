@@ -10,6 +10,8 @@
     <Compile Include="Hub/StateCache.fs" />
     <Compile Include="Hub/MetricsCounter.fsi" />
     <Compile Include="Hub/MetricsCounter.fs" />
+    <Compile Include="Hub/MeshCache.fsi" />
+    <Compile Include="Hub/MeshCache.fs" />
     <Compile Include="Hub/MessageRouter.fsi" />
     <Compile Include="Hub/MessageRouter.fs" />
     <Compile Include="Services/SimulationLinkService.fsi" />

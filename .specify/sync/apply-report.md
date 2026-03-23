@@ -1,32 +1,38 @@
 # Sync Apply Report
 
-Applied: 2026-03-22
-Feature: 005-stride-bepu-integration
+Applied: 2026-03-23
+Feature: 004-mesh-cache-transport
 
 ## Changes Made
 
 ### Specs Updated
 
-| Spec | Requirement | Change Type | Details |
-|------|-------------|-------------|---------|
-| 005-stride-bepu-integration | FR-006b | Modified | Backfill: "only on first use" -> "in every state stream update" |
-| 005-stride-bepu-integration | SC-008 | Modified | Backfill: Tiered accessibility (REPL/MCP full, Scripting convenience for common types) |
-
-### Implementation Tasks Generated
-
-2 tasks in `.specify/sync/align-tasks.md`:
-
-| Task | Requirement | Effort | Summary |
-|------|-------------|--------|---------|
-| Task 1 | FR-007 | Medium | Custom MeshDraw rendering for Triangle, Compound, Mesh shapes |
-| Task 2 | FR-030 | Medium | Add SetBodyPose command for kinematic runtime pose updates |
+| Spec | Requirement | Change Type | Description |
+|------|-------------|-------------|-------------|
+| 004-mesh-cache-transport | FR-010 | Modified | Narrowed cache invalidation to reset/disconnect; removed body-removal eviction requirement |
+| 004-mesh-cache-transport | FR-011 | Modified | Changed from per-child caching to atomic compound caching |
+| 004-mesh-cache-transport | FR-016 | Added | MCP recording must persist mesh geometry definitions for self-contained replay |
+| 004-mesh-cache-transport | Edge Case | Modified | Updated compound shape edge case to match FR-011 |
+| 004-mesh-cache-transport | Status | Modified | Changed from "Draft" to "Implemented" |
 
 ### Backup
 
-Spec backup saved to `.specify/sync/backups/spec.md.2026-03-22.bak`
+Original spec backed up to: `.specify/sync/backups/004-mesh-cache-transport-spec-2026-03-23.md`
+
+### New Specs Created
+
+(none)
+
+### Implementation Tasks Generated
+
+(none -- all proposals were BACKFILL, no code changes needed)
+
+### Not Applied
+
+(none -- all 3 proposals approved and applied)
 
 ## Next Steps
 
-1. Review updated spec: `specs/005-stride-bepu-integration/spec.md`
-2. Implement Task 1 (FR-007) and Task 2 (FR-030) from `align-tasks.md`
-3. Commit changes: `git add specs/ .specify/ && git commit -m "sync: apply drift resolutions for 005-stride-bepu-integration"`
+1. Review updated spec: `specs/004-mesh-cache-transport/spec.md`
+2. Commit changes
+3. Feature is ready for merge

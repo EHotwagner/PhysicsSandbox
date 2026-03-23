@@ -98,6 +98,9 @@ type RecordingEngine() =
         | Some writer when isRecording ->
             let ts = DateTimeOffset.UtcNow
             writer.Enqueue(LogEntry.StateSnapshot(ts, state))
+            // Write MeshDefinition entries for new meshes in this state
+            for mg in state.NewMeshes do
+                writer.Enqueue(LogEntry.MeshDefinition(ts, mg.MeshId, mg.Shape))
         | _ -> ()
 
     member _.OnCommandReceived(event: CommandEvent) =

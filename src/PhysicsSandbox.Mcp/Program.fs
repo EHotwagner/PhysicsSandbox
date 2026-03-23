@@ -24,10 +24,19 @@ let engine: RecordingEngine = create ()
 let onState = fun (s: PhysicsSandbox.Shared.Contracts.SimulationState) -> engine.OnStateReceived(s)
 let onCommand = fun (e: PhysicsSandbox.Shared.Contracts.CommandEvent) -> engine.OnCommandReceived(e)
 
-// Register GrpcConnection as singleton with recording callbacks
+// MeshResolver state — initialized when GrpcConnection starts
+let mutable mcpMeshResolver: PhysicsSandbox.Mcp.MeshResolver.MeshResolverState option = None
+
+// Register GrpcConnection as singleton with recording + mesh resolver callbacks
 builder.Services.AddSingleton<GrpcConnection>(fun (_: IServiceProvider) ->
     let conn = new GrpcConnection(serverAddress)
-    conn.OnStateReceived <- Some onState
+    let resolver = PhysicsSandbox.Mcp.MeshResolver.create conn.Client
+    mcpMeshResolver <- Some resolver
+    conn.OnStateReceived <- Some (fun s ->
+        // Process new meshes from state update
+        if s.NewMeshes.Count > 0 then
+            PhysicsSandbox.Mcp.MeshResolver.processNewMeshes s.NewMeshes resolver
+        onState s)
     conn.OnCommandReceived <- Some onCommand
     conn.Start()
     conn) |> ignore

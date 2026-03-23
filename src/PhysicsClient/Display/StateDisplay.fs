@@ -16,17 +16,39 @@ let internal velocityMagnitude (v: Vec3) =
     if isNull (box v) then 0.0
     else sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z)
 
-/// <summary>Returns a short description of a body's shape, e.g. "Sphere(r=0.50)" or "Box(1.00x1.00x1.00)".</summary>
-let internal shapeDescription (body: Body) =
-    if isNull body.Shape then "Unknown"
+/// <summary>Describes a shape proto, resolving cached refs if a resolver is provided.</summary>
+let rec private describeShape (resolver: MeshResolver.MeshResolverState option) (shape: Shape) =
+    if isNull shape then "Unknown"
     else
-        match body.Shape.ShapeCase with
-        | Shape.ShapeOneofCase.Sphere -> $"Sphere(r={body.Shape.Sphere.Radius:F2})"
+        match shape.ShapeCase with
+        | Shape.ShapeOneofCase.Sphere -> $"Sphere(r={shape.Sphere.Radius:F2})"
         | Shape.ShapeOneofCase.Box ->
-            let h = body.Shape.Box.HalfExtents
+            let h = shape.Box.HalfExtents
             $"Box({h.X:F2}\u00d7{h.Y:F2}\u00d7{h.Z:F2})"
         | Shape.ShapeOneofCase.Plane -> "Plane"
+        | Shape.ShapeOneofCase.CachedRef ->
+            let meshId = shape.CachedRef.MeshId
+            match resolver with
+            | Some r ->
+                match MeshResolver.resolve meshId r with
+                | Some resolved -> describeShape None resolved
+                | None -> $"Cached({meshId.[..7]})"
+            | None -> $"Cached({meshId.[..7]})"
+        | Shape.ShapeOneofCase.ConvexHull -> $"ConvexHull({shape.ConvexHull.Points.Count}pts)"
+        | Shape.ShapeOneofCase.Mesh -> $"Mesh({shape.Mesh.Triangles.Count}tri)"
+        | Shape.ShapeOneofCase.Compound -> $"Compound({shape.Compound.Children.Count})"
+        | Shape.ShapeOneofCase.Capsule -> $"Capsule(r={shape.Capsule.Radius:F2},l={shape.Capsule.Length:F2})"
+        | Shape.ShapeOneofCase.Cylinder -> $"Cylinder(r={shape.Cylinder.Radius:F2},l={shape.Cylinder.Length:F2})"
+        | Shape.ShapeOneofCase.Triangle -> "Triangle"
         | _ -> "Unknown"
+
+/// <summary>Returns a short description of a body's shape, e.g. "Sphere(r=0.50)" or "Box(1.00x1.00x1.00)".</summary>
+let internal shapeDescription (body: Body) =
+    describeShape None body.Shape
+
+/// <summary>Returns a short description of a body's shape, resolving CachedShapeRef from the session's mesh resolver.</summary>
+let internal shapeDescriptionResolved (session: Session) (body: Body) =
+    describeShape (Some (meshResolver session)) body.Shape
 
 let private stalenessInfo (session: Session) =
     let age = DateTime.UtcNow - lastStateUpdate session
@@ -52,7 +74,7 @@ let listBodies (session: Session) =
         for body in state.Bodies do
             table.AddRow(
                 body.Id,
-                shapeDescription body,
+                shapeDescriptionResolved session body,
                 formatVec3 body.Position,
                 formatVec3 body.Velocity,
                 $"{body.Mass:F2}"
@@ -75,7 +97,7 @@ let inspect (session: Session) (bodyId: string) =
                 if isNull (box b.Orientation) then "(0.00, 0.00, 0.00, 0.00)"
                 else $"({b.Orientation.X:F2}, {b.Orientation.Y:F2}, {b.Orientation.Z:F2}, {b.Orientation.W:F2})"
             let panel = Panel(
-                $"Shape: {shapeDescription b}\n" +
+                $"Shape: {shapeDescriptionResolved session b}\n" +
                 $"Position: {formatVec3 b.Position}\n" +
                 $"Velocity: {formatVec3 b.Velocity}\n" +
                 $"Angular Vel: {formatVec3 b.AngularVelocity}\n" +

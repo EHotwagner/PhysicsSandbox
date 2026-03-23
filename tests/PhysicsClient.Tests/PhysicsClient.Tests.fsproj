@@ -14,6 +14,7 @@
     <Compile Include="GeneratorsTests.fs" />
     <Compile Include="SteeringTests.fs" />
     <Compile Include="StateDisplayTests.fs" />
+    <Compile Include="MeshResolverTests.fs" />
     <Compile Include="SurfaceAreaTests.fs" />
   </ItemGroup>
 

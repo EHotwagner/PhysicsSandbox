@@ -5,8 +5,9 @@ open System.Text.Json
 
 [<RequireQualifiedAccess>]
 type EntryType =
-    | StateSnapshot = 0uy
-    | CommandEvent  = 1uy
+    | StateSnapshot    = 0uy
+    | CommandEvent     = 1uy
+    | MeshDefinition   = 2uy
 
 [<RequireQualifiedAccess>]
 type SessionStatus =
@@ -40,8 +41,9 @@ type PaginationCursor =
 
 [<RequireQualifiedAccess>]
 type LogEntry =
-    | StateSnapshot  of timestamp: DateTimeOffset * state: PhysicsSandbox.Shared.Contracts.SimulationState
-    | CommandEvent   of timestamp: DateTimeOffset * event: PhysicsSandbox.Shared.Contracts.CommandEvent
+    | StateSnapshot    of timestamp: DateTimeOffset * state: PhysicsSandbox.Shared.Contracts.SimulationState
+    | CommandEvent     of timestamp: DateTimeOffset * event: PhysicsSandbox.Shared.Contracts.CommandEvent
+    | MeshDefinition   of timestamp: DateTimeOffset * meshId: string * shape: PhysicsSandbox.Shared.Contracts.Shape
 
 module WireFormat =
     let HeaderSize = 4 + 8 + 1 // uint32 totalSize + int64 timestampMs + byte entryType

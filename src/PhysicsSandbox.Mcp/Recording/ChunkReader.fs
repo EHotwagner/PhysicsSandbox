@@ -40,6 +40,9 @@ let private deserializeEntry (timestampMs: int64) (entryType: byte) (payload: by
         | b when b = byte EntryType.CommandEvent ->
             let evt = CommandEvent.Parser.ParseFrom(payload)
             Some (LogEntry.CommandEvent(ts, evt))
+        | b when b = byte EntryType.MeshDefinition ->
+            let mg = MeshGeometry.Parser.ParseFrom(payload)
+            Some (LogEntry.MeshDefinition(ts, mg.MeshId, mg.Shape))
         | _ -> None
     with _ -> None
 

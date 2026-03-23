@@ -6,6 +6,7 @@ open Stride.Games
 open Stride.CommunityToolkit.Engine
 open Stride.CommunityToolkit.Games
 open PhysicsSandbox.Shared.Contracts
+module MeshResolver = PhysicsViewer.Streaming.MeshResolver
 
 type StrideColor = Stride.Core.Mathematics.Color
 type ProtoColor = PhysicsSandbox.Shared.Contracts.Color
@@ -13,6 +14,7 @@ type ProtoColor = PhysicsSandbox.Shared.Contracts.Color
 /// Tracks the 3D scene state, mapping simulation body IDs to Stride entities.
 type SceneState =
     { Bodies: Map<string, Entity>
+      Placeholders: Set<string> // Body IDs currently rendered as bounding box placeholders
       SimTime: float
       SimRunning: bool
       Wireframe: bool }
@@ -20,6 +22,7 @@ type SceneState =
 /// Creates an empty scene state.
 let create () =
     { Bodies = Map.empty
+      Placeholders = Set.empty
       SimTime = 0.0
       SimRunning = false
       Wireframe = false }
@@ -44,15 +47,30 @@ let private bodyColor (body: Body) : StrideColor =
     | Some c -> c
     | None -> ShapeGeometry.defaultColor body.Shape
 
-let private createEntity (game: Game) (scene: Scene) (body: Body) (wireframe: bool) =
-    let color = bodyColor body
-    let primType = ShapeGeometry.primitiveType body.Shape
+/// Returns (shape to render, isPlaceholder)
+let private resolveShape (resolver: MeshResolver.MeshResolverState option) (body: Body) =
+    if isNull body.Shape then (body.Shape, true)
+    elif body.Shape.ShapeCase = Shape.ShapeOneofCase.CachedRef then
+        match resolver with
+        | Some r ->
+            match MeshResolver.resolve body.Shape.CachedRef.MeshId r with
+            | Some resolved -> (resolved, false)
+            | None -> (body.Shape, true) // unresolved: use CachedRef bbox as placeholder
+        | None -> (body.Shape, true)
+    else (body.Shape, false)
+
+let private createEntity (game: Game) (scene: Scene) (body: Body) (wireframe: bool) (renderShape: Shape) =
+    let color =
+        match protoColorToStride body.Color with
+        | Some c -> c
+        | None -> ShapeGeometry.defaultColor renderShape
+    let primType = ShapeGeometry.primitiveType renderShape
     let material =
         if wireframe then
             game.CreateFlatMaterial(System.Nullable<StrideColor>(color))
         else
             game.CreateMaterial(color)
-    let size = ShapeGeometry.shapeSize body.Shape
+    let size = ShapeGeometry.shapeSize renderShape
     let options = Primitive3DEntityOptions(Material = material, Size = size)
     let entity = game.Create3DPrimitive(primType, options)
     entity.Transform.Position <- protoVec3ToStride body.Position
@@ -65,7 +83,7 @@ let private updateEntity (entity: Entity) (body: Body) =
     entity.Transform.Rotation <- protoQuatToStride body.Orientation
 
 /// Applies a simulation state snapshot to the 3D scene.
-let applyState (game: Game) (scene: Scene) (state: SceneState) (simState: SimulationState) =
+let applyState (game: Game) (scene: Scene) (state: SceneState) (simState: SimulationState) (resolver: MeshResolver.MeshResolverState option) =
     if isNull simState || isNull simState.Bodies then state
     else
 
@@ -83,17 +101,30 @@ let applyState (game: Game) (scene: Scene) (state: SceneState) (simState: Simula
         state.Bodies
         |> Map.filter (fun id _ -> Set.contains id incomingIds)
 
+    let mutable updatedPlaceholders = state.Placeholders |> Set.filter (fun id -> Set.contains id incomingIds)
+
     // Add or update
     for body in simState.Bodies do
+        let renderShape, isPlaceholder = resolveShape resolver body
         match Map.tryFind body.Id updatedBodies with
         | Some entity ->
-            updateEntity entity body
+            // If this was a placeholder and mesh is now resolved, recreate the entity
+            if Set.contains body.Id updatedPlaceholders && not isPlaceholder then
+                entity.Scene <- null
+                let newEntity = createEntity game scene body state.Wireframe renderShape
+                updatedBodies <- Map.add body.Id newEntity updatedBodies
+                updatedPlaceholders <- Set.remove body.Id updatedPlaceholders
+            else
+                updateEntity entity body
         | None ->
-            let entity = createEntity game scene body state.Wireframe
+            let entity = createEntity game scene body state.Wireframe renderShape
             updatedBodies <- Map.add body.Id entity updatedBodies
+            if isPlaceholder then
+                updatedPlaceholders <- Set.add body.Id updatedPlaceholders
 
     { state with
         Bodies = updatedBodies
+        Placeholders = updatedPlaceholders
         SimTime = simState.Time
         SimRunning = simState.Running }
 

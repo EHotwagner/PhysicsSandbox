@@ -92,3 +92,11 @@ let ``LiveWatch public API matches baseline`` () =
     Assert.NotNull(t)
     let members = getPublicMembers t
     assertContains members "watch"
+
+[<Fact>]
+let ``MeshResolver public API matches baseline`` () =
+    let t = typeof<PhysicsClient.Session.Session>.Assembly.GetType("PhysicsClient.MeshResolver")
+    Assert.NotNull(t)
+    let members = getPublicMembers t
+    for name in [| "create"; "fetchMissingSync"; "processNewMeshes"; "resolve" |] do
+        assertContains members name

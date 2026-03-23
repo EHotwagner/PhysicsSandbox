@@ -25,4 +25,9 @@
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- Kill existing PhysicsSandbox processes before tests to avoid port conflicts -->
+  <Target Name="KillExistingProcesses" BeforeTargets="VSTest">
+    <Exec Command="bash $(MSBuildThisFileDirectory)../../kill.sh" IgnoreExitCode="true" />
+  </Target>
+
 </Project>

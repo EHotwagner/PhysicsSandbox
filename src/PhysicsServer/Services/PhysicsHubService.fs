@@ -72,6 +72,18 @@ type PhysicsHubService(router: MessageRouter) =
         let response = sendBatchViewCommand router request
         Task.FromResult(response)
 
+    /// <summary>Fetch mesh geometries by mesh ID from the server cache.</summary>
+    override _.FetchMeshes(request: MeshRequest, context: ServerCallContext) =
+        let ids = request.MeshIds |> Seq.toList
+        let meshes = PhysicsServer.Hub.MeshCache.getMany ids (meshCache router)
+        let hits = meshes.Length
+        let misses = ids.Length - hits
+        PhysicsServer.Hub.MetricsCounter.incrementFetchRequest hits misses (metricsState router)
+        let response = MeshResponse()
+        for mg in meshes do
+            response.Meshes.Add(mg)
+        Task.FromResult(response)
+
     /// <summary>Return server throughput metrics and pipeline timing diagnostics (simulation tick, serialization, gRPC transfer).</summary>
     override _.GetMetrics(request: MetricsRequest, context: ServerCallContext) =
         let response = MetricsResponse()
