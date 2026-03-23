@@ -1,5 +1,39 @@
 # Merged Features Log
 
+## MCP Data Logging for Analysis — 2026-03-23
+**Branch:** 005-mcp-data-logging
+**Spec:** specs/005-mcp-data-logging
+
+**What was added:**
+- Persistent data recording: auto-captures all simulation state updates and command events to disk at full fidelity using protobuf binary serialization in 1-minute chunk files
+- Dual-limit storage management: configurable time window (default 10 min) and size cap (default 500 MB) with automatic pruning of oldest chunks
+- 4 query MCP tools: query_body_trajectory, query_snapshots, query_events, query_summary — all with cursor-based pagination (default 100 entries/page)
+- 5 session management MCP tools: start_recording, stop_recording, list_sessions, delete_session, recording_status
+- Auto-start recording on first simulation state received (FR-210)
+- Restart recovery: interrupted sessions marked Completed on MCP server startup
+- GrpcConnection callback hooks (OnStateReceived, OnCommandReceived) for extensible stream processing
+- Async Channel-based recording pipeline (capacity 10k, DropOldest) ensures zero impact on existing MCP tool responsiveness
+
+**New Components:**
+- `src/PhysicsSandbox.Mcp/Recording/Types.fsi/.fs` — LogEntry, SessionStatus, PaginationCursor, wire format
+- `src/PhysicsSandbox.Mcp/Recording/SessionStore.fsi/.fs` — Session metadata CRUD (JSON persistence)
+- `src/PhysicsSandbox.Mcp/Recording/ChunkWriter.fsi/.fs` — Async binary writer with pruning
+- `src/PhysicsSandbox.Mcp/Recording/ChunkReader.fsi/.fs` — Binary reader with pagination
+- `src/PhysicsSandbox.Mcp/Recording/RecordingEngine.fsi/.fs` — Recording lifecycle orchestration
+- `src/PhysicsSandbox.Mcp/RecordingTools.fsi/.fs` — 5 session management MCP tools
+- `src/PhysicsSandbox.Mcp/RecordingQueryTools.fsi/.fs` — 4 query MCP tools
+- `tests/PhysicsSandbox.Mcp.Tests/` — 12 unit tests (ChunkWriter, SessionStore, ChunkReader, RecordingEngine)
+
+**Modified Components:**
+- `src/PhysicsSandbox.Mcp/GrpcConnection.fsi/.fs` — Added OnStateReceived/OnCommandReceived callback hooks
+- `src/PhysicsSandbox.Mcp/Program.fs` — RecordingEngine DI registration, callback wiring
+- `src/PhysicsSandbox.Mcp/PhysicsSandbox.Mcp.fsproj` — 16 new compile entries
+- `PhysicsSandbox.slnx` — Added PhysicsSandbox.Mcp.Tests project
+
+**Tasks Completed:** 28/31 tasks (3 deferred: integration tests + surface area baselines require running Aspire)
+
+---
+
 ## Enhance Demos with New Body Types and Fix Impacts — 2026-03-23
 **Branch:** 005-enhance-demos
 **Spec:** specs/005-enhance-demos

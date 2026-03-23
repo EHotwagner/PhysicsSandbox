@@ -38,6 +38,20 @@
     <Compile Include="StressTestTools.fs" />
     <Compile Include="ComparisonTools.fsi" />
     <Compile Include="ComparisonTools.fs" />
+    <Compile Include="Recording\Types.fsi" />
+    <Compile Include="Recording\Types.fs" />
+    <Compile Include="Recording\SessionStore.fsi" />
+    <Compile Include="Recording\SessionStore.fs" />
+    <Compile Include="Recording\ChunkWriter.fsi" />
+    <Compile Include="Recording\ChunkWriter.fs" />
+    <Compile Include="Recording\ChunkReader.fsi" />
+    <Compile Include="Recording\ChunkReader.fs" />
+    <Compile Include="Recording\RecordingEngine.fsi" />
+    <Compile Include="Recording\RecordingEngine.fs" />
+    <Compile Include="RecordingTools.fsi" />
+    <Compile Include="RecordingTools.fs" />
+    <Compile Include="RecordingQueryTools.fsi" />
+    <Compile Include="RecordingQueryTools.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

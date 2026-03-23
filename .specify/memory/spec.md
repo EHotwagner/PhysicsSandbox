@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-23
-**Revision**: Updated with 005-enhance-demos archival
+**Revision**: Updated with 005-mcp-data-logging archival
 
 ## Overview
 
@@ -250,6 +250,18 @@ A user runs the demo suite and 12+ demos use custom per-body colors for visual d
 ### US-080: Demonstrate Kinematic Bodies (P3)
 A user runs Demo 18 and sees a kinematic bulldozer move through a grid of dynamic bodies, pushing them aside on a scripted path. [Source: specs/005-enhance-demos]
 
+### US-081: Continuous Physics Data Recording (P1)
+An AI assistant using MCP tools wants to capture all incoming simulation data (state updates and command events) to persistent disk storage for deferred analysis. Recording starts automatically when the MCP server connects to the simulation. [Source: specs/005-mcp-data-logging]
+
+### US-082: Dual-Limit Storage Management (P1)
+A user wants recording sessions to automatically manage storage using both a time-based retention window (default 10 minutes) and a size-based cap (default 500 MB), with automatic pruning of oldest data in 1-minute chunks. [Source: specs/005-mcp-data-logging]
+
+### US-083: Querying Recorded Data via MCP Tools (P1)
+An AI assistant wants to query recorded physics data — body trajectories, state snapshots, command events — with paginated results, enabling deferred analysis of simulation behavior. [Source: specs/005-mcp-data-logging]
+
+### US-084: Recording Session Management (P2)
+A user wants to manage multiple recording sessions — starting, stopping, listing, and deleting — to organize analysis work across simulation experiments. [Source: specs/005-mcp-data-logging]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -446,6 +458,22 @@ A user runs Demo 18 and sees a kinematic bulldozer move through a grid of dynami
 - **FR-192**: All 18 F# demos pass in AutoRun.fsx with 0 failures. [Source: specs/005-enhance-demos]
 - **FR-193**: Prelude.fsx extended with: makeTriangleCmd, makeConvexHullCmd, makeCompoundCmd, makeKinematicCmd, withMotionType, withCollisionFilter, setPose, queryRaycast, queryOverlapSphere, querySweepSphere, and 8 color palette constants. [Source: specs/005-enhance-demos]
 - **FR-194**: PhysicsClient NuGet package repacked to version 0.2.0 with raycast, sweepCast, overlap, setBodyPose APIs. [Source: specs/005-enhance-demos]
+- **FR-195**: MCP server MUST capture every simulation state update at full fidelity (no sampling) to persistent on-disk log during active recording. [Source: specs/005-mcp-data-logging]
+- **FR-196**: MCP server MUST capture all command events (simulation and view) into the recording log alongside state updates. [Source: specs/005-mcp-data-logging]
+- **FR-197**: Each recorded entry MUST have a high-resolution timestamp (millisecond precision) for frame-level event correlation. [Source: specs/005-mcp-data-logging]
+- **FR-198**: Recording sessions MUST enforce dual retention limits: configurable time window (default 10 minutes) and configurable size cap (default 500 MB). [Source: specs/005-mcp-data-logging]
+- **FR-199**: System MUST automatically prune oldest recorded data in 1-minute chunks when either retention limit is reached. [Source: specs/005-mcp-data-logging]
+- **FR-200**: MCP tools MUST be provided to start, stop, list, and delete recording sessions. [Source: specs/005-mcp-data-logging]
+- **FR-201**: MCP tool MUST query body trajectory (position, velocity, rotation over time) from recorded data with pagination. [Source: specs/005-mcp-data-logging]
+- **FR-202**: MCP tool MUST query state snapshots within a time range from recorded data with pagination. [Source: specs/005-mcp-data-logging]
+- **FR-203**: MCP tool MUST query command events by type and/or time range from recorded data with pagination. [Source: specs/005-mcp-data-logging]
+- **FR-204**: MCP tool MUST retrieve a recording session summary (time range, counts, storage) without scanning chunk files. [Source: specs/005-mcp-data-logging]
+- **FR-205**: Recording MUST NOT degrade existing MCP tool responsiveness — uses async Channel-based pipeline with non-blocking writes. [Source: specs/005-mcp-data-logging]
+- **FR-206**: Recording data MUST survive MCP server restarts. Interrupted sessions marked as Completed on recovery. [Source: specs/005-mcp-data-logging]
+- **FR-207**: Only one recording session may be active at a time. Starting a new session stops the previous one. [Source: specs/005-mcp-data-logging]
+- **FR-208**: System MUST report current storage usage and configured limits via recording_status tool. [Source: specs/005-mcp-data-logging]
+- **FR-209**: All query tools MUST support cursor-based pagination with configurable page size (default 100, max 500). [Source: specs/005-mcp-data-logging]
+- **FR-210**: Recording MUST auto-start when MCP server first receives a simulation state update, without explicit user command. [Source: specs/005-mcp-data-logging]
 
 ## Key Entities
 
@@ -491,6 +519,9 @@ A user runs Demo 18 and sees a kinematic bulldozer move through a grid of dynami
 - **ViewerSettings**: Persisted display/quality configuration — ResolutionWidth, ResolutionHeight, IsFullscreen, AntiAliasing (Off/X2/X4/X8), ShadowQuality (Off/Low/Medium/High), TextureFiltering (Point/Linear/Anisotropic), VSync. JSON at ~/.config/PhysicsSandbox/viewer-settings.json. [Source: specs/005-viewer-settings-sizing-fix]
 - **DisplayState**: Runtime display manager state — Game reference, current ViewerSettings, previous windowed dimensions for fullscreen restore. [Source: specs/005-viewer-settings-sizing-fix]
 - **OverlayState**: Settings overlay UI state — visible flag, active category (Display/Quality), selected row, menu items with current selections. [Source: specs/005-viewer-settings-sizing-fix]
+- **Recording Session**: Identifier (GUID), label, status (Recording/Completed/Failed), start/end time, dual retention limits, storage counters. Persisted as `session.json`. [Source: specs/005-mcp-data-logging]
+- **Chunk File**: Time-based binary recording segment (~1 minute), containing length-prefixed protobuf entries. Named `chunk-{timestampMs}.bin`. [Source: specs/005-mcp-data-logging]
+- **Log Entry**: Timestamped protobuf binary record. Wire format: `[uint32 totalSize | int64 timestampMs | byte entryType | byte[] payload]`. [Source: specs/005-mcp-data-logging]
 - **QueryHandler**: Simulation-side query dispatch — converts proto RaycastRequest/SweepCastRequest/OverlapRequest to BepuFSharp calls, resolves BodyId→string IDs. [Source: specs/005-stride-bepu-integration]
 - **QueryBuilders (Scripting)**: Convenience wrappers returning typed F# results — raycast, raycastAll, sweepSphere, overlapSphere. [Source: specs/005-stride-bepu-integration]
 - **Python Prelude**: Shared Python module providing 40+ functions mirroring the F# PhysicsClient + Prelude: session management, all simulation/view commands, 7 body presets, 5 generators, steering (push/launch), display (list_bodies/status), timing (timed context manager), batch helpers, ID generation. [Source: specs/004-python-demo-scripts]

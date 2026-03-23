@@ -1,13 +1,13 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-23
-**Revision**: Updated with 005-enhance-demos archival
+**Revision**: Updated with 005-mcp-data-logging archival
 
 ## Technical Context
 
 **Language/Version**: F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
 **Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1 (local NuGet, 10 shape types, 10 constraint types, sweep/overlap queries, collision filtering, material properties), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, includes Stride.BepuPhysics 4.3.0.2507 + Stride.BepuPhysics.Debug 4.3.0.2507 transitively), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 + ModelContextProtocol.AspNetCore 1.1.* (MCP server — HTTP/SSE transport)
-**Storage**: N/A (in-memory physics world, stateless message routing, in-memory metrics counters/stress test state/command logs)
+**Storage**: Append-only protobuf binary files at `~/.config/PhysicsSandbox/recordings/` (recording sessions), JSON metadata per session. In-memory physics world and stateless routing otherwise.
 **Testing**: xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x
 **Target Platform**: Linux (rootless Podman for containers)
 **Solution Format**: `.slnx` (XML-based, .NET 10 default)
@@ -92,7 +92,7 @@ src/
 │   ├── SimulationLifecycle.fsi/.fs    # resetSimulation, runFor, nextId
 │   └── Prelude.fsi/.fs               # [<AutoOpen>] re-export of all functions
 │
-└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 44 tools)
+└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 53 tools)
     ├── GrpcConnection.fsi/.fs          # gRPC channel + 3 background streams (state, view, audit) + batch/metrics RPCs
     ├── SimulationTools.fsi/.fs         # 17 simulation/query MCP tools (incl. constraints, shapes, queries, collision filter, body pose)
     ├── ViewTools.fsi/.fs               # 3 view command MCP tools
@@ -107,6 +107,14 @@ src/
     ├── StressTestTools.fsi/.fs         # start_stress_test, get_stress_test_status MCP tools
     ├── StressTestRunner.fsi/.fs        # Background stress test execution engine
     ├── ComparisonTools.fsi/.fs         # start_comparison_test MCP tool
+    ├── Recording/
+    │   ├── Types.fsi/.fs                 # LogEntry, SessionStatus, PaginationCursor, wire format
+    │   ├── SessionStore.fsi/.fs          # Session metadata CRUD (JSON persistence)
+    │   ├── ChunkWriter.fsi/.fs           # Async Channel-based binary writer with pruning
+    │   ├── ChunkReader.fsi/.fs           # Binary reader with pagination cursors
+    │   └── RecordingEngine.fsi/.fs       # Recording lifecycle orchestration, auto-start
+    ├── RecordingTools.fsi/.fs            # 5 session management MCP tools
+    ├── RecordingQueryTools.fsi/.fs       # 4 query MCP tools
     └── Program.fs                      # WebApplication + HTTP/SSE MCP transport
 
 tests/
@@ -151,15 +159,20 @@ tests/
 │   ├── CommandBuildersTests.fs
 │   ├── SurfaceAreaTests.fs
 │   └── SurfaceAreaBaseline.txt
-└── PhysicsClient.Tests/                 # F# — unit tests (52 tests)
-    ├── IdGeneratorTests.fs              # Sequential IDs, reset, thread safety
-    ├── SessionTests.fs                  # Connection lifecycle
-    ├── SimulationCommandsTests.fs       # Proto message construction, Vec3 conversion
-    ├── PresetsTests.fs                  # Preset parameters, mass values
-    ├── GeneratorsTests.fs               # Scene builder validation, count checks
-    ├── SteeringTests.fs                 # Direction-to-Vec3 mapping
-    ├── StateDisplayTests.fs             # Vec3 formatting, velocity magnitude, shapes
-    └── SurfaceAreaTests.fs              # Public API baseline for all 9 modules
+├── PhysicsClient.Tests/                 # F# — unit tests (52 tests)
+│   ├── IdGeneratorTests.fs              # Sequential IDs, reset, thread safety
+│   ├── SessionTests.fs                  # Connection lifecycle
+│   ├── SimulationCommandsTests.fs       # Proto message construction, Vec3 conversion
+│   ├── PresetsTests.fs                  # Preset parameters, mass values
+│   ├── GeneratorsTests.fs               # Scene builder validation, count checks
+│   ├── SteeringTests.fs                 # Direction-to-Vec3 mapping
+│   ├── StateDisplayTests.fs             # Vec3 formatting, velocity magnitude, shapes
+│   └── SurfaceAreaTests.fs              # Public API baseline for all 9 modules
+├── PhysicsSandbox.Mcp.Tests/            # F# — unit tests (12 tests)
+│   ├── ChunkWriterTests.fs
+│   ├── ChunkReaderTests.fs
+│   ├── SessionStoreTests.fs
+│   └── RecordingEngineTests.fs
 
 Scripting/                                   # All scripting folders consolidated
 ├── scratch/                                 # Gitignored experimentation folder (.gitkeep only)
@@ -215,6 +228,7 @@ Scripting/                                   # All scripting folders consolidate
 - Viewer settings persisted at `~/.config/PhysicsSandbox/viewer-settings.json` (resolution, fullscreen, AA, shadows, texture filtering, VSync)
 - Stride3D uses OpenGL graphics API (`<StrideGraphicsApi>OpenGL</StrideGraphicsApi>`) for container/GPU-passthrough compatibility
 - Stride asset compiler disabled by default (`StrideCompilerSkipBuild`); builds without it for CI, enable for live runs with GPU
+- Recording sessions persist at `~/.config/PhysicsSandbox/recordings/{session-guid}/` (session.json metadata + chunk-*.bin data files)
 
 ## Engineering Exceptions
 
@@ -259,3 +273,7 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - Pipeline diagnostics: viewer render time (`ViewerRenderMs`) not yet populated — remains 0.0. Simulation tick, serialization, and transfer times are measured correctly. [Source: specs/002-performance-diagnostics]
 - PhysicsClient NuGet repacked to 0.2.0 (from 0.1.0) to expose raycast, sweepCast, overlap, setBodyPose APIs to demo scripts. Prelude.fsx pins `#r "nuget: PhysicsClient, 0.2.0"`. ServiceDefaults and Contracts also repacked to 0.2.0 as transitive dependencies. [Source: specs/005-enhance-demos]
 - Demo Prelude weld/distance-limit constraints are built inline (not from Prelude helpers) because only ball-socket and hinge are in the Prelude constraint section. Promoting all constraint builders to Prelude is a future improvement. [Source: specs/005-enhance-demos]
+- Recording data stored at `~/.config/PhysicsSandbox/recordings/` with one subdirectory per session containing `session.json` + `chunk-*.bin` files. Follows same XDG convention as viewer settings. [Source: specs/005-mcp-data-logging]
+- ChunkWriter uses bounded Channel<LogEntry> with DropOldest (capacity 10,000). Under extreme load, oldest entries may be dropped before reaching disk. Non-blocking design ensures stream callbacks never stall. [Source: specs/005-mcp-data-logging]
+- Recording auto-starts on first SimulationState received (FR-210). If manually stopped, does NOT auto-restart — requires explicit start_recording tool call. [Source: specs/005-mcp-data-logging]
+- Restart recovery: on MCP server startup, any session with Status=Recording is marked Completed (was interrupted). Data is preserved for querying. [Source: specs/005-mcp-data-logging]

@@ -5,6 +5,7 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open ModelContextProtocol.Server
 open PhysicsSandbox.Mcp.GrpcConnection
+open PhysicsSandbox.Mcp.Recording.RecordingEngine
 
 let builder = WebApplication.CreateBuilder()
 builder.AddServiceDefaults() |> ignore
@@ -18,11 +19,21 @@ let serverAddress =
     | _, url when not (String.IsNullOrEmpty url) -> url
     | _ -> "http://localhost:5180"
 
-// Register GrpcConnection as singleton
-builder.Services.AddSingleton<GrpcConnection>(fun _ ->
+// Create recording engine (auto-starts on first state received)
+let engine: RecordingEngine = create ()
+let onState = fun (s: PhysicsSandbox.Shared.Contracts.SimulationState) -> engine.OnStateReceived(s)
+let onCommand = fun (e: PhysicsSandbox.Shared.Contracts.CommandEvent) -> engine.OnCommandReceived(e)
+
+// Register GrpcConnection as singleton with recording callbacks
+builder.Services.AddSingleton<GrpcConnection>(fun (_: IServiceProvider) ->
     let conn = new GrpcConnection(serverAddress)
+    conn.OnStateReceived <- Some onState
+    conn.OnCommandReceived <- Some onCommand
     conn.Start()
     conn) |> ignore
+
+// Register RecordingEngine as singleton for tool injection
+builder.Services.AddSingleton<RecordingEngine>(fun (_: IServiceProvider) -> engine) |> ignore
 
 builder.Services
     .AddMcpServer()

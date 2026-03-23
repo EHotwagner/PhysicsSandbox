@@ -17,5 +17,6 @@
     <Project Path="tests/PhysicsServer.Tests/PhysicsServer.Tests.fsproj" />
     <Project Path="tests/PhysicsViewer.Tests/PhysicsViewer.Tests.fsproj" />
     <Project Path="tests/PhysicsSandbox.Scripting.Tests/PhysicsSandbox.Scripting.Tests.fsproj" />
+    <Project Path="tests/PhysicsSandbox.Mcp.Tests/PhysicsSandbox.Mcp.Tests.fsproj" />
   </Folder>
 </Solution>
