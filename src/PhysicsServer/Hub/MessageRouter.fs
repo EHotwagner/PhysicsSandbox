@@ -28,7 +28,8 @@ type MessageRouter =
       ViewCommandChannel: Channel<ViewCommand>
       mutable SimulationConnected: bool
       SimulationLock: obj
-      Metrics: MetricsCounter.MetricsState }
+      Metrics: MetricsCounter.MetricsState
+      MeshCache: MeshCache.MeshCacheState }
 
 /// <summary>Pending query completions, keyed by correlation ID.</summary>
 let internal pendingQueries = ConcurrentDictionary<string, TaskCompletionSource<QueryResponse>>()
@@ -43,7 +44,8 @@ let create () =
       ViewCommandChannel = Channel.CreateBounded<ViewCommand>(1024)
       SimulationConnected = false
       SimulationLock = obj ()
-      Metrics = MetricsCounter.create "PhysicsServer" }
+      Metrics = MetricsCounter.create "PhysicsServer"
+      MeshCache = MeshCache.create () }
 
 /// <summary>Register a callback to receive command audit events (both simulation and view commands).</summary>
 /// <param name="router">The message router to subscribe to.</param>
@@ -94,6 +96,10 @@ let submitCommand (router: MessageRouter) (cmd: SimulationCommand) =
 
     if written then
         MetricsCounter.incrementSent 1 (int64 (cmd.CalculateSize())) router.Metrics
+
+    // Clear mesh cache on reset command
+    if cmd.CommandCase = SimulationCommand.CommandOneofCase.Reset then
+        MeshCache.clear router.MeshCache
 
     // Publish to command audit subscribers
     let evt = CommandEvent()
@@ -163,6 +169,14 @@ let publishState (router: MessageRouter) (state: SimulationState) =
 
         // Process query responses before caching/broadcasting
         processQueryResponses state
+
+        // Cache new mesh geometries from this state update
+        let newMeshCount = state.NewMeshes.Count
+        for mg in state.NewMeshes do
+            MeshCache.add mg.MeshId mg.Shape router.MeshCache
+        if newMeshCount > 0 then
+            MetricsCounter.incrementMeshesCached newMeshCount router.Metrics
+
         StateCache.update router.StateCache state
 
         for kvp in router.Subscribers do
@@ -194,6 +208,7 @@ let tryConnectSimulation (router: MessageRouter) =
 let disconnectSimulation (router: MessageRouter) =
     lock router.SimulationLock (fun () ->
         router.SimulationConnected <- false)
+    MeshCache.clear router.MeshCache
 
 /// <summary>Capture a point-in-time snapshot of the server's throughput metrics.</summary>
 /// <param name="router">The message router to query.</param>
@@ -206,6 +221,10 @@ let getMetrics (router: MessageRouter) =
 /// <returns>The underlying MetricsState for direct use with MetricsCounter functions.</returns>
 let metricsState (router: MessageRouter) =
     router.Metrics
+
+/// <summary>Access the mesh cache for FetchMeshes RPC.</summary>
+let meshCache (router: MessageRouter) =
+    router.MeshCache
 
 /// <summary>Submit a batch of simulation commands (max 100). Each command is individually forwarded and its result recorded.</summary>
 /// <param name="router">The message router to submit through.</param>

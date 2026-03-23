@@ -30,6 +30,8 @@ Last updated: 2026-03-23
 - F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts), Python 3.10+ (demo scripts) + .NET Aspire 13.1.3, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console, xUnit 2.x (005-refactor-evaluation)
 - F# on .NET 10.0 + Google.Protobuf 3.x (binary serialization), System.Text.Json (session metadata), System.Threading.Channels (async producer-consumer), ModelContextProtocol.AspNetCore 1.1.* (MCP tool registration) (005-mcp-data-logging)
 - Append-only protobuf binary files at `~/.config/PhysicsSandbox/recordings/`, JSON metadata per session (005-mcp-data-logging)
+- F# on .NET 10.0 (services, MCP, client, viewer), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console (004-mesh-cache-transport)
+- In-memory (physics world, mesh caches). Append-only protobuf binary files for MCP recordings. (004-mesh-cache-transport)
 
 ## Project Structure
 
@@ -92,14 +94,32 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 004-mesh-cache-transport: Mesh cache and on-demand transport — complex shapes (ConvexHull, MeshShape, Compound) use CachedShapeRef (mesh_id + bbox) instead of inline geometry after first tick. Server MeshCache + FetchMeshes RPC. MeshResolver in viewer/client/MCP. Viewer bounding box placeholders. MeshDefinition recording. 75 tasks, 262+ tests.
 - 005-mcp-data-logging: Added persistent data recording to MCP server — auto-captures all state updates + command events to protobuf binary chunk files at `~/.config/PhysicsSandbox/recordings/`. 9 new MCP tools (5 session management + 4 query). Dual-limit pruning (10 min / 500 MB). Async Channel pipeline. 12 new unit tests
 - 005-refactor-evaluation: Added F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts), Python 3.10+ (demo scripts) + .NET Aspire 13.1.3, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console, xUnit 2.x
-- 005-enhance-demos: Enhanced demo suite 15→18 demos. Fixed Demo 03/04 projectile impacts. Added Demo 16 (4 constraint types), Demo 17 (physics queries), Demo 18 (kinematic bodies). Distributed 8/10 shape types + colors + materials across all demos. PhysicsClient NuGet repacked to 0.2.0. Prelude extended with triangle/convex hull/compound/kinematic builders + query/pose helpers + color palette
 
 ## Environment
 
 - Container with GPU passthrough — not headless
 - Stride3D viewer and other GPU workloads are expected to run
+
+## Network Problem Logging
+
+When you encounter errors related to **Aspire service discovery, port binding, gRPC connectivity, HTTP/2 negotiation, SSL/TLS certificates, or service-to-service communication** during implementation or debugging, append a structured entry to `reports/NetworkProblems.md`. Create the file if it doesn't exist.
+
+Entry format:
+```markdown
+### [Short title] — YYYY-MM-DD
+
+**Context**: What you were doing when it happened
+**Error**: Paste the actual error message or relevant log output
+**Root Cause**: What caused it (if known)
+**Hypothesis**: If root cause unknown, what you suspect
+**Resolution**: What fixed it (or "unresolved")
+**Prevention**: How to avoid it in the future (if applicable)
+```
+
+Do this every time — even for transient errors that self-resolve, since patterns in transient failures are valuable.
 
 ## Known Issues & Gotchas
 

@@ -12,6 +12,8 @@
     <Compile Include="CameraControllerTests.fs" />
     <Compile Include="ViewerSettingsTests.fs" />
     <Compile Include="DisplayManagerTests.fs" />
+    <Compile Include="ShapeGeometryTests.fs" />
+    <Compile Include="MeshResolverTests.fs" />
     <Compile Include="SurfaceAreaTests.fs" />
   </ItemGroup>
 

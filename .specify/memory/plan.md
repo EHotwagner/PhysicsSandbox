@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-23
-**Revision**: Updated with 005-mcp-data-logging archival
+**Revision**: Updated with 004-mesh-cache-transport archival
 
 ## Technical Context
 
@@ -31,8 +31,9 @@ src/
 ├── PhysicsServer/                       # F# — server hub (central message router)
 │   ├── Hub/
 │   │   ├── StateCache.fsi/.fs           # Latest-state caching for late joiners
+│   │   ├── MeshCache.fsi/.fs             # Server-side mesh geometry cache (ConcurrentDictionary)
 │   │   ├── MessageRouter.fsi/.fs        # Command/state routing, subscriber mgmt, batch routing
-│   │   └── MetricsCounter.fsi/.fs       # Thread-safe per-service metrics tracking (Interlocked)
+│   │   └── MetricsCounter.fsi/.fs       # Thread-safe per-service metrics tracking (Interlocked, mesh cache counters)
 │   ├── Services/
 │   │   ├── PhysicsHubService.fsi/.fs    # Client/viewer-facing gRPC
 │   │   └── SimulationLinkService.fsi/.fs # Simulation-facing gRPC
@@ -40,7 +41,8 @@ src/
 │
 ├── PhysicsSimulation/                   # F# — physics simulation (gRPC client)
 │   ├── World/
-│   │   ├── SimulationWorld.fsi/.fs      # BepuFSharp world wrapper, body/force management
+│   │   ├── MeshIdGenerator.fsi/.fs      # Content-addressed mesh ID (SHA-256) + AABB computation
+│   │   ├── SimulationWorld.fsi/.fs      # BepuFSharp world wrapper, body/force management, CachedShapeRef emission
 │   ├── Commands/
 │   │   ├── CommandHandler.fsi/.fs       # Command dispatch (16 command types incl. constraints, shapes, queries, pose)
 │   ├── Queries/
@@ -61,6 +63,7 @@ src/
 │   │   ├── DisplayManager.fsi/.fs       # Fullscreen/resolution/quality Stride API wrapper
 │   │   └── SettingsOverlay.fsi/.fs      # F2 text-based settings UI (DebugTextSystem)
 │   ├── Streaming/
+│   │   ├── MeshResolver.fsi/.fs         # Local mesh cache + async FetchMeshes client
 │   │   └── ViewerClient.fsi/.fs         # gRPC streaming client with auto-reconnect
 │   └── Program.fs                       # Host + Stride game loop + F11/F2/Escape input
 │
@@ -70,7 +73,8 @@ src/
     │   ├── Presets.fsi/.fs              # 7 body presets (marble, bowlingBall, crate, etc.)
     │   └── Generators.fsi/.fs           # Random generators + scene builders
     ├── Connection/
-    │   └── Session.fsi/.fs              # gRPC connection, state caching, body registry
+    │   ├── MeshResolver.fsi/.fs         # Local mesh cache + sync FetchMeshes client
+    │   └── Session.fsi/.fs              # gRPC connection, state caching, body registry, MeshResolver
     ├── Commands/
     │   ├── SimulationCommands.fsi/.fs   # All simulation command wrappers
     │   └── ViewCommands.fsi/.fs         # Camera, zoom, wireframe wrappers
@@ -92,7 +96,8 @@ src/
 │   ├── SimulationLifecycle.fsi/.fs    # resetSimulation, runFor, nextId
 │   └── Prelude.fsi/.fs               # [<AutoOpen>] re-export of all functions
 │
-└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 53 tools)
+└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 58 tools)
+    ├── MeshResolver.fsi/.fs            # Local mesh cache + sync FetchMeshes client
     ├── GrpcConnection.fsi/.fs          # gRPC channel + 3 background streams (state, view, audit) + batch/metrics RPCs
     ├── SimulationTools.fsi/.fs         # 17 simulation/query MCP tools (incl. constraints, shapes, queries, collision filter, body pose)
     ├── ViewTools.fsi/.fs               # 3 view command MCP tools
@@ -131,21 +136,22 @@ tests/
 │   ├── DiagnosticsIntegrationTests.cs # Pipeline diagnostics end-to-end tests
 │   ├── StaticBodyTests.cs             # Static body collision verification
 │   ├── StressTestIntegrationTests.cs  # Stress test MCP tool end-to-end tests
+│   ├── MeshCacheIntegrationTests.cs   # End-to-end mesh caching: CachedShapeRef + FetchMeshes + late-joiner
 │   ├── ComparisonIntegrationTests.cs  # MCP-vs-scripting comparison tests
 │   └── xunit.runner.json              # Test runner configuration
-├── PhysicsServer.Tests/                 # F# — unit tests (18 tests)
+├── PhysicsServer.Tests/                 # F# — unit tests (35 tests)
 │   ├── StateCacheTests.fs
 │   ├── MessageRouterTests.fs            # Includes readViewCommand tests
 │   ├── BatchRoutingTests.fs             # Batch command routing tests
 │   ├── MetricsCounterTests.fs           # MetricsCounter unit tests
 │   └── PublicApiBaseline.txt            # Surface-area baseline
-├── PhysicsSimulation.Tests/             # F# — unit tests (85 tests)
+├── PhysicsSimulation.Tests/             # F# — unit tests (103 tests)
 │   ├── SimulationWorldTests.fs          # Lifecycle, bodies, forces, gravity, stress
 │   ├── CommandHandlerTests.fs           # Command dispatch, edge cases
 │   ├── ResetSimulationTests.fs          # Reset/restart command tests
 │   ├── StaticBodyTrackingTests.fs       # Static body state tracking tests
 │   └── SurfaceAreaTests.fs              # Public API baseline verification
-├── PhysicsViewer.Tests/                 # F# — unit tests (49 tests)
+├── PhysicsViewer.Tests/                 # F# — unit tests (56 tests)
 │   ├── SceneManagerTests.fs             # Shape classification, state accessors
 │   ├── CameraControllerTests.fs         # Camera math, command application
 │   ├── FpsCounterTests.fs               # FPS calculation, logging interval, threshold tests
@@ -159,7 +165,7 @@ tests/
 │   ├── CommandBuildersTests.fs
 │   ├── SurfaceAreaTests.fs
 │   └── SurfaceAreaBaseline.txt
-├── PhysicsClient.Tests/                 # F# — unit tests (52 tests)
+├── PhysicsClient.Tests/                 # F# — unit tests (56 tests)
 │   ├── IdGeneratorTests.fs              # Sequential IDs, reset, thread safety
 │   ├── SessionTests.fs                  # Connection lifecycle
 │   ├── SimulationCommandsTests.fs       # Proto message construction, Vec3 conversion
@@ -168,7 +174,7 @@ tests/
 │   ├── SteeringTests.fs                 # Direction-to-Vec3 mapping
 │   ├── StateDisplayTests.fs             # Vec3 formatting, velocity magnitude, shapes
 │   └── SurfaceAreaTests.fs              # Public API baseline for all 9 modules
-├── PhysicsSandbox.Mcp.Tests/            # F# — unit tests (12 tests)
+├── PhysicsSandbox.Mcp.Tests/            # F# — unit tests (13 tests)
 │   ├── ChunkWriterTests.fs
 │   ├── ChunkReaderTests.fs
 │   ├── SessionStoreTests.fs
@@ -277,3 +283,9 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - ChunkWriter uses bounded Channel<LogEntry> with DropOldest (capacity 10,000). Under extreme load, oldest entries may be dropped before reaching disk. Non-blocking design ensures stream callbacks never stall. [Source: specs/005-mcp-data-logging]
 - Recording auto-starts on first SimulationState received (FR-210). If manually stopped, does NOT auto-restart — requires explicit start_recording tool call. [Source: specs/005-mcp-data-logging]
 - Restart recovery: on MCP server startup, any session with Status=Recording is marked Completed (was interrupted). Data is preserved for querying. [Source: specs/005-mcp-data-logging]
+- Proto `CachedShapeRef` type added to Shape oneof (field 11). Use type alias `ProtoCachedShapeRef = PhysicsSandbox.Shared.Contracts.CachedShapeRef` in F# files that also use BepuFSharp types. [Source: specs/004-mesh-cache-transport]
+- Mesh IDs are SHA-256 hashes truncated to 128 bits (32 hex chars). Protobuf serialization is deterministic for proto3 (no map fields in shape messages). [Source: specs/004-mesh-cache-transport]
+- Body removal does NOT evict mesh cache entries — orphaned IDs persist until reset/disconnect. Content-addressed IDs prevent correctness issues. [Source: specs/004-mesh-cache-transport]
+- Compound shapes are cached as atomic units (single hash of entire Compound proto). Children are not independently identified. [Source: specs/004-mesh-cache-transport]
+- Viewer MeshResolver uses `Async.Start` for non-blocking fetch. Client/MCP use synchronous fetch (blocking acceptable for text/request-response). [Source: specs/004-mesh-cache-transport]
+- Demo Prelude.fsx references PhysicsClient NuGet 0.2.0 which does not include CachedShapeRef/MeshGeometry/FetchMeshes types. The `resolveShape` helper cannot be added until PhysicsClient is repacked. [Source: specs/004-mesh-cache-transport]

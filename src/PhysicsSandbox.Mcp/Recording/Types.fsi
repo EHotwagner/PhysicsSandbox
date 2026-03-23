@@ -5,8 +5,9 @@ open System
 /// Entry type discriminator byte for the on-disk wire format.
 [<RequireQualifiedAccess>]
 type EntryType =
-    | StateSnapshot = 0uy
-    | CommandEvent  = 1uy
+    | StateSnapshot    = 0uy
+    | CommandEvent     = 1uy
+    | MeshDefinition   = 2uy
 
 /// Recording session status.
 [<RequireQualifiedAccess>]
@@ -45,8 +46,9 @@ type PaginationCursor =
 /// A single recorded log entry (in-memory representation).
 [<RequireQualifiedAccess>]
 type LogEntry =
-    | StateSnapshot  of timestamp: DateTimeOffset * state: PhysicsSandbox.Shared.Contracts.SimulationState
-    | CommandEvent   of timestamp: DateTimeOffset * event: PhysicsSandbox.Shared.Contracts.CommandEvent
+    | StateSnapshot    of timestamp: DateTimeOffset * state: PhysicsSandbox.Shared.Contracts.SimulationState
+    | CommandEvent     of timestamp: DateTimeOffset * event: PhysicsSandbox.Shared.Contracts.CommandEvent
+    | MeshDefinition   of timestamp: DateTimeOffset * meshId: string * shape: PhysicsSandbox.Shared.Contracts.Shape
 
 /// Wire format constants for binary chunk files.
 /// Format: [uint32 totalSize | int64 timestampMs | byte entryType | byte[] payload]

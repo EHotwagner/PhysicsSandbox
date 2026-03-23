@@ -1,38 +1,30 @@
 {
-  "applied_at": "2026-03-22T00:00:00Z",
-  "feature": "005-stride-bepu-integration",
-  "proposals_applied": 4,
-  "specs_updated": [
+  "applied_at": "2026-03-23T00:00:00Z",
+  "feature": "004-mesh-cache-transport",
+  "changes": [
     {
-      "spec": "005-stride-bepu-integration",
-      "requirement": "FR-006b",
+      "spec": "004-mesh-cache-transport",
+      "requirement": "FR-010",
       "change_type": "modified",
-      "direction": "BACKFILL",
-      "before": "The server MUST cache registered shapes and include shape definitions in state streams only on first use, so all clients (including custom ones) can build and maintain a local shape cache.",
-      "after": "The server MUST cache registered shapes and include all registered shape definitions in every state stream update, so all clients (including late-joiners) receive the complete shape cache without per-subscriber tracking."
+      "before": "System MUST invalidate mesh caches when the simulation is reset or bodies are removed.",
+      "after": "System MUST invalidate all mesh caches when the simulation is reset or the simulation disconnects. Individual body removal does not evict mesh entries — shared mesh IDs may still be referenced by other bodies, and orphaned entries are reclaimed on the next reset or disconnect."
     },
     {
-      "spec": "005-stride-bepu-integration",
-      "requirement": "SC-008",
+      "spec": "004-mesh-cache-transport",
+      "requirement": "FR-011",
       "change_type": "modified",
-      "direction": "BACKFILL",
-      "before": "All new features are accessible through the existing client interfaces (REPL commands, MCP tools, scripting library).",
-      "after": "All new features MUST be accessible through the REPL and MCP interfaces. The scripting library MUST provide convenience builders for the most commonly used constraint types (ball-socket, hinge, weld, distance limit) with the remaining types constructible via standard proto message builders."
-    }
-  ],
-  "align_tasks_generated": [
-    {
-      "task": 1,
-      "requirement": "FR-007",
-      "summary": "Custom MeshDraw rendering for Triangle, Compound, Mesh shapes",
-      "effort": "medium"
+      "before": "System MUST handle compound shapes by independently caching each child shape's geometry.",
+      "after": "System MUST handle compound shapes as cacheable units. A compound shape receives a single content-addressed identifier derived from the serialized representation of all its children (shapes and local poses). Identical compound structures produce the same identifier. Individual children within a compound are not independently cached — the compound is treated as an atomic geometry unit for caching purposes."
     },
     {
-      "task": 2,
-      "requirement": "FR-030",
-      "summary": "Add SetBodyPose command for kinematic runtime pose updates",
-      "effort": "medium"
+      "spec": "004-mesh-cache-transport",
+      "requirement": "FR-016",
+      "change_type": "added",
+      "before": null,
+      "after": "The MCP recording system MUST persist mesh geometry definitions alongside state snapshots so that recording sessions are self-contained and can be replayed without requiring a live server to resolve mesh identifiers."
     }
   ],
-  "backup": ".specify/sync/backups/spec.md.2026-03-22.bak"
+  "backup": ".specify/sync/backups/004-mesh-cache-transport-spec-2026-03-23.md",
+  "not_applied": [],
+  "tasks_generated": 0
 }

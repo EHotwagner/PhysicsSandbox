@@ -16,6 +16,7 @@
     <Compile Include="StateCacheTests.fs" />
     <Compile Include="MetricsCounterTests.fs" />
     <Compile Include="BatchRoutingTests.fs" />
+    <Compile Include="MeshCacheTests.fs" />
     <Compile Include="MessageRouterTests.fs" />
   </ItemGroup>
 

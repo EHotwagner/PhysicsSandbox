@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="World/MeshIdGenerator.fsi" />
+    <Compile Include="World/MeshIdGenerator.fs" />
     <Compile Include="World/SimulationWorld.fsi" />
     <Compile Include="World/SimulationWorld.fs" />
     <Compile Include="Queries/QueryHandler.fsi" />

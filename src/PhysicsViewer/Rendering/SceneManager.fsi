@@ -12,7 +12,8 @@ val create: unit -> SceneState
 
 /// Apply a simulation state snapshot to the scene.
 /// Adds new entities, updates existing positions/orientations, removes absent bodies.
-val applyState: Game -> Scene -> SceneState -> SimulationState -> SceneState
+/// Optional MeshResolver resolves CachedShapeRef to real shapes; unresolved shapes render as bounding box placeholders.
+val applyState: Game -> Scene -> SceneState -> SimulationState -> Streaming.MeshResolver.MeshResolverState option -> SceneState
 
 /// Apply wireframe toggle. Returns updated SceneState with new wireframe mode.
 val applyWireframe: Game -> ToggleWireframe -> SceneState -> SceneState

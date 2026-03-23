@@ -16,6 +16,8 @@
   <ItemGroup>
     <Compile Include="Bodies/IdGenerator.fsi" />
     <Compile Include="Bodies/IdGenerator.fs" />
+    <Compile Include="Connection/MeshResolver.fsi" />
+    <Compile Include="Connection/MeshResolver.fs" />
     <Compile Include="Connection/Session.fsi" />
     <Compile Include="Connection/Session.fs" />
     <Compile Include="Commands/SimulationCommands.fsi" />

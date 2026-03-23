@@ -83,7 +83,9 @@ type internal BodyRecord =
       Color: PhysicsSandbox.Shared.Contracts.Color option
       Material: PhysicsSandbox.Shared.Contracts.MaterialProperties option
       CollisionGroup: uint32
-      CollisionMask: uint32 }
+      CollisionMask: uint32
+      MeshId: string option
+      BoundingBox: (PhysicsSandbox.Shared.Contracts.Vec3 * PhysicsSandbox.Shared.Contracts.Vec3) option }
 
 /// Internal: enqueue a query response for the next state.
 val internal addQueryResponse : World -> PhysicsSandbox.Shared.Contracts.QueryResponse -> unit

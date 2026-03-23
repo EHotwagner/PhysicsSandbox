@@ -15,10 +15,12 @@ let ``SimulationWorld public API matches baseline`` () =
     let t = typeof<PhysicsSimulation.SimulationWorld.World>.DeclaringType
     let members = getPublicMembers t
     let expected = [|
-        "addBody"; "applyForce"; "applyImpulse"; "applyTorque"
+        "addBody"; "addConstraint"; "applyForce"; "applyImpulse"; "applyTorque"
         "clearForces"; "create"; "currentState"; "destroy"
-        "isRunning"; "removeBody"; "setGravity"; "setRunning"
-        "step"; "time"
+        "isRunning"; "registerShape"; "removeBody"; "removeConstraint"
+        "resetSimulation"; "setBodyPose"; "setCollisionFilter"
+        "setGravity"; "setRunning"; "step"; "time"
+        "unregisterShape"
     |]
     for name in expected do
         Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
@@ -36,3 +38,11 @@ let ``SimulationClient public API matches baseline`` () =
     Assert.NotNull(t)
     let members = getPublicMembers t
     Assert.Contains("run", members)
+
+[<Fact>]
+let ``MeshIdGenerator public API matches baseline`` () =
+    let t = typeof<PhysicsSimulation.SimulationWorld.World>.Assembly.GetType("PhysicsSimulation.MeshIdGenerator")
+    Assert.NotNull(t)
+    let members = getPublicMembers t
+    Assert.Contains("computeMeshId", members)
+    Assert.Contains("computeBoundingBox", members)

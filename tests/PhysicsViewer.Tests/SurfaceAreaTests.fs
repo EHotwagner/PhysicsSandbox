@@ -90,3 +90,11 @@ let ``SettingsOverlay public API matches baseline`` () =
     let expected = [| "create"; "handleInput"; "isVisible"; "render"; "toggle" |]
     for name in expected do
         Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+
+[<Fact>]
+let ``MeshResolver public API matches baseline`` () =
+    let t = viewerAssembly.GetType("PhysicsViewer.Streaming.MeshResolver")
+    Assert.NotNull(t)
+    let members = getPublicMembers t
+    for name in [| "create"; "fetchMissing"; "processNewMeshes"; "resolve" |] do
+        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")

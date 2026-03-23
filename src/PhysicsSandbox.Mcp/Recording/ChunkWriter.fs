@@ -103,6 +103,9 @@ type ChunkWriter(config: ChunkWriterConfig) =
             | LogEntry.CommandEvent(ts, evt) ->
                 eventCount <- eventCount + 1L
                 ts.ToUnixTimeMilliseconds(), EntryType.CommandEvent, evt.ToByteArray()
+            | LogEntry.MeshDefinition(ts, meshId, shape) ->
+                let mg = MeshGeometry(MeshId = meshId, Shape = shape)
+                ts.ToUnixTimeMilliseconds(), EntryType.MeshDefinition, mg.ToByteArray()
 
         let entryMinute = truncateToMinute timestampMs
 

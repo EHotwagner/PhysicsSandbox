@@ -1,36 +1,50 @@
 {
   "generated": "2026-03-23T00:00:00Z",
   "project": "PhysicsSandbox",
-  "feature": "005-mcp-data-logging",
+  "feature": "004-mesh-cache-transport",
   "summary": {
     "specs_analyzed": 1,
-    "requirements_checked": 16,
-    "aligned": 15,
-    "drifted": 1,
+    "requirements_checked": 20,
+    "aligned": 18,
+    "drifted": 2,
     "not_implemented": 0,
-    "unspecced_features": 0
+    "unspecced_features": 1
   },
   "specs": [
     {
-      "id": "005-mcp-data-logging",
-      "title": "MCP Data Logging for Analysis",
+      "id": "004-mesh-cache-transport",
+      "title": "Mesh Cache and On-Demand Transport",
       "aligned": [
-        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006",
-        "FR-007", "FR-008", "FR-009", "FR-010", "FR-011", "FR-012",
-        "FR-013", "FR-014", "FR-016"
+        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007",
+        "FR-008", "FR-009", "FR-012", "FR-013", "FR-014", "FR-015",
+        "SC-001", "SC-002", "SC-003", "SC-004", "SC-005"
       ],
       "drifted": [
         {
-          "requirement": "FR-015",
-          "spec_text": "configurable page size (default 100 entries)",
-          "actual": "default page size is 50 entries",
-          "location": "src/PhysicsSandbox.Mcp/Recording/ChunkReader.fs",
+          "requirement": "FR-010",
+          "spec_text": "System MUST invalidate mesh caches when the simulation is reset or bodies are removed.",
+          "actual": "Reset and disconnect clear server MeshCache and simulation EmittedMeshIds. Body removal (removeBody) does NOT clear orphaned mesh entries from the server cache.",
+          "location": "src/PhysicsSimulation/World/SimulationWorld.fs:482-501",
+          "severity": "minor"
+        },
+        {
+          "requirement": "FR-011",
+          "spec_text": "System MUST handle compound shapes by independently caching each child shape's geometry.",
+          "actual": "Compound shapes are cached as a single atomic unit (one SHA-256 hash of entire Compound proto). Children are not individually identified or cached.",
+          "location": "src/PhysicsSimulation/World/MeshIdGenerator.fs:24-25",
           "severity": "minor"
         }
       ],
       "not_implemented": []
     }
   ],
-  "unspecced": [],
+  "unspecced": [
+    {
+      "feature": "MeshDefinition recording in MCP sessions",
+      "location": "src/PhysicsSandbox.Mcp/Recording/",
+      "lines": 20,
+      "suggested_spec": "004-mesh-cache-transport"
+    }
+  ],
   "conflicts": []
 }

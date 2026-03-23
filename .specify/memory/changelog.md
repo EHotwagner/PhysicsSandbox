@@ -1,5 +1,56 @@
 # Merged Features Log
 
+## Mesh Cache and On-Demand Transport — 2026-03-23
+**Branch:** 004-mesh-cache-transport
+**Spec:** specs/004-mesh-cache-transport
+
+**What was added:**
+- Bandwidth-efficient state streaming: complex shapes (ConvexHull, MeshShape, Compound) replaced with CachedShapeRef (mesh_id + bounding box) after first transmission, reducing per-body message size by ~96%
+- Content-addressed mesh ID generation (SHA-256 truncated to 128 bits) ensuring identical geometry always maps to the same identifier
+- Server-side MeshCache (ConcurrentDictionary) populated from state updates, cleared on reset/disconnect
+- FetchMeshes unary RPC for on-demand mesh geometry retrieval by late-joining subscribers
+- MeshResolver modules for viewer (async fetch), client (sync fetch), MCP (sync fetch) — each with local ConcurrentDictionary cache
+- Viewer bounding box placeholders (semi-transparent magenta) for unresolved meshes, replaced with real shapes on resolution
+- Async non-blocking mesh fetch in viewer (Async.Start) — does not block 60 Hz state stream
+- MeshDefinition recording entries in MCP for self-contained session replay
+- Structured logging and metrics for mesh cache events (hits, misses, cached count)
+- 2 integration tests: CachedShapeRef verification + late-joiner mesh resolution
+
+**New Components:**
+- `src/PhysicsSimulation/World/MeshIdGenerator.fsi/.fs` — Content-addressed SHA-256 mesh ID + AABB computation
+- `src/PhysicsServer/Hub/MeshCache.fsi/.fs` — Server-side mesh geometry cache
+- `src/PhysicsViewer/Streaming/MeshResolver.fsi/.fs` — Viewer local cache + async FetchMeshes
+- `src/PhysicsClient/Connection/MeshResolver.fsi/.fs` — Client local cache + sync FetchMeshes
+- `src/PhysicsSandbox.Mcp/MeshResolver.fsi/.fs` — MCP local cache + sync FetchMeshes
+- `tests/PhysicsServer.Tests/MeshCacheTests.fs` — 8 MeshCache unit tests
+- `tests/PhysicsViewer.Tests/ShapeGeometryTests.fs` — 3 CachedShapeRef rendering tests
+- `tests/PhysicsViewer.Tests/MeshResolverTests.fs` — 3 viewer resolver tests
+- `tests/PhysicsClient.Tests/MeshResolverTests.fs` — 3 client resolver tests
+- `tests/PhysicsSandbox.Mcp.Tests/SurfaceAreaTests.fs` — MCP MeshResolver surface area test
+- `tests/PhysicsSandbox.Integration.Tests/MeshCacheIntegrationTests.cs` — 2 end-to-end tests
+
+**Modified Components:**
+- `src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto` — CachedShapeRef, MeshGeometry, MeshRequest/Response, FetchMeshes RPC, SimulationState.new_meshes
+- `src/PhysicsSimulation/World/SimulationWorld.fs/.fsi` — BodyRecord (MeshId, BoundingBox), EmittedMeshIds tracking, CachedShapeRef emission
+- `src/PhysicsServer/Hub/MessageRouter.fs/.fsi` — MeshCache field, populate on publishState, clear on disconnect/reset
+- `src/PhysicsServer/Hub/MetricsCounter.fs/.fsi` — Mesh cache metrics (cached, fetch hits/misses)
+- `src/PhysicsServer/Services/PhysicsHubService.fs/.fsi` — FetchMeshes RPC override
+- `src/PhysicsViewer/Rendering/ShapeGeometry.fs` — CachedShapeRef → Cube placeholder with bbox sizing
+- `src/PhysicsViewer/Rendering/SceneManager.fs/.fsi` — Placeholder tracking + entity recreation on resolution
+- `src/PhysicsViewer/Program.fs` — MeshResolver integration in state stream loop
+- `src/PhysicsClient/Connection/Session.fs/.fsi` — MeshResolver integration
+- `src/PhysicsClient/Display/StateDisplay.fs` — CachedShapeRef shape description resolution
+- `src/PhysicsClient/Display/LiveWatch.fs` — CachedShapeRef shape filter resolution
+- `src/PhysicsSandbox.Mcp/Program.fs` — MeshResolver integration
+- `src/PhysicsSandbox.Mcp/Recording/Types.fs/.fsi` — MeshDefinition LogEntry case
+- `src/PhysicsSandbox.Mcp/Recording/RecordingEngine.fs` — Write MeshDefinition entries
+- `src/PhysicsSandbox.Mcp/Recording/ChunkWriter.fs` — Handle MeshDefinition serialization
+- `src/PhysicsSandbox.Mcp/Recording/ChunkReader.fs` — Handle MeshDefinition deserialization
+
+**Tasks Completed:** 75/75 tasks
+
+---
+
 ## MCP Data Logging for Analysis — 2026-03-23
 **Branch:** 005-mcp-data-logging
 **Spec:** specs/005-mcp-data-logging

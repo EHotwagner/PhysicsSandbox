@@ -268,6 +268,112 @@ let ``changing gravity mid-simulation takes effect`` () =
     finally
         destroy world
 
+// ─── Mesh Cache Transport (T018) ─────────────────────────────────────────
+
+let private makeConvexHullBody id mass =
+    let cmd = AddBody(Id = id, Mass = mass)
+    cmd.Position <- Vec3(X = 0.0, Y = 5.0, Z = 0.0)
+    let hull = ConvexHull()
+    hull.Points.Add(Vec3(X = 0.0, Y = 0.0, Z = 0.0))
+    hull.Points.Add(Vec3(X = 1.0, Y = 0.0, Z = 0.0))
+    hull.Points.Add(Vec3(X = 0.0, Y = 1.0, Z = 0.0))
+    hull.Points.Add(Vec3(X = 0.0, Y = 0.0, Z = 1.0))
+    cmd.Shape <- Shape(ConvexHull = hull)
+    cmd
+
+[<Fact>]
+let ``ConvexHull body first state has CachedShapeRef and new_meshes`` () =
+    let world = create ()
+    try
+        let ack = addBody world (makeConvexHullBody "hull1" 1.0)
+        Assert.True(ack.Success)
+        let state = step world
+        // Body shape should be CachedShapeRef
+        let body = state.Bodies.[0]
+        Assert.Equal(Shape.ShapeOneofCase.CachedRef, body.Shape.ShapeCase)
+        Assert.NotEmpty(body.Shape.CachedRef.MeshId)
+        // new_meshes should contain exactly this mesh
+        Assert.Single(state.NewMeshes) |> ignore
+        Assert.Equal(body.Shape.CachedRef.MeshId, state.NewMeshes.[0].MeshId)
+        Assert.Equal(Shape.ShapeOneofCase.ConvexHull, state.NewMeshes.[0].Shape.ShapeCase)
+    finally
+        destroy world
+
+[<Fact>]
+let ``ConvexHull body second state has CachedShapeRef but empty new_meshes`` () =
+    let world = create ()
+    try
+        let _ = addBody world (makeConvexHullBody "hull1" 1.0)
+        let _ = step world
+        let state2 = step world
+        let body = state2.Bodies.[0]
+        Assert.Equal(Shape.ShapeOneofCase.CachedRef, body.Shape.ShapeCase)
+        Assert.Empty(state2.NewMeshes)
+    finally
+        destroy world
+
+[<Fact>]
+let ``Sphere body always uses inline shape`` () =
+    let world = create ()
+    try
+        let _ = addBody world (makeSphereBody "ball1" 1.0 0.5)
+        let state1 = step world
+        let body1 = state1.Bodies.[0]
+        Assert.Equal(Shape.ShapeOneofCase.Sphere, body1.Shape.ShapeCase)
+        Assert.Empty(state1.NewMeshes)
+        let state2 = step world
+        Assert.Equal(Shape.ShapeOneofCase.Sphere, state2.Bodies.[0].Shape.ShapeCase)
+        Assert.Empty(state2.NewMeshes)
+    finally
+        destroy world
+
+[<Fact>]
+let ``resetSimulation clears EmittedMeshIds so new_meshes re-emits`` () =
+    let world = create ()
+    try
+        let _ = addBody world (makeConvexHullBody "hull1" 1.0)
+        let state1 = step world
+        let meshId = state1.Bodies.[0].Shape.CachedRef.MeshId
+        Assert.Single(state1.NewMeshes) |> ignore
+        // Reset and re-add the same hull
+        let _ = resetSimulation world
+        let _ = addBody world (makeConvexHullBody "hull1" 1.0)
+        let state2 = step world
+        // Should re-emit mesh geometry since EmittedMeshIds was cleared
+        Assert.Single(state2.NewMeshes) |> ignore
+        Assert.Equal(meshId, state2.NewMeshes.[0].MeshId)
+    finally
+        destroy world
+
+[<Fact>]
+let ``CachedShapeRef has valid bounding box`` () =
+    let world = create ()
+    try
+        let _ = addBody world (makeConvexHullBody "hull1" 1.0)
+        let state = step world
+        let cachedRef = state.Bodies.[0].Shape.CachedRef
+        // bbox_min should be component-wise <= bbox_max
+        Assert.True(cachedRef.BboxMin.X <= cachedRef.BboxMax.X)
+        Assert.True(cachedRef.BboxMin.Y <= cachedRef.BboxMax.Y)
+        Assert.True(cachedRef.BboxMin.Z <= cachedRef.BboxMax.Z)
+    finally
+        destroy world
+
+[<Fact>]
+let ``duplicate ConvexHull bodies share same mesh_id and only one new_meshes entry`` () =
+    let world = create ()
+    try
+        let _ = addBody world (makeConvexHullBody "hull1" 1.0)
+        let _ = addBody world (makeConvexHullBody "hull2" 2.0)
+        let state = step world
+        let id1 = state.Bodies |> Seq.find (fun b -> b.Id = "hull1") |> fun b -> b.Shape.CachedRef.MeshId
+        let id2 = state.Bodies |> Seq.find (fun b -> b.Id = "hull2") |> fun b -> b.Shape.CachedRef.MeshId
+        Assert.Equal(id1, id2)
+        // Only one new_meshes entry despite two bodies with same geometry
+        Assert.Single(state.NewMeshes) |> ignore
+    finally
+        destroy world
+
 // ─── Edge Cases & Stress Tests (T043) ──────────────────────────────────────
 
 [<Fact>]

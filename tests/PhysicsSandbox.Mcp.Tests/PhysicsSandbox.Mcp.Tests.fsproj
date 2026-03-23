@@ -16,6 +16,7 @@
     <Compile Include="ChunkWriterTests.fs" />
     <Compile Include="SessionStoreTests.fs" />
     <Compile Include="RecordingEngineTests.fs" />
+    <Compile Include="SurfaceAreaTests.fs" />
   </ItemGroup>
 
   <ItemGroup>

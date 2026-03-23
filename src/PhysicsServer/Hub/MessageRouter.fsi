@@ -58,6 +58,9 @@ val getMetrics: MessageRouter -> ServiceMetricsReport
 /// Get the metrics state for periodic logging setup.
 val metricsState: MessageRouter -> MetricsCounter.MetricsState
 
+/// Access the mesh cache for FetchMeshes RPC.
+val meshCache: MessageRouter -> MeshCache.MeshCacheState
+
 /// Submit a batch of simulation commands. Returns per-command results.
 val sendBatchCommand: MessageRouter -> BatchSimulationRequest -> BatchResponse
 

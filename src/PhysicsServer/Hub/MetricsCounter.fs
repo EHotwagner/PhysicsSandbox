@@ -15,7 +15,11 @@ module MetricsCounter =
           mutable MessagesSent: int64
           mutable MessagesReceived: int64
           mutable BytesSent: int64
-          mutable BytesReceived: int64 }
+          mutable BytesReceived: int64
+          mutable MeshesCachedTotal: int64
+          mutable FetchRequestsTotal: int64
+          mutable FetchHitsTotal: int64
+          mutable FetchMissesTotal: int64 }
 
     /// <summary>Create a new zeroed metrics state for the given service name.</summary>
     /// <param name="serviceName">The display name used when reporting metrics.</param>
@@ -25,7 +29,11 @@ module MetricsCounter =
           MessagesSent = 0L
           MessagesReceived = 0L
           BytesSent = 0L
-          BytesReceived = 0L }
+          BytesReceived = 0L
+          MeshesCachedTotal = 0L
+          FetchRequestsTotal = 0L
+          FetchHitsTotal = 0L
+          FetchMissesTotal = 0L }
 
     /// <summary>Atomically increment the sent message count and byte total.</summary>
     /// <param name="count">Number of messages sent.</param>
@@ -42,6 +50,16 @@ module MetricsCounter =
     let incrementReceived (count: int) (bytes: int64) (state: MetricsState) : unit =
         Interlocked.Add(&state.MessagesReceived, int64 count) |> ignore
         Interlocked.Add(&state.BytesReceived, bytes) |> ignore
+
+    /// <summary>Atomically increment the mesh cache counters.</summary>
+    let incrementMeshesCached (count: int) (state: MetricsState) : unit =
+        Interlocked.Add(&state.MeshesCachedTotal, int64 count) |> ignore
+
+    /// <summary>Record a FetchMeshes request with hit/miss counts.</summary>
+    let incrementFetchRequest (hits: int) (misses: int) (state: MetricsState) : unit =
+        Interlocked.Increment(&state.FetchRequestsTotal) |> ignore
+        Interlocked.Add(&state.FetchHitsTotal, int64 hits) |> ignore
+        Interlocked.Add(&state.FetchMissesTotal, int64 misses) |> ignore
 
     /// <summary>Capture a point-in-time snapshot of the current metrics as a protobuf report.</summary>
     /// <param name="state">The metrics state to read.</param>

@@ -36,6 +36,10 @@ type PhysicsHubService =
         request: BatchViewRequest * context: ServerCallContext ->
             System.Threading.Tasks.Task<BatchResponse>
 
+    override FetchMeshes:
+        request: MeshRequest * context: ServerCallContext ->
+            System.Threading.Tasks.Task<MeshResponse>
+
     override GetMetrics:
         request: MetricsRequest * context: ServerCallContext ->
             System.Threading.Tasks.Task<MetricsResponse>

@@ -32,3 +32,6 @@ val internal sendCommand : session: Session -> PhysicsSandbox.Shared.Contracts.S
 
 /// Internal: send a view command and return the ack result.
 val internal sendViewCommand : session: Session -> PhysicsSandbox.Shared.Contracts.ViewCommand -> Result<unit, string>
+
+/// Internal: get the mesh resolver state for resolving CachedShapeRef.
+val internal meshResolver : session: Session -> PhysicsClient.MeshResolver.MeshResolverState

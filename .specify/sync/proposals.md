@@ -1,35 +1,35 @@
 # Drift Resolution Proposals
 
-Generated: 2026-03-22
-Based on: drift-report from 2026-03-22
+Generated: 2026-03-23
+Based on: drift-report from 2026-03-23 (004-mesh-cache-transport)
 
 ## Summary
 
 | Resolution Type | Count |
 |-----------------|-------|
-| Backfill (Code -> Spec) | 2 |
-| Align (Spec -> Code) | 2 |
+| Backfill (Code -> Spec) | 3 |
+| Align (Spec -> Code) | 0 |
 | Human Decision | 0 |
 | New Specs | 0 |
 | Remove from Spec | 0 |
 
 ## Proposals
 
-### Proposal 1: 005-stride-bepu-integration/FR-006b
+### Proposal 1: 004-mesh-cache-transport/FR-010
 
 **Direction**: BACKFILL
 
 **Current State**:
-- Spec says: "The server MUST cache registered shapes and include shape definitions in state streams only on first use, so all clients can build and maintain a local shape cache."
-- Code does: All registered shapes are included in every state stream update. This is simpler, stateless, and ensures late-joining clients always receive the full shape cache.
+- Spec says: "System MUST invalidate mesh caches when the simulation is reset or bodies are removed."
+- Code does: "Reset and disconnect clear server MeshCache and simulation EmittedMeshIds. Body removal does NOT clear orphaned mesh entries from the server cache."
 
 **Proposed Resolution**:
 
-Update FR-006b to:
+Update FR-010 to:
 
-> **FR-006b**: The server MUST cache registered shapes and include all registered shape definitions in every state stream update, so all clients (including late-joiners) receive the complete shape cache without per-subscriber tracking.
+> **FR-010**: System MUST invalidate all mesh caches when the simulation is reset or the simulation disconnects. Individual body removal does not evict mesh entries — shared mesh IDs may still be referenced by other bodies, and orphaned entries are reclaimed on the next reset or disconnect. This reset-based eviction strategy is sufficient for typical sandbox usage where scenes are transient.
 
-**Rationale**: The current implementation is a deliberate simplification. Per-subscriber cache tracking adds complexity (subscriber identity management, cache invalidation, reconnection handling) with minimal benefit given the small size of registered shape data. The implementation is functionally correct -- all clients get the data they need. The spec optimization was aspirational; the simpler approach is appropriate for the current scale.
+**Rationale**: The spec's own Assumptions section (line 143) states "Cache eviction on the server is not needed for typical sandbox usage (scenes are transient and reset frequently)." Per-body eviction would require reference counting (tracking which bodies share a mesh ID), adding complexity with no practical benefit at sandbox scale. The implementation correctly clears all caches on reset and disconnect, which are the natural session boundaries. Content-addressed IDs prevent any correctness issues from orphaned entries.
 
 **Confidence**: HIGH
 
@@ -40,91 +40,48 @@ Update FR-006b to:
 
 ---
 
-### Proposal 2: 005-stride-bepu-integration/FR-007
-
-**Direction**: ALIGN
-
-**Current State**:
-- Spec says: "The viewer MUST render each shape type with geometry that visually matches the physics collider dimensions."
-- Code does: 7/10 shape types render accurately (Sphere, Box, Plane, Capsule, Cylinder, ConvexHull bounding box, ShapeReference). Triangle, Compound, and Mesh shapes render as placeholder spheres.
-
-**Proposed Resolution**:
-
-Implement custom rendering for the 3 remaining shape types in `ShapeGeometry.fs`:
-- **Triangle**: Generate a `MeshDraw` from the 3 vertices (single face, double-sided).
-- **Compound**: Create child entities with local transforms, each rendered via recursive `primitiveType`/`shapeSize` dispatch.
-- **Mesh**: Generate a `MeshDraw` from the triangle list vertex data.
-
-This requires adding custom `MeshDraw` generation functions to `ShapeGeometry.fs` and updating `SceneManager.applyState` to use them for non-primitive shapes.
-
-**Estimated effort**: Medium (1-2 tasks). The vertex data is already available in the proto state stream.
-
-**Rationale**: The spec explicitly requires "visually matches the physics collider dimensions" for each shape type. Placeholder spheres are functionally misleading -- a mesh collider shaped like a ramp rendering as a sphere hides the actual collision geometry. This is especially important for debug/development use cases where developers need to see what they built. 7/10 is good but the remaining 3 are the most geometrically interesting shapes.
-
-**Confidence**: HIGH
-
-**Action**:
-- [ ] Approve
-- [ ] Reject
-- [ ] Modify
-
----
-
-### Proposal 3: 005-stride-bepu-integration/FR-030
-
-**Direction**: ALIGN
-
-**Current State**:
-- Spec says: "Users MUST be able to set the position and velocity of kinematic bodies directly."
-- Code does: Position and velocity can only be set at creation time via `AddBody`. No command exists to update kinematic body pose or velocity after creation.
-
-**Proposed Resolution**:
-
-Add a `SetBodyPose` command:
-1. **Proto**: Add `SetBodyPose` message with fields: `body_id`, `position` (Vec3), `orientation` (Vec4, optional), `velocity` (Vec3, optional), `angular_velocity` (Vec3, optional).
-2. **SimulationWorld**: Add `setBodyPose` function that updates position/velocity on the BepuFSharp body. For kinematic bodies, use `PhysicsWorld.setKinematicBodyPose`; for dynamic bodies, optionally allow teleporting.
-3. **SimulationCommand**: Add `set_body_pose` variant to the oneof.
-4. **CommandHandler**: Dispatch `SetBodyPose` to `SimulationWorld.setBodyPose`.
-5. **Client interfaces**: Add `setBodyPose` to PhysicsClient, MCP tool, and Scripting library.
-
-**Estimated effort**: Medium (1 task across proto + simulation + server + clients).
-
-**Rationale**: Kinematic bodies are fundamentally designed to be script-driven -- their entire purpose is to move according to explicit commands rather than physics forces. Without runtime pose updates, kinematic bodies are limited to constant-velocity motion set at creation, which severely limits their utility (no moving platforms that change direction, no animated obstacles, no scripted waypoint motion). This is the most significant functional gap in the feature.
-
-**Confidence**: HIGH
-
-**Action**:
-- [ ] Approve
-- [ ] Reject
-- [ ] Modify
-
----
-
-### Proposal 4: 005-stride-bepu-integration/SC-008
+### Proposal 2: 004-mesh-cache-transport/FR-011
 
 **Direction**: BACKFILL
 
 **Current State**:
-- Spec says: "All new features are accessible through the existing client interfaces (REPL commands, MCP tools, scripting library)."
-- Code does: All features are accessible via proto commands (REPL + MCP cover all command types). The Scripting library provides convenience builders for 4/10 constraint types (BallSocket, Hinge, Weld, DistanceLimit). The remaining 6 constraint types can be created via manual proto construction through the scripting library's `batchAdd` with hand-built `SimulationCommand` objects.
+- Spec says: "System MUST handle compound shapes by independently caching each child shape's geometry."
+- Code does: "Compound shapes are cached as a single atomic unit (one SHA-256 hash of entire Compound proto). Children are not individually identified or cached."
 
 **Proposed Resolution**:
 
-Update SC-008 to acknowledge the tiered accessibility:
+Update FR-011 to:
 
-> **SC-008**: All new features MUST be accessible through the REPL and MCP interfaces. The scripting library MUST provide convenience builders for the most commonly used constraint types (ball-socket, hinge, weld, distance limit) with the remaining types constructible via standard proto message builders.
+> **FR-011**: System MUST handle compound shapes as cacheable units. A compound shape receives a single content-addressed identifier derived from the serialized representation of all its children (shapes and local poses). Identical compound structures produce the same identifier. Individual children within a compound are not independently cached — the compound is treated as an atomic geometry unit for caching purposes.
 
-Additionally, add 6 missing constraint convenience builders as a follow-up enhancement (not blocking):
-- `makeDistanceSpringCmd`
-- `makeSwingLimitCmd`
-- `makeTwistLimitCmd`
-- `makeLinearAxisMotorCmd`
-- `makeAngularMotorCmd`
-- `makePointOnLineCmd`
+**Rationale**: The research.md (R1) explicitly documents the design: "Compound: recursively serialize each child's shape + local pose (position + orientation)" — the hash includes all children but produces one ID for the whole compound. Per-child caching would require multiple MeshIds per BodyRecord, hierarchical cache lookup, and complex partial-resolution logic in the viewer. This adds significant complexity for a scenario (shared sub-meshes across different compounds) that doesn't occur in typical sandbox usage. The atomic approach correctly deduplicates identical whole compounds and is tested.
 
-**Rationale**: The core requirement (feature accessibility) is met -- every feature is reachable through REPL and MCP. The scripting library is a convenience layer; having builders for the 4 most common constraint types covers the majority of use cases. The SC-009 (30 FPS benchmark) is a runtime validation that requires a live system test, not a code-level verification.
+**Confidence**: HIGH
 
-**Confidence**: MEDIUM
+**Action**:
+- [ ] Approve
+- [ ] Reject
+- [ ] Modify
+
+---
+
+### Proposal 3: Backfill MeshDefinition Recording
+
+**Direction**: BACKFILL (unspecced code into existing spec)
+
+**Current State**:
+- No spec coverage for MCP recording of mesh definitions
+- Code writes `LogEntry.MeshDefinition` entries to recording sessions when `state.NewMeshes` arrives
+
+**Proposed Resolution**:
+
+Add to spec under FR section:
+
+> **FR-016**: The MCP recording system MUST persist mesh geometry definitions alongside state snapshots so that recording sessions are self-contained and can be replayed without requiring a live server to resolve mesh identifiers.
+
+**Rationale**: Without mesh definitions in the recording, replayed sessions containing CachedShapeRef bodies would be unresolvable — viewers would show only bounding box placeholders. Writing mesh definitions makes sessions self-contained, following the existing StateSnapshot and CommandEvent recording pattern. The implementation adds ~20 lines across Types.fs, ChunkWriter.fs, ChunkReader.fs, and RecordingEngine.fs.
+
+**Confidence**: HIGH
 
 **Action**:
 - [ ] Approve

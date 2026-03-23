@@ -8,16 +8,29 @@ open PhysicsSandbox.Shared.Contracts
 open PhysicsClient.Session
 open PhysicsClient.StateDisplay
 
-let private matchesShape (filter: string) (body: Body) =
+let private resolveShapeCase (resolver: MeshResolver.MeshResolverState) (body: Body) =
+    if isNull body.Shape then Shape.ShapeOneofCase.None
+    elif body.Shape.ShapeCase = Shape.ShapeOneofCase.CachedRef then
+        match MeshResolver.resolve body.Shape.CachedRef.MeshId resolver with
+        | Some resolved -> resolved.ShapeCase
+        | None -> Shape.ShapeOneofCase.CachedRef
+    else body.Shape.ShapeCase
+
+let private matchesShape (resolver: MeshResolver.MeshResolverState) (filter: string) (body: Body) =
     if isNull body.Shape then false
     else
+        let shapeCase = resolveShapeCase resolver body
         match filter.ToLowerInvariant() with
-        | "sphere" -> body.Shape.ShapeCase = Shape.ShapeOneofCase.Sphere
-        | "box" -> body.Shape.ShapeCase = Shape.ShapeOneofCase.Box
-        | "plane" -> body.Shape.ShapeCase = Shape.ShapeOneofCase.Plane
+        | "sphere" -> shapeCase = Shape.ShapeOneofCase.Sphere
+        | "box" -> shapeCase = Shape.ShapeOneofCase.Box
+        | "plane" -> shapeCase = Shape.ShapeOneofCase.Plane
+        | "convexhull" | "hull" -> shapeCase = Shape.ShapeOneofCase.ConvexHull
+        | "mesh" -> shapeCase = Shape.ShapeOneofCase.Mesh
+        | "compound" -> shapeCase = Shape.ShapeOneofCase.Compound
         | _ -> true
 
 let private filterBodies
+    (resolver: MeshResolver.MeshResolverState)
     (bodyIds: string list option)
     (shapeFilter: string option)
     (minVelocity: float option)
@@ -31,7 +44,7 @@ let private filterBodies
         let shapeMatch =
             match shapeFilter with
             | None -> true
-            | Some f -> matchesShape f b
+            | Some f -> matchesShape resolver f b
         let velMatch =
             match minVelocity with
             | None -> true
@@ -39,7 +52,7 @@ let private filterBodies
         idMatch && shapeMatch && velMatch)
     |> Seq.toList
 
-let private renderTable (state: SimulationState option) bodyIds shapeFilter minVelocity =
+let private renderTable (resolver: MeshResolver.MeshResolverState) (state: SimulationState option) bodyIds shapeFilter minVelocity =
     let table = Table()
     table.Title <- TableTitle("[bold]Live Watch[/] [dim](Ctrl+C to stop)[/]")
     table.AddColumn("ID") |> ignore
@@ -52,7 +65,7 @@ let private renderTable (state: SimulationState option) bodyIds shapeFilter minV
     | None ->
         table.AddRow("[dim]Waiting for state...[/]", "", "", "", "", "") |> ignore
     | Some s ->
-        let filtered = filterBodies bodyIds shapeFilter minVelocity s.Bodies
+        let filtered = filterBodies resolver bodyIds shapeFilter minVelocity s.Bodies
         if filtered.IsEmpty then
             table.AddRow("[dim]No matching bodies[/]", "", "", "", "", "") |> ignore
         else
@@ -86,7 +99,7 @@ let watch (session: Session) (bodyIds: string list option) (shapeFilter: string 
             .Start(fun ctx ->
                 while not cts.Token.IsCancellationRequested do
                     let state = latestState session
-                    let table = renderTable state bodyIds shapeFilter minVelocity
+                    let table = renderTable (meshResolver session) state bodyIds shapeFilter minVelocity
                     ctx.UpdateTarget(table)
                     try
                         Thread.Sleep(100)
