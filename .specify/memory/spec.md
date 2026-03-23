@@ -262,6 +262,12 @@ An AI assistant wants to query recorded physics data — body trajectories, stat
 ### US-084: Recording Session Management (P2)
 A user wants to manage multiple recording sessions — starting, stopping, listing, and deleting — to organize analysis work across simulation experiments. [Source: specs/005-mcp-data-logging]
 
+### US-089: Record Mesh Fetch Activity (P1)
+The recording captures all FetchMeshes RPC activity — requested mesh IDs, hit/miss counts, missed IDs — enabling post-hoc analysis of mesh resolution behavior and late-joiner debugging. [Source: specs/004-mcp-mesh-logging]
+
+### US-090: Query Mesh Fetch History via MCP Tools (P2)
+MCP query tools retrieve mesh fetch events from recorded sessions with time-range and mesh ID filtering, supporting paginated results for analysis workflows. [Source: specs/004-mcp-mesh-logging]
+
 ### US-085: Bandwidth-Efficient State Streaming (P1)
 Running complex physics simulations with many mesh-based bodies, the system avoids resending unchanged mesh geometry every tick. State updates use lightweight identifiers instead of full vertex data for previously-transmitted complex shapes (ConvexHull, MeshShape, Compound), reducing bandwidth by 80%+. [Source: specs/004-mesh-cache-transport]
 
@@ -502,6 +508,12 @@ Mesh geometry exchange happens on a dedicated FetchMeshes RPC separate from the 
 - **FR-224**: System MUST precompute axis-aligned bounding box extents when a mesh geometry is first seen, stored in BodyRecord. [Source: specs/004-mesh-cache-transport]
 - **FR-225**: CachedShapeRef messages MUST include precomputed bbox_min and bbox_max alongside mesh_id. [Source: specs/004-mesh-cache-transport]
 - **FR-226**: MCP recording MUST persist MeshDefinition log entries alongside state snapshots for self-contained session replay. [Source: specs/004-mesh-cache-transport]
+- **FR-227**: System MUST record a MeshFetchEvent log entry each time the server handles a FetchMeshes RPC, capturing timestamp, requested mesh IDs, hits, misses, and missed IDs. [Source: specs/004-mcp-mesh-logging]
+- **FR-228**: MeshFetchEvent entries MUST use the established binary wire format (EntryType=3) and be written to the same chunk files as other entry types. [Source: specs/004-mcp-mesh-logging]
+- **FR-229**: Recording mesh fetch events MUST NOT degrade FetchMeshes RPC response time — non-blocking via async Channel pipeline. [Source: specs/004-mcp-mesh-logging]
+- **FR-230**: An MCP `query_mesh_fetches` tool MUST retrieve mesh fetch events with time-range filtering, optional mesh ID filtering, and cursor-based pagination. [Source: specs/004-mcp-mesh-logging]
+- **FR-231**: The server MUST publish FetchMeshes observations through the CommandEvent audit stream (MeshFetchLog oneof case) for MCP recording. [Source: specs/004-mcp-mesh-logging]
+- **FR-232**: Recording session summary MUST include mesh fetch event count alongside snapshot and command event counts. [Source: specs/004-mcp-mesh-logging]
 
 ## Key Entities
 
@@ -559,6 +571,7 @@ Mesh geometry exchange happens on a dedicated FetchMeshes RPC separate from the 
 - **MeshCache (Server)**: ConcurrentDictionary<string, Shape> in MessageRouter, populated from state updates, cleared on reset/disconnect. [Source: specs/004-mesh-cache-transport]
 - **MeshResolver (Subscriber)**: Local ConcurrentDictionary<string, Shape> cache on each subscriber (viewer, client, MCP) with processNewMeshes/resolve/fetchMissing interface. [Source: specs/004-mesh-cache-transport]
 - **MeshIdGenerator**: Simulation-side module computing content-addressed mesh IDs and axis-aligned bounding boxes for ConvexHull, MeshShape, and Compound shapes. [Source: specs/004-mesh-cache-transport]
+- **MeshFetchEvent**: Recorded observation of a FetchMeshes RPC call — timestamp, requested mesh IDs, hit count, miss count, missed mesh IDs. Serialized as MeshFetchLog proto (EntryType=3). [Source: specs/004-mcp-mesh-logging]
 
 ## Edge Cases
 
@@ -724,3 +737,5 @@ Mesh geometry exchange happens on a dedicated FetchMeshes RPC separate from the 
 - **SC-090**: 60 Hz state delivery maintained with <5% jitter during concurrent mesh transfers. [Source: specs/004-mesh-cache-transport]
 - **SC-091**: Identical shapes used by multiple bodies result in only one cached copy. [Source: specs/004-mesh-cache-transport]
 - **SC-092**: Viewers display placeholder bounding boxes for unresolved meshes within one frame of state receipt. [Source: specs/004-mesh-cache-transport]
+- **SC-093**: All FetchMeshes RPC calls during an active recording are captured with zero data loss under normal operation. [Source: specs/004-mcp-mesh-logging]
+- **SC-094**: Recording mesh fetch events adds less than 1ms overhead to FetchMeshes RPC. [Source: specs/004-mcp-mesh-logging]

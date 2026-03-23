@@ -96,7 +96,7 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
-- 004-mcp-mesh-logging: Added F# on .NET 10.0 (PhysicsServer, PhysicsSandbox.Mcp), C# on .NET 10.0 (integration tests) + Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, ModelContextProtocol.AspNetCore 1.1.*, System.Threading.Channels
+- 004-mcp-mesh-logging: MCP recording for FetchMeshes RPC — MeshFetchEvent (EntryType=3) records requested IDs, hits/misses. Published via CommandEvent audit stream. New query_mesh_fetches tool. 17 tasks.
 - 004-mesh-cache-transport: Mesh cache and on-demand transport — complex shapes (ConvexHull, MeshShape, Compound) use CachedShapeRef (mesh_id + bbox) instead of inline geometry after first tick. Server MeshCache + FetchMeshes RPC. MeshResolver in viewer/client/MCP. Viewer bounding box placeholders. MeshDefinition recording. 75 tasks, 262+ tests.
 - 005-mcp-data-logging: Added persistent data recording to MCP server — auto-captures all state updates + command events to protobuf binary chunk files at `~/.config/PhysicsSandbox/recordings/`. 9 new MCP tools (5 session management + 4 query). Dual-limit pruning (10 min / 500 MB). Async Channel pipeline. 12 new unit tests
 

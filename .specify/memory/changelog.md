@@ -1,5 +1,34 @@
 # Merged Features Log
 
+## MCP Mesh Fetch Logging — 2026-03-23
+**Branch:** 004-mcp-mesh-logging
+**Spec:** specs/004-mcp-mesh-logging
+
+**What was added:**
+- MeshFetchEvent recording: every FetchMeshes RPC call captured with requested IDs, hit/miss counts, missed IDs
+- Mesh fetch observations published via CommandEvent audit stream (MeshFetchLog proto oneof case)
+- MeshFetchEvent binary serialization (EntryType=3) in ChunkWriter/ChunkReader
+- RecordingEngine detects mesh fetch events in command stream and records them
+- `query_mesh_fetches` MCP tool with session, time-range, mesh ID filtering + pagination
+- `query_summary` now includes mesh fetch event count
+- 1 new unit test (round-trip), 2 surface area tests
+
+**New Components:**
+- `src/PhysicsSandbox.Mcp/MeshFetchQueryTools.fsi/.fs` — query_mesh_fetches MCP tool
+
+**Modified Components:**
+- `src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto` — MeshFetchLog message, CommandEvent.mesh_fetch_log oneof
+- `src/PhysicsServer/Services/PhysicsHubService.fs` — Publish fetch observations to audit stream
+- `src/PhysicsSandbox.Mcp/Recording/Types.fs/.fsi` — EntryType.MeshFetchEvent, LogEntry.MeshFetchEvent
+- `src/PhysicsSandbox.Mcp/Recording/ChunkWriter.fs` — MeshFetchEvent serialization
+- `src/PhysicsSandbox.Mcp/Recording/ChunkReader.fs` — MeshFetchEvent deserialization
+- `src/PhysicsSandbox.Mcp/Recording/RecordingEngine.fs` — Detect mesh fetch in command stream
+- `src/PhysicsSandbox.Mcp/RecordingQueryTools.fs` — query_summary includes fetch count
+
+**Tasks Completed:** 17/17 tasks
+
+---
+
 ## Mesh Cache and On-Demand Transport — 2026-03-23
 **Branch:** 004-mesh-cache-transport
 **Spec:** specs/004-mesh-cache-transport

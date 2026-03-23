@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-23
-**Revision**: Updated with 004-mesh-cache-transport archival
+**Revision**: Updated with 004-mcp-mesh-logging archival
 
 ## Technical Context
 
@@ -96,7 +96,7 @@ src/
 │   ├── SimulationLifecycle.fsi/.fs    # resetSimulation, runFor, nextId
 │   └── Prelude.fsi/.fs               # [<AutoOpen>] re-export of all functions
 │
-└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 58 tools)
+└── PhysicsSandbox.Mcp/                 # F# — MCP server (persistent HTTP/SSE, 59 tools)
     ├── MeshResolver.fsi/.fs            # Local mesh cache + sync FetchMeshes client
     ├── GrpcConnection.fsi/.fs          # gRPC channel + 3 background streams (state, view, audit) + batch/metrics RPCs
     ├── SimulationTools.fsi/.fs         # 17 simulation/query MCP tools (incl. constraints, shapes, queries, collision filter, body pose)
@@ -120,6 +120,7 @@ src/
     │   └── RecordingEngine.fsi/.fs       # Recording lifecycle orchestration, auto-start
     ├── RecordingTools.fsi/.fs            # 5 session management MCP tools
     ├── RecordingQueryTools.fsi/.fs       # 4 query MCP tools
+    ├── MeshFetchQueryTools.fsi/.fs     # 1 mesh fetch query MCP tool
     └── Program.fs                      # WebApplication + HTTP/SSE MCP transport
 
 tests/
@@ -174,7 +175,7 @@ tests/
 │   ├── SteeringTests.fs                 # Direction-to-Vec3 mapping
 │   ├── StateDisplayTests.fs             # Vec3 formatting, velocity magnitude, shapes
 │   └── SurfaceAreaTests.fs              # Public API baseline for all 9 modules
-├── PhysicsSandbox.Mcp.Tests/            # F# — unit tests (13 tests)
+├── PhysicsSandbox.Mcp.Tests/            # F# — unit tests (15 tests)
 │   ├── ChunkWriterTests.fs
 │   ├── ChunkReaderTests.fs
 │   ├── SessionStoreTests.fs
