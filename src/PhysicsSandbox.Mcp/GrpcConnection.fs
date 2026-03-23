@@ -40,6 +40,8 @@ type GrpcConnection(serverAddress: string) =
     let mutable mcpMsgRecv = 0L
     let mutable mcpBytesSent = 0L
     let mutable mcpBytesRecv = 0L
+    let mutable onStateReceived: (SimulationState -> unit) option = None
+    let mutable onCommandReceived: (CommandEvent -> unit) option = None
 
     let addToCommandLog (evt: CommandEvent) =
         lock commandLogLock (fun () ->
@@ -65,6 +67,9 @@ type GrpcConnection(serverAddress: string) =
                                 lastUpdateTime <- DateTimeOffset.UtcNow
                                 Threading.Interlocked.Increment(&mcpMsgRecv) |> ignore
                                 Threading.Interlocked.Add(&mcpBytesRecv, int64 (stream.Current.CalculateSize())) |> ignore
+                                match onStateReceived with
+                                | Some cb -> try cb stream.Current with _ -> ()
+                                | None -> ()
                     with
                     | :? OperationCanceledException -> ()
                     | :? RpcException when cts.Token.IsCancellationRequested -> ()
@@ -130,6 +135,9 @@ type GrpcConnection(serverAddress: string) =
                                 addToCommandLog stream.Current
                                 Threading.Interlocked.Increment(&mcpMsgRecv) |> ignore
                                 Threading.Interlocked.Add(&mcpBytesRecv, int64 (stream.Current.CalculateSize())) |> ignore
+                                match onCommandReceived with
+                                | Some cb -> try cb stream.Current with _ -> ()
+                                | None -> ()
                     with
                     | :? OperationCanceledException -> ()
                     | :? RpcException when cts.Token.IsCancellationRequested -> ()
@@ -195,6 +203,16 @@ type GrpcConnection(serverAddress: string) =
     member _.IncrementSent(bytes: int64) =
         Threading.Interlocked.Increment(&mcpMsgSent) |> ignore
         Threading.Interlocked.Add(&mcpBytesSent, bytes) |> ignore
+
+    /// <summary>Optional callback invoked for each SimulationState received from the state stream. Must not block.</summary>
+    member _.OnStateReceived
+        with get() = onStateReceived
+        and set(v) = onStateReceived <- v
+
+    /// <summary>Optional callback invoked for each CommandEvent received from the audit stream. Must not block.</summary>
+    member _.OnCommandReceived
+        with get() = onCommandReceived
+        and set(v) = onCommandReceived <- v
 
     /// <summary>Returns a ServiceMetricsReport for the MCP server's own message and byte counters.</summary>
     member _.LocalMetrics =

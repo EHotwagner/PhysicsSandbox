@@ -28,6 +28,8 @@ Last updated: 2026-03-23
 - JSON file at `~/.config/PhysicsSandbox/viewer-settings.json` (005-viewer-settings-sizing-fix)
 - F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient.dll (NuGet), PhysicsSandbox.Shared.Contracts.dll (proto types), Grpc.Net.Client 2.x, Google.Protobuf 3.x (005-enhance-demos)
 - F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts), Python 3.10+ (demo scripts) + .NET Aspire 13.1.3, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console, xUnit 2.x (005-refactor-evaluation)
+- F# on .NET 10.0 + Google.Protobuf 3.x (binary serialization), System.Text.Json (session metadata), System.Threading.Channels (async producer-consumer), ModelContextProtocol.AspNetCore 1.1.* (MCP tool registration) (005-mcp-data-logging)
+- Append-only protobuf binary files at `~/.config/PhysicsSandbox/recordings/`, JSON metadata per session (005-mcp-data-logging)
 
 ## Project Structure
 
@@ -41,13 +43,14 @@ src/
   PhysicsSimulation/                # F# physics simulation (gRPC client, BepuFSharp)
   PhysicsViewer/                    # F# 3D viewer (Stride3D + gRPC client, debug wireframes)
   PhysicsClient/                    # F# REPL client library (gRPC client, Spectre.Console)
-  PhysicsSandbox.Mcp/               # F# MCP server (38 tools, interactive debugging via AI assistants)
+  PhysicsSandbox.Mcp/               # F# MCP server (47 tools, interactive debugging via AI assistants, recording + query)
   PhysicsSandbox.Scripting/         # F# scripting convenience library (wraps PhysicsClient, 6 modules)
 tests/
   PhysicsServer.Tests/              # F# unit tests (18 tests)
   PhysicsSimulation.Tests/          # F# unit tests (39 tests)
   PhysicsViewer.Tests/              # F# unit tests (19 tests)
   PhysicsClient.Tests/              # F# unit tests (52 tests)
+  PhysicsSandbox.Mcp.Tests/          # F# unit tests (12 tests)
   PhysicsSandbox.Scripting.Tests/   # F# unit + surface area tests (19 tests)
   PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (42 tests)
 Scripting/
@@ -89,9 +92,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 005-mcp-data-logging: Added persistent data recording to MCP server — auto-captures all state updates + command events to protobuf binary chunk files at `~/.config/PhysicsSandbox/recordings/`. 9 new MCP tools (5 session management + 4 query). Dual-limit pruning (10 min / 500 MB). Async Channel pipeline. 12 new unit tests
 - 005-refactor-evaluation: Added F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts), Python 3.10+ (demo scripts) + .NET Aspire 13.1.3, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console, xUnit 2.x
 - 005-enhance-demos: Enhanced demo suite 15→18 demos. Fixed Demo 03/04 projectile impacts. Added Demo 16 (4 constraint types), Demo 17 (physics queries), Demo 18 (kinematic bodies). Distributed 8/10 shape types + colors + materials across all demos. PhysicsClient NuGet repacked to 0.2.0. Prelude extended with triangle/convex hull/compound/kinematic builders + query/pose helpers + color palette
-- 005-viewer-settings-sizing-fix: Added F# on .NET 10.0 (PhysicsViewer project) + Stride.CommunityToolkit 1.0.0-preview.62 (rendering), Stride.CommunityToolkit.Bepu 1.0.0-preview.62 (Bepu3DPhysicsOptions, Create3DPrimitive), Grpc.Net.Client 2.x (server communication), System.Text.Json (settings persistence)
 
 ## Environment
 
