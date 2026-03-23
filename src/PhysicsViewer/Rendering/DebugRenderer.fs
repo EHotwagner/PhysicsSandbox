@@ -4,7 +4,7 @@ open Stride.Core.Mathematics
 open Stride.Engine
 open Stride.Games
 open Stride.CommunityToolkit.Engine
-open Stride.CommunityToolkit.Bepu
+open Stride.CommunityToolkit.Games
 open Stride.CommunityToolkit.Rendering.ProceduralModels
 open PhysicsSandbox.Shared.Contracts
 
@@ -37,7 +37,7 @@ let private createPrimitiveWireframe (game: Game) (scene: Scene) (shape: Shape) 
     let wireColor = StrideColor(0uy, 255uy, 0uy, 128uy)
     let material = game.CreateFlatMaterial(System.Nullable<StrideColor>(wireColor))
     let size = ShapeGeometry.shapeSize shape
-    let options = Bepu3DPhysicsOptions(Material = material, IncludeCollider = false, Size = size)
+    let options = Primitive3DEntityOptions(Material = material, Size = size)
     let entity = game.Create3DPrimitive(primType, options)
     // No artificial scaling — wireframe matches physics bounds exactly (FR-009)
     entity.Transform.Position <- pos
@@ -98,7 +98,7 @@ let private createConstraintLine (game: Game) (scene: Scene) (posA: Vector3) (po
     if dist < 0.001f then None
     else
         let size = System.Nullable(Vector3(0.05f, dist, 0.05f))
-        let options = Bepu3DPhysicsOptions(Material = material, IncludeCollider = false, Size = size)
+        let options = Primitive3DEntityOptions(Material = material, Size = size)
         let entity = game.Create3DPrimitive(PrimitiveModelType.Cylinder, options)
         entity.Transform.Position <- mid
         let dir = Vector3.Normalize(diff)

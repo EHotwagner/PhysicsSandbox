@@ -16,7 +16,7 @@ let name = "Bowling Alley"
 let run s =
     resetSimulation s
     // Start focused on the pyramid
-    setCamera s (0.0, 2.0, 8.0) (0.0, 0.5, 5.0) |> ignore
+    setCamera s (0.0, 4.0, 12.0) (0.0, 0.5, 5.0) |> ignore
     // 6x5 brick wall — small bricks (10cm cubes) so the boulder clearly smashes through
     let brickIds =
         [ for row in 0 .. 4 do
@@ -25,23 +25,23 @@ let run s =
                 let z = 5.0
                 let y = 0.11 + float row * 0.22
                 let id = nextId "box"
-                batchAdd s [ makeBoxCmd id (x, y, z) (0.1, 0.1, 0.1) 0.5 ]
+                let colors = [| accentYellow; accentOrange; projectileColor; accentPurple; accentGreen |]
+                batchAdd s [ makeBoxCmd id (x, y, z) (0.1, 0.1, 0.1) 0.5
+                             |> withColorAndMaterial (Some colors.[row % colors.Length]) None ]
                 id ]
     printfn "  Built wall of %d bricks" brickIds.Length
     // Big wrecking ball (r=0.4, 10kg) — big enough to smash bricks, light enough to fly
     let ballId = nextId "sphere"
-    batchAdd s [ makeSphereCmd ballId (0.0, 0.5, -4.0) 0.4 10.0 ]
+    batchAdd s [ makeSphereCmd ballId (0.0, 0.5, -4.0) 0.4 10.0
+                 |> withColorAndMaterial (Some targetColor) None ]
     printfn "  Wrecking ball ready"
     runFor s 1.0
     printfn "  Admiring the wall..."
     sleep 1500
-    setCamera s (0.0, 2.5, -6.0) (0.0, 0.5, 5.0) |> ignore
     printfn "  SMASH!"
     batchAdd s [ makeImpulseCmd ballId (0.0, 0.0, 100.0) ]
     runFor s 2.5
-    // Side view of the debris
-    setCamera s (4.0, 1.5, 5.0) (0.0, 0.3, 5.0) |> ignore
-    printfn "  Debris view"
+    printfn "  Debris settling..."
     runFor s 3.0
     listBodies s
 

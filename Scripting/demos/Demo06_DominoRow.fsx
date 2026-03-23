@@ -5,6 +5,8 @@
 #load "Prelude.fsx"
 open Prelude
 open PhysicsClient.Session
+open PhysicsClient.SimulationCommands
+open PhysicsClient.ViewCommands
 open PhysicsClient.Steering
 open PhysicsClient.StateDisplay
 

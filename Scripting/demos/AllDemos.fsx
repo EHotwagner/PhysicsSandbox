@@ -924,14 +924,19 @@ let demos = [|
                    |> withColorAndMaterial (Some kinematicColor) None ]
       printfn "  30 dynamic spheres + 1 kinematic bulldozer"
       printfn "  Bulldozer advancing..."
-      for step in 0..19 do
-          let x = -4.0 + float step * 0.4
-          setPose s bulldozerId (x, 0.5, 0.0)
-          play s |> ignore
-          sleep 200
-          pause s |> ignore
+      let speed = 2.0
+      let totalDist = 8.0
+      let totalTime = totalDist / speed
+      let steps = 20
+      let stepTime = totalTime / float steps
+      setBodyPose s bulldozerId (-4.0, 0.5, 0.0) None (Some (speed, 0.0, 0.0)) None |> ok
+      play s |> ignore
+      for step in 0 .. steps - 1 do
+          sleep (int (stepTime * 1000.0))
           if step % 5 = 0 then
-              printfn "  Step %d/20 — bulldozer at X=%.1f" (step+1) x
+              let x = -4.0 + float (step + 1) * (totalDist / float steps)
+              printfn "  Step %d/%d — bulldozer at X=%.1f" (step+1) steps x
+      pause s |> ignore
       printfn "  Sweep complete!"
       setCamera s (5.0, 4.0, 8.0) (0.0, 0.5, 0.0) |> ignore
       runFor s 2.0

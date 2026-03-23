@@ -7,9 +7,10 @@ open Stride.Core.Mathematics
 open Stride.Engine
 open Stride.Games
 open Stride.CommunityToolkit.Engine
-open Stride.CommunityToolkit.Bepu
+open Stride.CommunityToolkit.Games
 open Stride.CommunityToolkit.Skyboxes
 open Stride.CommunityToolkit.Rendering.Compositing
+open Stride.CommunityToolkit.Rendering.ProceduralModels
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
@@ -17,6 +18,7 @@ open PhysicsSandbox.Shared.Contracts
 open PhysicsViewer.SceneManager
 open PhysicsViewer.CameraController
 open PhysicsViewer.Rendering
+open Stride.Rendering.Lights
 open PhysicsViewer.Settings
 
 let game = new Game()
@@ -122,7 +124,20 @@ let start (scene: Scene) =
     let camEntity = game.Add3DCamera()
     cameraEntity <- Some camEntity
     game.AddDirectionalLight() |> ignore
-    game.Add3DGround() |> ignore
+    // Add ambient light so objects are visible from all angles
+    let ambientEntity = Entity("AmbientLight")
+    let ambientLight = LightComponent()
+    let ambient = LightAmbient()
+    ambient.Color <- Stride.Rendering.Colors.ColorRgbProvider(Color3(0.3f, 0.3f, 0.3f))
+    ambientLight.Type <- ambient
+    ambientLight.Intensity <- 0.5f
+    ambientEntity.Add(ambientLight)
+    ambientEntity.Scene <- game.SceneSystem.SceneInstance.RootScene
+    // Create ground plane without Bepu physics (visual-only viewer)
+    let groundMaterial = game.CreateMaterial(Color.DarkGray, 0.0f, 0.1f)
+    let groundOpts = Primitive3DEntityOptions(Material = groundMaterial, EntityName = "Ground")
+    let ground = game.Create3DPrimitive(PrimitiveModelType.Plane, groundOpts)
+    ground.Scene <- game.SceneSystem.SceneInstance.RootScene
     game.AddSkybox() |> ignore
 
     GameExtensions.AddGroundGizmo(

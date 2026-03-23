@@ -8,6 +8,8 @@ open Prelude
 open PhysicsClient.Session
 open PhysicsClient.Presets
 open PhysicsClient.Generators
+open PhysicsClient.SimulationCommands
+open PhysicsClient.ViewCommands
 open PhysicsClient.Steering
 open PhysicsClient.StateDisplay
 
@@ -35,25 +37,31 @@ module Demo10 =
         // Dramatic pause — let the audience take in the stage
         sleep 800
 
-        // Act 2: Bombardment from above
-        setCamera s (0.0, 15.0, 10.0) (0.0, 2.0, 0.0) |> ignore
-        printfn "  Act 2: Bombardment!"
+        // Act 2: Barrage from the side at pyramid and stack
+        setCamera s (0.0, 6.0, 14.0) (0.0, 2.0, 0.0) |> ignore
+        printfn "  Act 2: Side barrage!"
 
-        let projectiles = randomSpheres s 10 (Some 99) |> ok
-        // Batch-apply downward impulses to all projectiles
-        let impulseCmds =
-            [ for id in projectiles do
-                makeImpulseCmd id (0.0, -20.0, 0.0) ]
-        batchAdd s impulseCmds
-
+        // Spawn 10 spheres to the right, launch at the pyramid (-4, ~2, 0)
+        for i in 0 .. 4 do
+            let y = 1.0 + float i * 0.8
+            let sid = nextId "proj"
+            addSphere s (10.0, y, 0.0) 0.3 3.0 (Some sid) None None None None None |> ignore
+            launch s sid (-4.0, y, 0.0) 200.0 |> ignore
+        sleep 500
+        // Spawn 5 more, launch at the stack (4, ~2, 0)
+        for i in 0 .. 4 do
+            let y = 1.0 + float i * 0.8
+            let sid = nextId "proj"
+            addSphere s (-10.0, y, 0.0) 0.3 3.0 (Some sid) None None None None None |> ignore
+            launch s sid (4.0, y, 0.0) 200.0 |> ignore
         runFor s 3.0
 
-        // Act 3: Boulder attack
-        setCamera s (-10.0, 3.0, 0.0) (0.0, 2.0, 0.0) |> ignore
-        printfn "  Act 3: Boulder attack on pyramid!"
+        // Act 3: Boulder attack on whatever's left
+        setCamera s (-10.0, 3.0, 6.0) (0.0, 2.0, 0.0) |> ignore
+        printfn "  Act 3: Boulder attack!"
 
         let rock = boulder s (Some (-8.0, 1.0, 0.0)) None None |> ok
-        launch s rock (-4.0, 2.0, 0.0) 30.0 |> ignore
+        launch s rock (0.0, 2.0, 0.0) 30.0 |> ignore
         runFor s 3.0
 
         // Act 4: Gravity chaos

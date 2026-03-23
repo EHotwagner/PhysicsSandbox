@@ -5,6 +5,9 @@
 #load "Prelude.fsx"
 open Prelude
 open PhysicsClient.Session
+open PhysicsClient.SimulationCommands
+open PhysicsClient.ViewCommands
+open PhysicsClient.Steering
 open PhysicsClient.StateDisplay
 
 module Demo07 =
@@ -41,14 +44,14 @@ module Demo07 =
 
         runFor s 0.5
 
-        // Spin them all — varied torque axes for visual variety
+        // Spin them all — strong torques for visible rotation
         let torqueCmds =
-            [ makeTorqueCmd ids.[0] (0.0, 80.0, 0.0)
-              makeTorqueCmd ids.[1] (0.0, -60.0, 30.0)
-              makeTorqueCmd ids.[2] (0.0, 70.0, 0.0)
-              makeTorqueCmd ids.[3] (40.0, 0.0, -50.0)
-              makeTorqueCmd ids.[4] (0.0, -90.0, 0.0)
-              makeTorqueCmd ids.[5] (-30.0, 60.0, 0.0) ]
+            [ makeTorqueCmd ids.[0] (0.0, 500.0, 0.0)
+              makeTorqueCmd ids.[1] (0.0, -400.0, 200.0)
+              makeTorqueCmd ids.[2] (0.0, 450.0, 0.0)
+              makeTorqueCmd ids.[3] (300.0, 0.0, -350.0)
+              makeTorqueCmd ids.[4] (0.0, -600.0, 0.0)
+              makeTorqueCmd ids.[5] (-200.0, 400.0, 0.0) ]
         batchAdd s torqueCmds
         printfn "  All spinning..."
         runFor s 2.0

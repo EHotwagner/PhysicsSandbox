@@ -10,6 +10,7 @@ open PhysicsClient.SimulationCommands
 open PhysicsClient.ViewCommands
 open PhysicsClient.Steering
 open PhysicsClient.StateDisplay
+open PhysicsSandbox.Shared.Contracts
 
 module Demo14 =
     let name = "Domino Cascade"
@@ -17,7 +18,8 @@ module Demo14 =
 
     let run (s: Session) =
         resetSimulation s
-        setCamera s (0.0, 12.0, 0.1) (0.0, 0.0, 0.0) |> ignore
+        // Elevated angle showing the full semicircle
+        setCamera s (0.0, 10.0, -12.0) (0.0, 0.0, 3.0) |> ignore
         let count = 120
         let radius = 8.0
         let ids =
@@ -28,29 +30,43 @@ module Demo14 =
                         let angle = float i / float count * System.Math.PI
                         let x = radius * cos angle
                         let z = radius * sin angle
-                        makeBoxCmd dominoIds.[i] (x, 0.3, z) (0.05, 0.3, 0.15) 1.0 ]
+                        // Rotate each domino so thin axis (local X) aligns with tangent
+                        // Tangent at angle θ is (-sin θ, 0, cos θ)
+                        // Y-rotation by -(π/2 + θ) maps (1,0,0) → (-sin θ, 0, cos θ)
+                        let halfA = -(System.Math.PI / 4.0 + angle / 2.0)
+                        let qy = sin halfA
+                        let qw = cos halfA
+                        let b = PhysicsSandbox.Shared.Contracts.Box()
+                        b.HalfExtents <- toVec3 (0.05, 0.3, 0.15)
+                        let shape = PhysicsSandbox.Shared.Contracts.Shape()
+                        shape.Box <- b
+                        let orient = Vec4()
+                        orient.X <- 0.0; orient.Y <- qy; orient.Z <- 0.0; orient.W <- qw
+                        let body = AddBody()
+                        body.Id <- dominoIds.[i]
+                        body.Position <- toVec3 (x, 0.3, z)
+                        body.Mass <- 1.0
+                        body.Shape <- shape
+                        body.Orientation <- orient
+                        let cmd = SimulationCommand()
+                        cmd.AddBody <- body
+                        cmd ]
                 batchAdd s cmds
                 dominoIds)
         printfn "  %d dominoes in semicircle (radius %.0fm)" count radius
         runFor s 1.0
 
-        // Brief overhead view to show the full semicircle layout
-        setCamera s (0.0, 14.0, 0.1) (0.0, 0.0, 0.0) |> ignore
+        // Overhead view to show the full semicircle layout
+        setCamera s (0.0, 16.0, 0.1) (0.0, 0.0, 4.0) |> ignore
         printfn "  Overhead view — full semicircle"
-        sleep 1000
+        sleep 1500
 
-        // Move to side view for the push
-        setCamera s (radius + 2.0, 3.0, 0.0) (0.0, 0.5, 0.0) |> ignore
+        // Pull back to a wide view of the full arc
+        setCamera s (0.0, 12.0, -14.0) (0.0, 0.0, 3.0) |> ignore
         printfn "  Pushing first domino..."
-        push s ids.[0] East 4.0 |> ignore
+        pushVec s ids.[0] (0.0, 0.0, 4.0) |> ignore
         timed "Cascade propagation" (fun () ->
-            runFor s 10.0)
-        for i in 0..5 do
-            let angle = float i / 5.0 * System.Math.PI
-            let cx = (radius + 4.0) * cos angle
-            let cz = (radius + 4.0) * sin angle
-            setCamera s (cx, 3.0, cz) (0.0, 0.5, 0.0) |> ignore
-            sleep 350
+            runFor s 20.0)
         printfn "  Cascade complete"
         status s
 

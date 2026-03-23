@@ -34,7 +34,6 @@
 
   <ItemGroup>
     <PackageReference Include="Stride.CommunityToolkit" Version="1.0.0-preview.62" />
-    <PackageReference Include="Stride.CommunityToolkit.Bepu" Version="1.0.0-preview.62" />
     <PackageReference Include="Stride.CommunityToolkit.Skyboxes" Version="1.0.0-preview.62" />
     <PackageReference Include="Stride.CommunityToolkit.Linux" Version="1.0.0-preview.62" />
     <PackageReference Include="Grpc.Net.Client" Version="2.*" />

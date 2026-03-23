@@ -11,12 +11,12 @@ builder.AddServiceDefaults() |> ignore
 
 // Resolve server address from environment or defaults
 let serverAddress =
-    let envHttps = Environment.GetEnvironmentVariable("services__server__https__0")
     let envHttp = Environment.GetEnvironmentVariable("services__server__http__0")
-    match envHttps, envHttp with
+    let envHttps = Environment.GetEnvironmentVariable("services__server__https__0")
+    match envHttp, envHttps with
     | url, _ when not (String.IsNullOrEmpty url) -> url
     | _, url when not (String.IsNullOrEmpty url) -> url
-    | _ -> "https://localhost:7180"
+    | _ -> "http://localhost:5180"
 
 // Register GrpcConnection as singleton
 builder.Services.AddSingleton<GrpcConnection>(fun _ ->

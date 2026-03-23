@@ -5,6 +5,8 @@
 #load "Prelude.fsx"
 open Prelude
 open PhysicsClient.Session
+open PhysicsClient.SimulationCommands
+open PhysicsClient.ViewCommands
 open PhysicsClient.Steering
 open PhysicsClient.StateDisplay
 
@@ -18,8 +20,8 @@ module Demo09 =
         // Reduce gravity for billiards-like sliding (low friction sim)
         setGravity s (0.0, -9.81, 0.0) |> ignore
 
-        // Camera: overhead billiards view
-        setCamera s (0.0, 10.0, 0.1) (0.0, 0.0, 0.0) |> ignore
+        // Camera: top-down above the table
+        setCamera s (0.0, 6.0, 0.1) (0.0, 0.0, 0.0) |> ignore
 
         // Batch-create 15 balls in triangle + 1 cue ball
         let r = 0.1
@@ -39,25 +41,17 @@ module Demo09 =
         printfn "  Admiring the formation..."
         sleep 1500
 
-        // Camera: dramatic low angle
-        setCamera s (-3.0, 1.5, 2.0) (1.0, 0.0, 0.0) |> ignore
-
         runFor s 0.5
 
         // BREAK!
         printfn "  BREAK!"
-        launch s cueId (1.5, 0.0, 0.0) 15.0 |> ignore
-
-        // Low angle during the break to see balls scatter
-        setCamera s (-1.0, 0.4, 1.5) (1.0, 0.1, 0.0) |> ignore
+        launch s cueId (1.5, 0.0, 0.0) 7.5 |> ignore
         runFor s 2.0
 
-        // Pull back to see the spread
-        setCamera s (0.0, 5.0, 3.0) (0.0, 0.0, 0.0) |> ignore
+        // Zoom out to see the full spread
+        setCamera s (0.0, 12.0, 0.1) (0.0, 0.0, 0.0) |> ignore
         runFor s 2.0
 
-        // Top-down aftermath
-        setCamera s (0.0, 8.0, 0.1) (0.0, 0.0, 0.0) |> ignore
         sleep 1000
         listBodies s
 

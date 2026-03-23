@@ -6,6 +6,7 @@ open Prelude
 open PhysicsClient.Session
 open PhysicsClient.SimulationCommands
 open PhysicsClient.ViewCommands
+open PhysicsClient.StateDisplay
 open PhysicsSandbox.Shared.Contracts
 
 let run (s: Session) =
@@ -42,16 +43,18 @@ let run (s: Session) =
     printfn "  Settling..."
     runFor s 1.0
 
-    // 5. Animate bulldozer through 20 steps
-    printfn "  Starting bulldozer sweep..."
+    // 5. Drive spinning bulldozer forward — linear velocity + angular spin
+    let speed = 2.0 // m/s forward
+    let spin = 5.0  // rad/s around Y axis
+    printfn "  %d dynamic spheres + 1 spinning kinematic bulldozer" sphereCmds.Length
+    printfn "  Bulldozer advancing at %.1f m/s with %.1f rad/s Y-spin..." speed spin
+    setBodyPose s "bulldozer" (-4.0, 0.5, 0.0) None (Some (speed, 0.0, 0.0)) (Some (0.0, spin, 0.0)) |> ok
+    play s |> ignore
     for step in 0 .. 19 do
-        let x = -4.0 + float step * 0.4
-        setPose s "bulldozer" (x, 0.5, 0.0)
-        play s |> ignore
         sleep 200
-        pause s |> ignore
-        if step % 5 = 4 then
-            printfn "  Step %d/20 — bulldozer at x=%.1f" (step + 1) x
+        if step % 5 = 0 then
+            printfn "  Step %d/20 — t=%.1fs" (step + 1) (float (step + 1) * 0.2)
+    pause s |> ignore
 
     // 6. Final camera sweep and status
     printfn "  Sweep complete! Final overview..."

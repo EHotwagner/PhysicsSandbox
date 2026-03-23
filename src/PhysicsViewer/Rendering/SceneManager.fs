@@ -4,7 +4,7 @@ open Stride.Core.Mathematics
 open Stride.Engine
 open Stride.Games
 open Stride.CommunityToolkit.Engine
-open Stride.CommunityToolkit.Bepu
+open Stride.CommunityToolkit.Games
 open PhysicsSandbox.Shared.Contracts
 
 type StrideColor = Stride.Core.Mathematics.Color
@@ -53,7 +53,7 @@ let private createEntity (game: Game) (scene: Scene) (body: Body) (wireframe: bo
         else
             game.CreateMaterial(color)
     let size = ShapeGeometry.shapeSize body.Shape
-    let options = Bepu3DPhysicsOptions(Material = material, IncludeCollider = false, Size = size)
+    let options = Primitive3DEntityOptions(Material = material, Size = size)
     let entity = game.Create3DPrimitive(primType, options)
     entity.Transform.Position <- protoVec3ToStride body.Position
     entity.Transform.Rotation <- protoQuatToStride body.Orientation

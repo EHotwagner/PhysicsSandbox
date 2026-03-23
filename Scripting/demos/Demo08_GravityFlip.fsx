@@ -5,6 +5,8 @@
 #load "Prelude.fsx"
 open Prelude
 open PhysicsClient.Session
+open PhysicsClient.SimulationCommands
+open PhysicsClient.ViewCommands
 open PhysicsClient.StateDisplay
 
 module Demo08 =
@@ -36,35 +38,75 @@ module Demo08 =
                   let x = float i * 1.0 - 2.0
                   makeSphereCmd (nextId "sphere") (x, 1.5, 0.0) 0.15 1.0 ]
         batchAdd s bodyCmds
-        printfn "  25 objects: beach balls, dice, and spheres"
+        printfn "  25 objects in a walled enclosure"
+
+        // Smooth camera tracking via body centroid
+        let camDist = 12.0
+        let mutable camX = 6.0
+        let mutable camY = 5.0
+        let mutable camZ = 6.0
+        let mutable lookX = 0.0
+        let mutable lookY = 2.0
+        let mutable lookZ = 0.0
+        let smooth = 0.08
+
+        let lerp (c: float) (t: float) (f: float) = c + (t - c) * f
+
+        let trackBodies () =
+            match snapshot s with
+            | Some state when state.Bodies.Count > 0 ->
+                let bodies = state.Bodies |> Seq.filter (fun b -> not b.IsStatic)
+                let n = bodies |> Seq.length |> float
+                if n > 0.0 then
+                    let cx = bodies |> Seq.sumBy (fun b -> b.Position.X) |> fun v -> v / n
+                    let cy = bodies |> Seq.sumBy (fun b -> b.Position.Y) |> fun v -> v / n
+                    let cz = bodies |> Seq.sumBy (fun b -> b.Position.Z) |> fun v -> v / n
+                    lookX <- lerp lookX cx smooth
+                    lookY <- lerp lookY cy smooth
+                    lookZ <- lerp lookZ cz smooth
+                    camX <- lerp camX (lookX + camDist * 0.5) smooth
+                    camY <- lerp camY (lookY + camDist * 0.4) smooth
+                    camZ <- lerp camZ (lookZ + camDist * 0.5) smooth
+                    setCamera s (camX, camY, camZ) (lookX, lookY, lookZ) |> ignore
+            | _ -> ()
+
+        let runTracking (seconds: float) =
+            play s |> ignore
+            let steps = int (seconds * 1000.0) / 33
+            for _ in 1 .. steps do
+                sleep 33
+                trackBodies ()
+            pause s |> ignore
 
         // Normal gravity — let things settle
         runFor s 2.5
         printfn "  Settled. Now the fun begins..."
 
-        // Phase 1: REVERSE — objects fly upward
-        setCamera s (5.0, 1.0, 5.0) (0.0, 6.0, 0.0) |> ignore
+        // Short gravity pulses — camera tracks the action
         printfn "  GRAVITY UP!"
-        setGravity s (0.0, 15.0, 0.0) |> ignore
-        runFor s 2.0
+        setGravity s (0.0, 9.81, 0.0) |> ignore
+        runTracking 0.8
+        setGravity s (0.0, -9.81, 0.0) |> ignore
+        runTracking 1.5
 
-        // Phase 2: SIDEWAYS — everything slides east
         printfn "  GRAVITY EAST!"
-        setGravity s (12.0, 0.0, 0.0) |> ignore
-        setCamera s (-8.0, 4.0, 4.0) (2.0, 2.0, 0.0) |> ignore
-        runFor s 2.0
+        setGravity s (9.81, -2.0, 0.0) |> ignore
+        runTracking 0.8
+        setGravity s (0.0, -9.81, 0.0) |> ignore
+        runTracking 1.5
 
-        // Phase 3: DIAGONAL — pulls to a corner
         printfn "  GRAVITY DIAGONAL!"
-        setGravity s (-8.0, -5.0, 8.0) |> ignore
-        setCamera s (4.0, 6.0, -6.0) (-2.0, 1.0, 2.0) |> ignore
-        runFor s 2.0
+        setGravity s (-6.0, 6.0, 6.0) |> ignore
+        runTracking 0.8
+        setGravity s (0.0, -9.81, 0.0) |> ignore
+        runTracking 1.5
 
-        // Phase 4: RESTORED — everything falls back
+        printfn "  GRAVITY SOUTH!"
+        setGravity s (0.0, -2.0, -9.81) |> ignore
+        runTracking 0.8
         printfn "  Gravity restored — everything falls!"
         setGravity s (0.0, -9.81, 0.0) |> ignore
-        setCamera s (6.0, 5.0, 6.0) (0.0, 1.0, 0.0) |> ignore
-        runFor s 2.5
+        runTracking 2.0
 
         listBodies s
 
