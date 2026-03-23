@@ -125,6 +125,9 @@ Do not use Stride's `Add3DCameraController()` alongside a custom CameraControlle
 ### Stride3D Linux Dependencies
 Viewer needs `openal`, `freetype2`, `sdl2`, `ttf-liberation` system packages. FreeImage requires `freeimage.so` symlink (`ln -sf /usr/lib/libfreeimage.so /usr/lib/freeimage.so`). GLSL shader compiler binary must be at `linux-x64/glslangValidator.bin`.
 
+### Stride Create3DPrimitive Size Semantics
+`Bepu3DPhysicsOptions.Size` interpretation varies by primitive type: Sphere/Capsule/Cylinder use Size.X as **radius** (not diameter); Cube uses full extents. When computing sizes from physics dimensions, pass radius directly — do not double it. This was the root cause of the original shape sizing bug.
+
 ### Viewer Debug Wireframes for Complex Shapes
 Convex hull, mesh, and triangle shapes are rendered as bounding-box approximations in both the solid view and debug wireframe overlay. Procedural mesh wireframes that trace the actual collision geometry are not implemented — significant scope requiring custom vertex buffer generation from proto vertex/triangle data. Compound shapes render per-child wireframes correctly.
 

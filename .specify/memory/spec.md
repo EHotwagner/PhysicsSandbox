@@ -217,6 +217,21 @@ A developer creates kinematic bodies that move by explicit position/velocity com
 ### US-069: Per-Body Color (P1)
 A developer specifies RGBA color per body at creation. Bodies without specified color get auto-assigned defaults by shape type. The viewer renders each body in its assigned color including transparency. [Source: specs/005-stride-bepu-integration]
 
+### US-070: Correct Shape Sizing in Viewer (P1)
+A user observes physics bodies in the 3D viewer and they render at their exact physics dimensions — no visual overlap where physics bodies are separated. Spheres, capsules, and cylinders display at correct radius. [Source: specs/005-viewer-settings-sizing-fix]
+
+### US-071: Accurate Debug Wireframes (P1)
+A user toggles F3 debug view and wireframes match physics collision bounds exactly (no artificial 1.02x scaling). Compound shapes render per-child wireframes. Convex hull/mesh shapes use correctly-dimensioned bounding boxes. [Source: specs/005-viewer-settings-sizing-fix]
+
+### US-072: Borderless Windowed Fullscreen (P2)
+A user presses F11 to toggle borderless windowed fullscreen. Escape returns to windowed mode. Fullscreen state persists across restarts. Alt-tab transitions are seamless. [Source: specs/005-viewer-settings-sizing-fix]
+
+### US-073: Display Resolution Selection (P2)
+A user presses F2 to open a settings overlay, selects a resolution (1280x720, 1920x1080, 2560x1440), and the viewport resizes immediately without restart. Selection persists across restarts. [Source: specs/005-viewer-settings-sizing-fix]
+
+### US-074: Quality Settings (P3)
+A user adjusts anti-aliasing (Off/X2/X4/X8), shadow quality (Off/Low/Medium/High), texture filtering (Point/Linear/Anisotropic), and VSync via the F2 settings overlay. MSAA and shadow changes apply immediately. Settings persist across restarts. [Source: specs/005-viewer-settings-sizing-fix]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -392,6 +407,15 @@ A developer specifies RGBA color per body at creation. Bodies without specified 
 - **FR-171**: SetBodyPose command for runtime position/orientation/velocity updates on kinematic and dynamic bodies. [Source: specs/005-stride-bepu-integration]
 - **FR-172**: Per-body RGBA color at creation. Default color palette by shape type. Color in state stream. [Source: specs/005-stride-bepu-integration]
 - **FR-173**: BepuFSharp 0.2.0-beta.1 wrapper with constraints, materials, queries, collision filters, Stride interop. [Source: specs/005-stride-bepu-integration]
+- **FR-174**: Viewer renders all physics body shapes at exact physics dimensions — shapeSize passes radius (not diameter) for sphere/capsule/cylinder to Stride's Create3DPrimitive. [Source: specs/005-viewer-settings-sizing-fix]
+- **FR-175**: Debug wireframe visualization accurately represents physics collision boundaries for all 10 shape types with no artificial scaling offset. [Source: specs/005-viewer-settings-sizing-fix]
+- **FR-176**: Viewer provides borderless windowed fullscreen toggle via F11 keyboard shortcut. Escape exits fullscreen. [Source: specs/005-viewer-settings-sizing-fix]
+- **FR-177**: Viewer allows resolution selection from supported resolutions (1280x720, 1920x1080, 2560x1440) via on-screen settings overlay (F2). [Source: specs/005-viewer-settings-sizing-fix]
+- **FR-178**: Viewer provides basic quality settings: anti-aliasing (MSAA Off/X2/X4/X8), shadow quality (Off/Low/Medium/High via cascade count), texture filtering (Point/Linear/Anisotropic), VSync. [Source: specs/005-viewer-settings-sizing-fix]
+- **FR-179**: Display and quality settings persist across viewer restarts via JSON at ~/.config/PhysicsSandbox/viewer-settings.json. [Source: specs/005-viewer-settings-sizing-fix]
+- **FR-180**: All settings changes (resolution, fullscreen, quality) apply immediately without requiring a viewer restart. [Source: specs/005-viewer-settings-sizing-fix]
+- **FR-181**: Compound shape debug wireframes render each child shape individually at correct local position/orientation within the compound. [Source: specs/005-viewer-settings-sizing-fix]
+- **FR-182**: Near-zero shape dimensions clamped to 0.01f minimum to prevent invisible bodies. [Source: specs/005-viewer-settings-sizing-fix]
 
 ## Key Entities
 
@@ -433,7 +457,10 @@ A developer specifies RGBA color per body at creation. Bodies without specified 
 - **MaterialProperties**: Per-body surface interaction properties — friction (float), max_recovery_velocity (float), spring_frequency (float), spring_damping_ratio (float). Defaults applied when absent. [Source: specs/005-stride-bepu-integration]
 - **RegisteredShape**: Server-side cached shape definition (mesh, convex hull) registered once by handle, referenced by ID in AddBody without retransmitting vertex data. Cleared on reset. [Source: specs/005-stride-bepu-integration]
 - **Color**: Per-body RGBA (0.0–1.0 each). Auto-assigned by shape type when not specified: Sphere=blue, Box=orange, Capsule=green, Cylinder=yellow, Plane=gray, Triangle=cyan, ConvexHull=purple, Compound=white, Mesh=teal. [Source: specs/005-stride-bepu-integration]
-- **DebugState**: Viewer debug visualization state — wireframe entity cache, constraint line cache, enabled toggle. Updated each frame from SimulationState. [Source: specs/005-stride-bepu-integration]
+- **DebugState**: Viewer debug visualization state — wireframe entity cache (Map<string, Entity list> for compound children), constraint line cache, enabled toggle. Updated each frame from SimulationState. [Source: specs/005-stride-bepu-integration, specs/005-viewer-settings-sizing-fix]
+- **ViewerSettings**: Persisted display/quality configuration — ResolutionWidth, ResolutionHeight, IsFullscreen, AntiAliasing (Off/X2/X4/X8), ShadowQuality (Off/Low/Medium/High), TextureFiltering (Point/Linear/Anisotropic), VSync. JSON at ~/.config/PhysicsSandbox/viewer-settings.json. [Source: specs/005-viewer-settings-sizing-fix]
+- **DisplayState**: Runtime display manager state — Game reference, current ViewerSettings, previous windowed dimensions for fullscreen restore. [Source: specs/005-viewer-settings-sizing-fix]
+- **OverlayState**: Settings overlay UI state — visible flag, active category (Display/Quality), selected row, menu items with current selections. [Source: specs/005-viewer-settings-sizing-fix]
 - **QueryHandler**: Simulation-side query dispatch — converts proto RaycastRequest/SweepCastRequest/OverlapRequest to BepuFSharp calls, resolves BodyId→string IDs. [Source: specs/005-stride-bepu-integration]
 - **QueryBuilders (Scripting)**: Convenience wrappers returning typed F# results — raycast, raycastAll, sweepSphere, overlapSphere. [Source: specs/005-stride-bepu-integration]
 - **Python Prelude**: Shared Python module providing 40+ functions mirroring the F# PhysicsClient + Prelude: session management, all simulation/view commands, 7 body presets, 5 generators, steering (push/launch), display (list_bodies/status), timing (timed context manager), batch helpers, ID generation. [Source: specs/004-python-demo-scripts]
@@ -497,6 +524,10 @@ A developer specifies RGBA color per body at creation. Bodies without specified 
 - Raycast originates inside a body: behavior defined by BepuPhysics2. [Source: specs/005-stride-bepu-integration]
 - Conflicting material properties on contact: BepuPhysics2 combined/averaged values. [Source: specs/005-stride-bepu-integration]
 - Late-joining client: registered shapes included in every state stream update. [Source: specs/005-stride-bepu-integration]
+- Near-zero body dimensions (radius 0.001): clamped to 0.01f minimum for visibility. [Source: specs/005-viewer-settings-sizing-fix]
+- Resolution exceeds display bounds: should clamp to maximum supported. [Source: specs/005-viewer-settings-sizing-fix]
+- GPU does not support selected MSAA level: should fall back to nearest supported level. [Source: specs/005-viewer-settings-sizing-fix]
+- Settings file missing or corrupt: returns defaults, no crash. [Source: specs/005-viewer-settings-sizing-fix]
 
 ## Success Criteria
 
@@ -581,3 +612,9 @@ A developer specifies RGBA color per body at creation. Bodies without specified 
 - **SC-079**: All new features accessible via REPL and MCP. Scripting has convenience builders for common constraint types. [Source: specs/005-stride-bepu-integration]
 - **SC-080**: Existing demos and tests pass without modification (backward compatibility). [Source: specs/005-stride-bepu-integration]
 - **SC-081**: Two bodies of same shape with different colors render in respective colors. [Source: specs/005-stride-bepu-integration]
+- **SC-082**: All 10 supported shape types render at visually correct dimensions — no visual overlap where physics bodies are separated. [Source: specs/005-viewer-settings-sizing-fix]
+- **SC-083**: Debug wireframe outlines align with solid body edges for all shape types. [Source: specs/005-viewer-settings-sizing-fix]
+- **SC-084**: Fullscreen toggle responds within 0.5 seconds of F11 keypress with no visual corruption. [Source: specs/005-viewer-settings-sizing-fix]
+- **SC-085**: Resolution changes apply within 1 second without requiring a restart. [Source: specs/005-viewer-settings-sizing-fix]
+- **SC-086**: Settings persist across viewer restarts. [Source: specs/005-viewer-settings-sizing-fix]
+- **SC-087**: Viewer maintains above 30 FPS at minimum quality settings with 100 active bodies. [Source: specs/005-viewer-settings-sizing-fix]

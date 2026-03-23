@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
-**Last Updated**: 2026-03-22
-**Revision**: Updated with 005-stride-bepu-integration archival
+**Last Updated**: 2026-03-23
+**Revision**: Updated with 005-viewer-settings-sizing-fix archival
 
 ## Technical Context
 
@@ -56,9 +56,13 @@ src/
 │   │   ├── DebugRenderer.fsi/.fs        # Wireframe overlay, constraint line visualization, F3 toggle
 │   │   ├── CameraController.fsi/.fs     # Camera state, input, REPL commands
 │   │   └── FpsCounter.fsi/.fs           # Smoothed FPS calculation, logging, threshold warnings
+│   ├── Settings/
+│   │   ├── ViewerSettings.fsi/.fs       # Settings model, JSON persistence (~/.config/PhysicsSandbox/)
+│   │   ├── DisplayManager.fsi/.fs       # Fullscreen/resolution/quality Stride API wrapper
+│   │   └── SettingsOverlay.fsi/.fs      # F2 text-based settings UI (DebugTextSystem)
 │   ├── Streaming/
 │   │   └── ViewerClient.fsi/.fs         # gRPC streaming client with auto-reconnect
-│   └── Program.fs                       # Host + Stride game loop
+│   └── Program.fs                       # Host + Stride game loop + F11/F2/Escape input
 │
 └── PhysicsClient/                       # F# — REPL client library (gRPC client, Spectre.Console)
     ├── Bodies/
@@ -133,11 +137,13 @@ tests/
 │   ├── ResetSimulationTests.fs          # Reset/restart command tests
 │   ├── StaticBodyTrackingTests.fs       # Static body state tracking tests
 │   └── SurfaceAreaTests.fs              # Public API baseline verification
-├── PhysicsViewer.Tests/                 # F# — unit tests (40 tests)
+├── PhysicsViewer.Tests/                 # F# — unit tests (49 tests)
 │   ├── SceneManagerTests.fs             # Shape classification, state accessors
 │   ├── CameraControllerTests.fs         # Camera math, command application
 │   ├── FpsCounterTests.fs               # FPS calculation, logging interval, threshold tests
-│   ├── SurfaceAreaTests.fs              # Public API baseline verification
+│   ├── ViewerSettingsTests.fs            # Settings persistence round-trip tests
+│   ├── DisplayManagerTests.fs           # Display manager logic tests
+│   ├── SurfaceAreaTests.fs              # Public API baseline (8 modules incl. Settings)
 │   └── PublicApiBaseline.txt            # Surface-area baseline
 ├── PhysicsSandbox.Scripting.Tests/     # F# — unit + surface area tests (20 tests)
 │   ├── HelpersTests.fs
@@ -203,6 +209,7 @@ Scripting/                                   # All scripting folders consolidate
 - Viewer connects to server via same Aspire service discovery env vars
 - Client connects to server via same Aspire service discovery env vars (fallback: `http://localhost:5180`)
 - MCP server connects to PhysicsServer via Aspire service discovery (`services__server__https__0` / `services__server__http__0` env vars); falls back to CLI arg or `https://localhost:7180` for standalone use
+- Viewer settings persisted at `~/.config/PhysicsSandbox/viewer-settings.json` (resolution, fullscreen, AA, shadows, texture filtering, VSync)
 - Stride3D uses OpenGL graphics API (`<StrideGraphicsApi>OpenGL</StrideGraphicsApi>`) for container/GPU-passthrough compatibility
 - Stride asset compiler disabled by default (`StrideCompilerSkipBuild`); builds without it for CI, enable for live runs with GPU
 

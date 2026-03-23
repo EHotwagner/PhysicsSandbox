@@ -1,5 +1,37 @@
 # Merged Features Log
 
+## Viewer Display Settings & Shape Sizing Fix — 2026-03-23
+**Branch:** 005-viewer-settings-sizing-fix
+**Spec:** specs/005-viewer-settings-sizing-fix
+
+**What was added:**
+- Fixed shape sizing bug: sphere/capsule/cylinder rendered 2x too large (shapeSize passed diameter but Stride expects radius)
+- Removed artificial 1.02x debug wireframe scaling — wireframes now match physics bounds exactly
+- Compound shape debug wireframes render per-child shapes at correct local transforms
+- Near-zero dimension clamping (0.01f minimum) prevents invisible bodies
+- F11 borderless windowed fullscreen toggle with Escape to exit
+- F2 settings overlay with Display (resolution) and Quality (MSAA, shadows, texture filtering, VSync) tabs
+- Settings persisted to ~/.config/PhysicsSandbox/viewer-settings.json (System.Text.Json)
+- MSAA applied via GraphicsDeviceManager.PreferredMultisampleCount; shadows via LightDirectionalShadowMap.CascadeCount
+
+**New Components:**
+- `src/PhysicsViewer/Settings/ViewerSettings.fsi/.fs` — Settings model + JSON persistence
+- `src/PhysicsViewer/Settings/DisplayManager.fsi/.fs` — Stride window/graphics API wrapper
+- `src/PhysicsViewer/Settings/SettingsOverlay.fsi/.fs` — Text-based settings UI
+- `tests/PhysicsViewer.Tests/ViewerSettingsTests.fs` — Persistence round-trip tests
+- `tests/PhysicsViewer.Tests/DisplayManagerTests.fs` — Display manager tests
+
+**Modified Components:**
+- `src/PhysicsViewer/Rendering/ShapeGeometry.fs` — Fixed sizing for sphere/capsule/cylinder + min clamp
+- `src/PhysicsViewer/Rendering/DebugRenderer.fs` — Removed 1.02x scale, compound child wireframes, Entity list map
+- `src/PhysicsViewer/Program.fs` — Integrated F11/F2/Escape, settings persistence, overlay rendering
+- `tests/PhysicsViewer.Tests/SceneManagerTests.fs` — Updated expected sizing values, added capsule/cylinder tests
+- `tests/PhysicsViewer.Tests/SurfaceAreaTests.fs` — Added baselines for 3 new modules
+
+**Tasks Completed:** 40/40 tasks
+
+---
+
 ## Stride BepuPhysics Integration — 2026-03-22
 **Branch:** 005-stride-bepu-integration
 **Spec:** specs/005-stride-bepu-integration

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `005-viewer-settings-sizing-fix`
 **Created**: 2026-03-23
-**Status**: Planned
+**Status**: Completed
 **Input**: User description: "Improve the viewer by enabling fullscreen, different resolutions, and basic quality settings. Fix bug where objects like balls are rendered with wrong size, causing them to merge visually. Use Stride.BepuPhysics.Debug source code as correctness reference for shape-to-rendering dimension mapping (cannot be used directly — it requires native BepuPhysics objects not available in the gRPC-based viewer)."
 
 ## User Scenarios & Testing *(mandatory)*
