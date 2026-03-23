@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-23
-**Revision**: Updated with 005-mcp-data-logging archival
+**Revision**: Updated with 004-state-stream-optimization archival
 
 ## Overview
 
@@ -280,6 +280,18 @@ The viewer displays correctly-sized bounding box placeholders for bodies whose m
 ### US-088: Separate Mesh Channel (P2)
 Mesh geometry exchange happens on a dedicated FetchMeshes RPC separate from the main state stream, so mesh fetching does not block or degrade the 60 Hz state updates. [Source: specs/004-mesh-cache-transport]
 
+### US-091: Reduced Bandwidth for Steady-State Scenes (P1)
+When a simulation is running with many objects (100-500+), the 60 Hz tick stream contains only continuous data (pose + optional velocity) for dynamic bodies. Semi-static properties (shape, color, mass, material) are delivered via a property event stream on creation and on change. Static bodies are excluded from the tick stream entirely. ~69% bandwidth reduction at 200 bodies. [Source: specs/004-state-stream-optimization]
+
+### US-092: Viewer Gets Minimal Pose-Only Updates (P2)
+The 3D viewer receives TickState without velocity/angular_velocity fields (opts out via ExcludeVelocity=true on StateRequest) and caches semi-static properties from StreamProperties. ~80% bandwidth reduction. [Source: specs/004-state-stream-optimization]
+
+### US-093: Client and MCP Receive Velocity Data (P2)
+The REPL client and MCP server continue receiving velocity data on every tick for live watch filtering, steering, and trajectory recording. Split channels preserve all velocity-dependent features. [Source: specs/004-state-stream-optimization]
+
+### US-094: Constraints and Registered Shapes via Property Channel (P3)
+Constraints and registered shapes are transmitted via the property event stream on add/remove/modify — not in every tick. TickState contains no constraint or shape registry data. [Source: specs/004-state-stream-optimization]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -514,6 +526,16 @@ Mesh geometry exchange happens on a dedicated FetchMeshes RPC separate from the 
 - **FR-230**: An MCP `query_mesh_fetches` tool MUST retrieve mesh fetch events with time-range filtering, optional mesh ID filtering, and cursor-based pagination. [Source: specs/004-mcp-mesh-logging]
 - **FR-231**: The server MUST publish FetchMeshes observations through the CommandEvent audit stream (MeshFetchLog oneof case) for MCP recording. [Source: specs/004-mcp-mesh-logging]
 - **FR-232**: Recording session summary MUST include mesh fetch event count alongside snapshot and command event counts. [Source: specs/004-mcp-mesh-logging]
+- **FR-233**: The 60 Hz tick stream MUST contain only continuous data for dynamic bodies: body id, position, orientation, plus velocity and angular velocity for clients that have opted in. Static bodies MUST NOT appear in the tick stream. [Source: specs/004-state-stream-optimization]
+- **FR-234**: Semi-static body properties (shape, color, mass, material, collision filters, motion type, is_static) MUST be delivered via the property event stream (StreamProperties RPC), not the tick stream. [Source: specs/004-state-stream-optimization]
+- **FR-235**: The property event stream MUST deliver a body's full semi-static properties when the body is first created. For static bodies, this includes position and orientation. [Source: specs/004-state-stream-optimization]
+- **FR-236**: The property event stream MUST push updated semi-static properties to all connected clients when any semi-static property changes for a body. [Source: specs/004-state-stream-optimization]
+- **FR-237**: When a new client connects to the property event stream, it MUST receive a PropertySnapshot backfill of all existing bodies, constraints, and registered shapes. [Source: specs/004-state-stream-optimization]
+- **FR-238**: The system MUST allow different clients to declare velocity opt-out via StateRequest.ExcludeVelocity. Default includes velocity for backward compatibility. [Source: specs/004-state-stream-optimization]
+- **FR-239**: The system MUST push an explicit removal event (body id) on the property event stream when a body is removed. [Source: specs/004-state-stream-optimization]
+- **FR-240**: Constraints and registered shapes MUST be delivered via the property event stream on add/remove/modify — not on every tick. [Source: specs/004-state-stream-optimization]
+- **FR-241**: All clients (PhysicsClient, Viewer, MCP) MUST merge continuous tick data with cached semi-static property data to reconstruct full body state locally. [Source: specs/004-state-stream-optimization]
+- **FR-242**: The system MUST ensure that a slow consumer who drops ticks eventually converges to correct state via PropertySnapshot backfill on reconnect, without requiring a manual restart. [Source: specs/004-state-stream-optimization]
 
 ## Key Entities
 
@@ -572,6 +594,11 @@ Mesh geometry exchange happens on a dedicated FetchMeshes RPC separate from the 
 - **MeshResolver (Subscriber)**: Local ConcurrentDictionary<string, Shape> cache on each subscriber (viewer, client, MCP) with processNewMeshes/resolve/fetchMissing interface. [Source: specs/004-mesh-cache-transport]
 - **MeshIdGenerator**: Simulation-side module computing content-addressed mesh IDs and axis-aligned bounding boxes for ConvexHull, MeshShape, and Compound shapes. [Source: specs/004-mesh-cache-transport]
 - **MeshFetchEvent**: Recorded observation of a FetchMeshes RPC call — timestamp, requested mesh IDs, hit count, miss count, missed mesh IDs. Serialized as MeshFetchLog proto (EntryType=3). [Source: specs/004-mcp-mesh-logging]
+- **BodyPose**: Per-body continuous data in TickState — id, position (Vec3), orientation (Vec4), optional velocity (Vec3), optional angular_velocity (Vec3). Dynamic bodies only. [Source: specs/004-state-stream-optimization]
+- **TickState**: Lean per-tick message replacing SimulationState on the StreamState RPC — repeated BodyPose, time, running, tick_ms, serialize_ms, query_responses. [Source: specs/004-state-stream-optimization]
+- **BodyProperties**: Full semi-static properties for a body — id, shape, color, mass, is_static, motion_type, collision_group, collision_mask, material, position, orientation (pose included for static bodies). [Source: specs/004-state-stream-optimization]
+- **PropertyEvent**: Server→client event wrapper — oneof body_created (BodyProperties), body_removed (string), body_updated (BodyProperties), constraints_snapshot, registered_shapes_snapshot, new_meshes. [Source: specs/004-state-stream-optimization]
+- **PropertySnapshot**: Late-joiner backfill message — all existing BodyProperties + constraints + registered shapes + mesh geometries. [Source: specs/004-state-stream-optimization]
 
 ## Edge Cases
 
@@ -642,6 +669,11 @@ Mesh geometry exchange happens on a dedicated FetchMeshes RPC separate from the 
 - Two bodies share identical geometry: same content-addressed mesh ID, single cache entry, single new_meshes transmission. [Source: specs/004-mesh-cache-transport]
 - CachedShapeRef received in simulation commands: rejected with error (only valid in state output, not command input). [Source: specs/004-mesh-cache-transport]
 - Mesh fetch fails or times out in viewer: bounding box placeholder persists, viewer does not crash. [Source: specs/004-mesh-cache-transport]
+- Body removed: server pushes explicit removal PropertyEvent; clients delete from local cache. Body stops appearing in TickState. [Source: specs/004-state-stream-optimization]
+- Dynamic→static transition: PropertyEvent.body_updated with motion_type=static includes final pose. Body stops appearing in TickState; clients use cached pose. [Source: specs/004-state-stream-optimization]
+- Static→dynamic transition: PropertyEvent.body_updated with motion_type=dynamic. Body starts appearing in TickState on next tick. [Source: specs/004-state-stream-optimization]
+- Client misses tick (slow consumer): pose data is always-latest (next tick overwrites). PropertySnapshot backfill on reconnect ensures convergence. [Source: specs/004-state-stream-optimization]
+- Simulation paused and resumed: no special handling — pose data stops changing when paused, ticks naturally become smaller. [Source: specs/004-state-stream-optimization]
 
 ## Success Criteria
 
@@ -739,3 +771,8 @@ Mesh geometry exchange happens on a dedicated FetchMeshes RPC separate from the 
 - **SC-092**: Viewers display placeholder bounding boxes for unresolved meshes within one frame of state receipt. [Source: specs/004-mesh-cache-transport]
 - **SC-093**: All FetchMeshes RPC calls during an active recording are captured with zero data loss under normal operation. [Source: specs/004-mcp-mesh-logging]
 - **SC-094**: Recording mesh fetch events adds less than 1ms overhead to FetchMeshes RPC. [Source: specs/004-mcp-mesh-logging]
+- **SC-095**: For 200 moving bodies in steady state, per-tick TickState message size <=16 KB (~69% reduction from ~50 KB baseline). [Source: specs/004-state-stream-optimization]
+- **SC-096**: For the viewer (ExcludeVelocity=true), per-tick TickState message size <=11 KB (~80% reduction). [Source: specs/004-state-stream-optimization]
+- **SC-097**: All existing tests pass — no functional regression in client display, live watch, steering, MCP tools, or recording. [Source: specs/004-state-stream-optimization]
+- **SC-098**: New clients joining a running simulation see correct, complete state within 1 tick of connecting (via PropertySnapshot backfill + cached TickState). [Source: specs/004-state-stream-optimization]
+- **SC-099**: Body property changes visible to all clients within 1 tick of the change being applied (event-driven, no batching). [Source: specs/004-state-stream-optimization]

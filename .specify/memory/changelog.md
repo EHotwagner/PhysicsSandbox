@@ -1,5 +1,41 @@
 # Merged Features Log
 
+## State Stream Bandwidth Optimization — 2026-03-23
+**Branch:** 004-state-stream-optimization
+**Spec:** specs/004-state-stream-optimization
+
+**What was added:**
+- Split monolithic 60 Hz SimulationState into lean TickState (pose-only for dynamic bodies) + PropertyEvent stream (semi-static properties on creation/change/backfill)
+- StreamProperties RPC — server→client property event stream with PropertySnapshot late-joiner backfill
+- TickState replaces SimulationState on StreamState RPC — server decomposes in MessageRouter
+- ExcludeVelocity on StateRequest — viewer opts out of velocity fields for additional bandwidth savings
+- Constraints and registered shapes moved to PropertyEvent channel (not in every tick)
+- Client-side state reconstruction in all 4 client types (PhysicsClient, Viewer, MCP, demo scripts)
+- Separate tick vs property bandwidth tracking in MetricsCounter
+- ~69% bandwidth reduction at 200 bodies (TickState <=16 KB vs ~50 KB baseline)
+- ~80% reduction for viewer (TickState without velocity <=11 KB)
+
+**New Components:**
+- `tests/PhysicsServer.Tests/StateStreamOptimizationTests.fs` — 6 unit tests for split channel routing
+- `tests/PhysicsSimulation.Tests/StateDecompositionTests.fs` — 11 unit tests for state decomposition
+- `tests/PhysicsSandbox.Integration.Tests/StateStreamOptimizationIntegrationTests.cs` — 12 integration tests
+
+**Modified Components:**
+- `src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto` — BodyPose, TickState, BodyProperties, PropertyEvent, PropertySnapshot messages + StreamProperties RPC
+- `src/PhysicsServer/Hub/MessageRouter.fs` — buildTickState, detectPropertyEvents, publishTick, publishPropertyEvent, property subscriber mgmt
+- `src/PhysicsServer/Hub/StateCache.fs` — Dual cache (TickState + PropertySnapshot)
+- `src/PhysicsServer/Hub/MetricsCounter.fs` — Tick vs property bandwidth counters
+- `src/PhysicsServer/Services/PhysicsHubService.fs` — StreamState sends TickState, new StreamProperties RPC, StripVelocity helper
+- `src/PhysicsClient/Connection/Session.fs` — BodyPropertiesCache, StreamProperties subscription, reconstructState
+- `src/PhysicsSandbox.Mcp/GrpcConnection.fs` — Same reconstruction pattern as client
+- `src/PhysicsSandbox.Mcp/Recording/RecordingEngine.fs` — OnPropertyEventReceived for mesh recording
+- `src/PhysicsViewer/Streaming/ViewerClient.fs` — streamState(excludeVelocity) + streamProperties
+- `src/PhysicsViewer/Program.fs` — reconstructSimState, ExcludeVelocity=true
+
+**Tasks Completed:** 108/109 tasks (T041 deferred — requires unimplemented SetColor command)
+
+---
+
 ## MCP Mesh Fetch Logging — 2026-03-23
 **Branch:** 004-mcp-mesh-logging
 **Spec:** specs/004-mcp-mesh-logging

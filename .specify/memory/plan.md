@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-23
-**Revision**: Updated with 004-mcp-mesh-logging archival
+**Revision**: Updated with 004-state-stream-optimization archival
 
 ## Technical Context
 
@@ -30,12 +30,12 @@ src/
 │
 ├── PhysicsServer/                       # F# — server hub (central message router)
 │   ├── Hub/
-│   │   ├── StateCache.fsi/.fs           # Latest-state caching for late joiners
+│   │   ├── StateCache.fsi/.fs           # TickState caching for late joiners (dual tick + property cache)
 │   │   ├── MeshCache.fsi/.fs             # Server-side mesh geometry cache (ConcurrentDictionary)
-│   │   ├── MessageRouter.fsi/.fs        # Command/state routing, subscriber mgmt, batch routing
-│   │   └── MetricsCounter.fsi/.fs       # Thread-safe per-service metrics tracking (Interlocked, mesh cache counters)
+│   │   ├── MessageRouter.fsi/.fs        # Command/state routing, state decomposition (TickState + PropertyEvent), subscriber mgmt, batch routing
+│   │   └── MetricsCounter.fsi/.fs       # Thread-safe per-service metrics tracking (Interlocked, mesh cache, tick vs property counters)
 │   ├── Services/
-│   │   ├── PhysicsHubService.fsi/.fs    # Client/viewer-facing gRPC
+│   │   ├── PhysicsHubService.fsi/.fs    # Client/viewer-facing gRPC (StreamState sends TickState, StreamProperties sends PropertyEvents)
 │   │   └── SimulationLinkService.fsi/.fs # Simulation-facing gRPC
 │   └── Program.fs                       # Host setup
 │
@@ -124,7 +124,7 @@ src/
     └── Program.fs                      # WebApplication + HTTP/SSE MCP transport
 
 tests/
-├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests (42 tests)
+├── PhysicsSandbox.Integration.Tests/    # C# — Aspire end-to-end tests (56 tests)
 │   ├── ServerHubTests.cs               # 6 tests (SendCommand, StreamState, SendViewCommand, StreamViewCommands)
 │   ├── SimulationConnectionTests.cs    # 7 tests (connection lifecycle, physics verification, 30s stability)
 │   ├── CommandRoutingTests.cs          # 10 tests (all 9 command types + ClearForces end-to-end)
@@ -139,19 +139,22 @@ tests/
 │   ├── StressTestIntegrationTests.cs  # Stress test MCP tool end-to-end tests
 │   ├── MeshCacheIntegrationTests.cs   # End-to-end mesh caching: CachedShapeRef + FetchMeshes + late-joiner
 │   ├── ComparisonIntegrationTests.cs  # MCP-vs-scripting comparison tests
+│   ├── StateStreamOptimizationIntegrationTests.cs  # 12 tests: split channels, backfill, bandwidth, velocity
 │   └── xunit.runner.json              # Test runner configuration
-├── PhysicsServer.Tests/                 # F# — unit tests (35 tests)
+├── PhysicsServer.Tests/                 # F# — unit tests (41 tests)
 │   ├── StateCacheTests.fs
 │   ├── MessageRouterTests.fs            # Includes readViewCommand tests
 │   ├── BatchRoutingTests.fs             # Batch command routing tests
 │   ├── MetricsCounterTests.fs           # MetricsCounter unit tests
+│   ├── StateStreamOptimizationTests.fs  # Split channel routing, property events, backfill tests
 │   └── PublicApiBaseline.txt            # Surface-area baseline
-├── PhysicsSimulation.Tests/             # F# — unit tests (103 tests)
+├── PhysicsSimulation.Tests/             # F# — unit tests (114 tests)
 │   ├── SimulationWorldTests.fs          # Lifecycle, bodies, forces, gravity, stress
 │   ├── CommandHandlerTests.fs           # Command dispatch, edge cases
 │   ├── ResetSimulationTests.fs          # Reset/restart command tests
 │   ├── StaticBodyTrackingTests.fs       # Static body state tracking tests
-│   └── SurfaceAreaTests.fs              # Public API baseline verification
+│   ├── SurfaceAreaTests.fs              # Public API baseline verification
+│   └── StateDecompositionTests.fs       # buildTickState, detectPropertyEvents, state decomposition tests
 ├── PhysicsViewer.Tests/                 # F# — unit tests (56 tests)
 │   ├── SceneManagerTests.fs             # Shape classification, state accessors
 │   ├── CameraControllerTests.fs         # Camera math, command application
@@ -175,7 +178,7 @@ tests/
 │   ├── SteeringTests.fs                 # Direction-to-Vec3 mapping
 │   ├── StateDisplayTests.fs             # Vec3 formatting, velocity magnitude, shapes
 │   └── SurfaceAreaTests.fs              # Public API baseline for all 9 modules
-├── PhysicsSandbox.Mcp.Tests/            # F# — unit tests (15 tests)
+├── PhysicsSandbox.Mcp.Tests/            # F# — unit tests (19 tests)
 │   ├── ChunkWriterTests.fs
 │   ├── ChunkReaderTests.fs
 │   ├── SessionStoreTests.fs
@@ -290,3 +293,7 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - Compound shapes are cached as atomic units (single hash of entire Compound proto). Children are not independently identified. [Source: specs/004-mesh-cache-transport]
 - Viewer MeshResolver uses `Async.Start` for non-blocking fetch. Client/MCP use synchronous fetch (blocking acceptable for text/request-response). [Source: specs/004-mesh-cache-transport]
 - Demo Prelude.fsx references PhysicsClient NuGet 0.2.0 which does not include CachedShapeRef/MeshGeometry/FetchMeshes types. The `resolveShape` helper cannot be added until PhysicsClient is repacked. [Source: specs/004-mesh-cache-transport]
+- StreamState RPC now returns TickState (not SimulationState). Server decomposes SimulationState from simulation into TickState + PropertyEvents in MessageRouter. SimulationLink proto is unchanged. [Source: specs/004-state-stream-optimization]
+- Proto Vec3/Vec4 use `double` (8 bytes per component), not `float` (4 bytes). This contributes to slightly higher-than-estimated TickState size (~80 bytes/body with collisions vs theoretical ~56 bytes with float). Switching to float would be a cross-cutting change. [Source: specs/004-state-stream-optimization]
+- SC-001 bandwidth target is marginally missed (69% reduction vs 70% target) due to double-precision Vec3/Vec4. Test threshold set at 16 KB. [Source: specs/004-state-stream-optimization]
+- T041 integration test (PropertyEvent.body_updated on color change) deferred — requires a SetColor command not yet implemented. Server-side detection logic is in place. [Source: specs/004-state-stream-optimization]

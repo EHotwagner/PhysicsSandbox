@@ -52,13 +52,13 @@ src/
   PhysicsSandbox.Mcp/               # F# MCP server (47 tools, interactive debugging via AI assistants, recording + query)
   PhysicsSandbox.Scripting/         # F# scripting convenience library (wraps PhysicsClient, 6 modules)
 tests/
-  PhysicsServer.Tests/              # F# unit tests (18 tests)
-  PhysicsSimulation.Tests/          # F# unit tests (39 tests)
-  PhysicsViewer.Tests/              # F# unit tests (19 tests)
-  PhysicsClient.Tests/              # F# unit tests (52 tests)
-  PhysicsSandbox.Mcp.Tests/          # F# unit tests (12 tests)
-  PhysicsSandbox.Scripting.Tests/   # F# unit + surface area tests (19 tests)
-  PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (42 tests)
+  PhysicsServer.Tests/              # F# unit tests (41 tests)
+  PhysicsSimulation.Tests/          # F# unit tests (114 tests)
+  PhysicsViewer.Tests/              # F# unit tests (56 tests)
+  PhysicsClient.Tests/              # F# unit tests (56 tests)
+  PhysicsSandbox.Mcp.Tests/          # F# unit tests (19 tests)
+  PhysicsSandbox.Scripting.Tests/   # F# unit + surface area tests (20 tests)
+  PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (56 tests)
 Scripting/
   demos/                            # F# demo scripts (15 demos + runners)
   demos_py/                         # Python demo scripts (15 demos + runners)
@@ -98,7 +98,7 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
-- 004-state-stream-optimization: Added F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console
+- 004-state-stream-optimization: Split SimulationState into lean TickState (pose-only, dynamic bodies) + PropertyEvent stream (semi-static on change/backfill). StreamProperties RPC, ExcludeVelocity opt-out, constraints/shapes via property channel. ~69% bandwidth reduction at 200 bodies. 108/109 tasks, 306+ unit tests, 12 integration tests.
 - 004-mcp-mesh-logging: MCP recording for FetchMeshes RPC — MeshFetchEvent (EntryType=3) records requested IDs, hits/misses. Published via CommandEvent audit stream. New query_mesh_fetches tool. 17 tasks.
 - 004-mesh-cache-transport: Mesh cache and on-demand transport — complex shapes (ConvexHull, MeshShape, Compound) use CachedShapeRef (mesh_id + bbox) instead of inline geometry after first tick. Server MeshCache + FetchMeshes RPC. MeshResolver in viewer/client/MCP. Viewer bounding box placeholders. MeshDefinition recording. 75 tasks, 262+ tests.
 
