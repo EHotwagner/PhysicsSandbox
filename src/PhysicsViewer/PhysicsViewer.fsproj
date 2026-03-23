@@ -23,6 +23,12 @@
     <Compile Include="Rendering/CameraController.fs" />
     <Compile Include="Streaming/ViewerClient.fsi" />
     <Compile Include="Streaming/ViewerClient.fs" />
+    <Compile Include="Settings/ViewerSettings.fsi" />
+    <Compile Include="Settings/ViewerSettings.fs" />
+    <Compile Include="Settings/DisplayManager.fsi" />
+    <Compile Include="Settings/DisplayManager.fs" />
+    <Compile Include="Settings/SettingsOverlay.fsi" />
+    <Compile Include="Settings/SettingsOverlay.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -10,6 +10,8 @@
     <Compile Include="FpsCounterTests.fs" />
     <Compile Include="SceneManagerTests.fs" />
     <Compile Include="CameraControllerTests.fs" />
+    <Compile Include="ViewerSettingsTests.fs" />
+    <Compile Include="DisplayManagerTests.fs" />
     <Compile Include="SurfaceAreaTests.fs" />
   </ItemGroup>
 
