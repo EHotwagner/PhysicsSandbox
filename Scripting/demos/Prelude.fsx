@@ -1,7 +1,7 @@
 // Shared preamble for all demo scripts
 // Usage: #load "Prelude.fsx" at the top of any demo script
 
-#r "nuget: PhysicsClient"
+#r "nuget: PhysicsClient, 0.2.0"
 #r "nuget: Microsoft.Extensions.Logging.Abstractions"
 #r "nuget: Spectre.Console"
 
@@ -183,6 +183,122 @@ let makeHingeCmd (id: string) (bodyA: string) (bodyB: string) (axis: float * flo
     let cmd = SimulationCommand()
     cmd.AddConstraint <- ac
     cmd
+
+// ─── Color Palette ────────────────────────────────────────────────────
+
+let projectileColor = makeColor 1.0 0.2 0.1 1.0   // Red
+let targetColor     = makeColor 0.3 0.6 1.0 1.0   // Blue
+let structureColor  = makeColor 0.7 0.7 0.7 1.0   // Gray
+let accentYellow    = makeColor 1.0 0.8 0.0 1.0   // Yellow
+let accentGreen     = makeColor 0.2 0.8 0.3 1.0   // Green
+let accentPurple    = makeColor 0.8 0.4 1.0 1.0   // Purple
+let accentOrange    = makeColor 1.0 0.5 0.0 1.0   // Orange
+let kinematicColor  = makeColor 0.0 1.0 1.0 1.0   // Cyan
+
+// ─── Advanced Shape Commands ──────────────────────────────────────────
+
+let makeTriangleCmd (id: string) (pos: float * float * float) (a: float * float * float) (b: float * float * float) (c: float * float * float) (mass: float) =
+    let tri = Triangle()
+    tri.A <- toVec3 a; tri.B <- toVec3 b; tri.C <- toVec3 c
+    let shape = Shape()
+    shape.Triangle <- tri
+    let body = AddBody()
+    body.Id <- id
+    body.Position <- toVec3 pos
+    body.Mass <- mass
+    body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
+
+let makeConvexHullCmd (id: string) (pos: float * float * float) (points: (float * float * float) list) (mass: float) =
+    let hull = ConvexHull()
+    for p in points do hull.Points.Add(toVec3 p)
+    let shape = Shape()
+    shape.ConvexHull <- hull
+    let body = AddBody()
+    body.Id <- id
+    body.Position <- toVec3 pos
+    body.Mass <- mass
+    body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
+
+let makeCompoundCmd (id: string) (pos: float * float * float) (children: (Shape * (float * float * float)) list) (mass: float) =
+    let compound = Compound()
+    for (childShape, localPos) in children do
+        let child = CompoundChild()
+        child.Shape <- childShape
+        child.LocalPosition <- toVec3 localPos
+        let orient = Vec4()
+        orient.W <- 1.0
+        child.LocalOrientation <- orient
+        compound.Children.Add(child)
+    let shape = Shape()
+    shape.Compound <- compound
+    let body = AddBody()
+    body.Id <- id
+    body.Position <- toVec3 pos
+    body.Mass <- mass
+    body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
+
+// ─── Kinematic & Filter Helpers ───────────────────────────────────────
+
+let withMotionType (mt: BodyMotionType) (cmd: SimulationCommand) =
+    cmd.AddBody.MotionType <- mt
+    cmd
+
+let withCollisionFilter (group: uint32) (mask: uint32) (cmd: SimulationCommand) =
+    cmd.AddBody.CollisionGroup <- group
+    cmd.AddBody.CollisionMask <- mask
+    cmd
+
+let makeKinematicCmd (id: string) (pos: float * float * float) (shape: Shape) =
+    let body = AddBody()
+    body.Id <- id
+    body.Position <- toVec3 pos
+    body.Mass <- 0.0
+    body.MotionType <- BodyMotionType.Kinematic
+    body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
+
+let setPose (s: Session) (bodyId: string) (pos: float * float * float) =
+    setBodyPose s bodyId pos None None None |> ok
+
+// ─── Query Helpers ────────────────────────────────────────────────────
+
+let queryRaycast (s: Session) (origin: float * float * float) (direction: float * float * float) (maxDist: float) =
+    let resp = raycast s origin direction maxDist false None |> ok
+    if resp.Hit then
+        resp.Hits |> Seq.map (fun h -> (h.BodyId, (h.Position.X, h.Position.Y, h.Position.Z), (h.Normal.X, h.Normal.Y, h.Normal.Z), h.Distance)) |> Seq.toList
+    else []
+
+let queryOverlapSphere (s: Session) (radius: float) (position: float * float * float) =
+    let sphere = Sphere()
+    sphere.Radius <- radius
+    let shape = Shape()
+    shape.Sphere <- sphere
+    let resp = overlap s shape position None None |> ok
+    resp.BodyIds |> Seq.toList
+
+let querySweepSphere (s: Session) (radius: float) (startPos: float * float * float) (direction: float * float * float) (maxDist: float) =
+    let sphere = Sphere()
+    sphere.Radius <- radius
+    let shape = Shape()
+    shape.Sphere <- sphere
+    let resp = sweepCast s shape startPos direction maxDist None None |> ok
+    if resp.Hit then
+        let h = resp.Closest
+        Some (h.BodyId, (h.Position.X, h.Position.Y, h.Position.Z), (h.Normal.X, h.Normal.Y, h.Normal.Z), h.Distance)
+    else None
+
+// ─── Standalone Runner ────────────────────────────────────────────────
 
 let runStandalone (name: string) (run: Session -> unit) =
     let addr =

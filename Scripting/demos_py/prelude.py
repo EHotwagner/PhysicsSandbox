@@ -540,6 +540,183 @@ def reset_simulation(session: Session) -> None:
 # ─── Standalone Runner Helper ──────────────────────────────────────────────
 
 
+# ─── Color Palette ─────────────────────────────────────────────────────────
+
+PROJECTILE_COLOR = make_color(1.0, 0.2, 0.1)
+TARGET_COLOR = make_color(0.3, 0.6, 1.0)
+STRUCTURE_COLOR = make_color(0.7, 0.7, 0.7)
+ACCENT_YELLOW = make_color(1.0, 0.8, 0.0)
+ACCENT_GREEN = make_color(0.2, 0.8, 0.3)
+ACCENT_PURPLE = make_color(0.8, 0.4, 1.0)
+ACCENT_ORANGE = make_color(1.0, 0.5, 0.0)
+KINEMATIC_COLOR = make_color(0.0, 1.0, 1.0)
+
+
+# ─── Advanced Shape Commands ──────────────────────────────────────────────
+
+
+def make_triangle_cmd(body_id: str, pos: tuple[float, float, float],
+                      a: tuple[float, float, float],
+                      b: tuple[float, float, float],
+                      c: tuple[float, float, float],
+                      mass: float) -> pb.SimulationCommand:
+    return pb.SimulationCommand(add_body=pb.AddBody(
+        id=body_id, position=to_vec3(*pos), mass=mass,
+        shape=pb.Shape(triangle=pb.Triangle(
+            a=to_vec3(*a), b=to_vec3(*b), c=to_vec3(*c)))))
+
+
+def make_convex_hull_cmd(body_id: str, pos: tuple[float, float, float],
+                         points: list[tuple[float, float, float]],
+                         mass: float) -> pb.SimulationCommand:
+    hull_points = [to_vec3(*p) for p in points]
+    return pb.SimulationCommand(add_body=pb.AddBody(
+        id=body_id, position=to_vec3(*pos), mass=mass,
+        shape=pb.Shape(convex_hull=pb.ConvexHull(points=hull_points))))
+
+
+def make_compound_cmd(body_id: str, pos: tuple[float, float, float],
+                      children: list[tuple[pb.Shape, tuple[float, float, float]]],
+                      mass: float) -> pb.SimulationCommand:
+    compound_children = []
+    for child_shape, local_pos in children:
+        compound_children.append(pb.CompoundChild(
+            shape=child_shape, local_position=to_vec3(*local_pos),
+            local_orientation=pb.Vec4(x=0, y=0, z=0, w=1)))
+    return pb.SimulationCommand(add_body=pb.AddBody(
+        id=body_id, position=to_vec3(*pos), mass=mass,
+        shape=pb.Shape(compound=pb.Compound(children=compound_children))))
+
+
+# ─── Kinematic & Filter Helpers ────────────────────────────────────────────
+
+
+def with_color_and_material(cmd: pb.SimulationCommand,
+                            color: pb.Color | None = None,
+                            material: pb.MaterialProperties | None = None) -> pb.SimulationCommand:
+    if color:
+        cmd.add_body.color.CopyFrom(color)
+    if material:
+        cmd.add_body.material.CopyFrom(material)
+    return cmd
+
+
+def with_motion_type(cmd: pb.SimulationCommand,
+                     motion_type: int) -> pb.SimulationCommand:
+    cmd.add_body.motion_type = motion_type
+    return cmd
+
+
+def with_collision_filter(cmd: pb.SimulationCommand,
+                          group: int, mask: int) -> pb.SimulationCommand:
+    cmd.add_body.collision_group = group
+    cmd.add_body.collision_mask = mask
+    return cmd
+
+
+def make_kinematic_cmd(body_id: str, pos: tuple[float, float, float],
+                       shape: pb.Shape) -> pb.SimulationCommand:
+    return pb.SimulationCommand(add_body=pb.AddBody(
+        id=body_id, position=to_vec3(*pos), mass=0.0,
+        motion_type=1, shape=shape))  # 1 = KINEMATIC
+
+
+def set_body_pose(session: Session, body_id: str,
+                  pos: tuple[float, float, float]) -> pb.CommandAck:
+    return _send(session, pb.SimulationCommand(
+        set_body_pose=pb.SetBodyPose(
+            body_id=body_id, position=to_vec3(*pos))))
+
+
+# ─── Constraint Helpers ────────────────────────────────────────────────────
+
+
+def make_ball_socket_cmd(constraint_id: str, body_a: str, body_b: str,
+                         offset_a: tuple[float, float, float],
+                         offset_b: tuple[float, float, float]) -> pb.SimulationCommand:
+    ct = pb.ConstraintType(ball_socket=pb.BallSocketConstraint(
+        local_offset_a=to_vec3(*offset_a), local_offset_b=to_vec3(*offset_b)))
+    return pb.SimulationCommand(add_constraint=pb.AddConstraint(
+        id=constraint_id, body_a=body_a, body_b=body_b, type=ct))
+
+
+def make_hinge_cmd(constraint_id: str, body_a: str, body_b: str,
+                   axis: tuple[float, float, float],
+                   offset_a: tuple[float, float, float],
+                   offset_b: tuple[float, float, float]) -> pb.SimulationCommand:
+    ct = pb.ConstraintType(hinge=pb.HingeConstraint(
+        local_hinge_axis_a=to_vec3(*axis), local_hinge_axis_b=to_vec3(*axis),
+        local_offset_a=to_vec3(*offset_a), local_offset_b=to_vec3(*offset_b)))
+    return pb.SimulationCommand(add_constraint=pb.AddConstraint(
+        id=constraint_id, body_a=body_a, body_b=body_b, type=ct))
+
+
+def make_weld_cmd(constraint_id: str, body_a: str,
+                  body_b: str) -> pb.SimulationCommand:
+    spring = pb.SpringSettings(frequency=30.0, damping_ratio=1.0)
+    ct = pb.ConstraintType(weld=pb.WeldConstraint(
+        local_offset=to_vec3(0, 0, 0),
+        local_orientation=pb.Vec4(x=0, y=0, z=0, w=1), spring=spring))
+    return pb.SimulationCommand(add_constraint=pb.AddConstraint(
+        id=constraint_id, body_a=body_a, body_b=body_b, type=ct))
+
+
+def make_distance_limit_cmd(constraint_id: str, body_a: str, body_b: str,
+                            min_dist: float,
+                            max_dist: float) -> pb.SimulationCommand:
+    spring = pb.SpringSettings(frequency=30.0, damping_ratio=1.0)
+    ct = pb.ConstraintType(distance_limit=pb.DistanceLimitConstraint(
+        local_offset_a=to_vec3(0, 0, 0), local_offset_b=to_vec3(0, 0, 0),
+        min_distance=min_dist, max_distance=max_dist, spring=spring))
+    return pb.SimulationCommand(add_constraint=pb.AddConstraint(
+        id=constraint_id, body_a=body_a, body_b=body_b, type=ct))
+
+
+# ─── Query Helpers ─────────────────────────────────────────────────────────
+
+
+def query_raycast(session: Session, origin: tuple[float, float, float],
+                  direction: tuple[float, float, float],
+                  max_distance: float = 1000.0) -> list[tuple[str, tuple, tuple, float]]:
+    resp = session.stub.Raycast(pb.RaycastRequest(
+        origin=to_vec3(*origin), direction=to_vec3(*direction),
+        max_distance=max_distance, all_hits=False))
+    if resp.hit:
+        return [(h.body_id,
+                 (h.position.x, h.position.y, h.position.z),
+                 (h.normal.x, h.normal.y, h.normal.z),
+                 h.distance) for h in resp.hits]
+    return []
+
+
+def query_overlap_sphere(session: Session, radius: float,
+                         position: tuple[float, float, float]) -> list[str]:
+    shape = pb.Shape(sphere=pb.Sphere(radius=radius))
+    resp = session.stub.Overlap(pb.OverlapRequest(
+        shape=shape, position=to_vec3(*position)))
+    return list(resp.body_ids)
+
+
+def query_sweep_sphere(session: Session, radius: float,
+                       start: tuple[float, float, float],
+                       direction: tuple[float, float, float],
+                       max_distance: float) -> tuple | None:
+    shape = pb.Shape(sphere=pb.Sphere(radius=radius))
+    resp = session.stub.SweepCast(pb.SweepCastRequest(
+        shape=shape, start_position=to_vec3(*start),
+        direction=to_vec3(*direction), max_distance=max_distance))
+    if resp.hit:
+        h = resp.closest
+        return (h.body_id,
+                (h.position.x, h.position.y, h.position.z),
+                (h.normal.x, h.normal.y, h.normal.z),
+                h.distance)
+    return None
+
+
+# ─── Standalone Runner Helper ──────────────────────────────────────────────
+
+
 def run_standalone(run_fn, name: str = "Demo") -> None:
     addr = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5180"
     print(f"Connecting to {addr}...")
