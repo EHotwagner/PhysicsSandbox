@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-24
-**Revision**: Updated with 004-proper-shape-rendering archival
+**Revision**: Updated with 004-enhance-demos-shapes archival
 
 ## Technical Context
 
@@ -197,7 +197,7 @@ Scripting/                                   # All scripting folders consolidate
 │   ├── Prelude.fsx                          # Single #r to Scripting DLL + opens
 │   └── HelloDrop.fsx                        # Minimal validation script
 ├── demos/                                   # F# scripts — demo suite (18 demos + runners)
-├── Prelude.fsx                            # Shared helpers: command builders (sphere, box, capsule, cylinder, triangle, convex hull, compound, kinematic), color palette (8 constants), material presets, constraint helpers (ball-socket, hinge), query helpers (raycast, overlap, sweep), setPose, batchAdd, resetSimulation, runFor, nextId, toVec3, timed, runStandalone + all PhysicsClient 0.2.0 opens
+├── Prelude.fsx                            # Shared helpers: command builders (sphere, box, capsule, cylinder, triangle, convex hull, compound, mesh, kinematic), color palette (8 constants), material presets, constraint helpers (ball-socket, hinge), query helpers (raycast, overlap, sweep), setPose, setDemoInfo, batchAdd, resetSimulation, runFor, nextId, toVec3, timed, runStandalone + all PhysicsClient 0.3.0 opens
 ├── 01_HelloDrop.fsx                       # 6 shapes (sphere, box, capsule, cylinder) — comparative fall + bouncy/sticky materials
 ├── 02_BouncingMarbles.fsx                 # 25 marbles in 2 color-coded waves (yellow/green)
 ├── 03_CrateStack.fsx                      # 12 blue crates — red boulder strikes tower center via launch
@@ -216,13 +216,16 @@ Scripting/                                   # All scripting folders consolidate
 ├── 16_Constraints.fsx                     # NEW: pendulum chain (ball-socket + distance-limit), hinged bridge, weld cluster — 4 constraint types
 ├── 17_QueryRange.fsx                      # NEW: raycast, overlap sphere, sweep sphere queries with printed results
 ├── 18_KinematicSweep.fsx                  # NEW: kinematic bulldozer plows through 30 dynamic bodies
-├── AllDemos.fsx                           # All 18 demos as inline functions (loaded by RunAll + AutoRun)
+├── 19_ShapeGallery.fsx                    # NEW: all shape types side-by-side showcase
+├── 20_CompoundConstructions.fsx           # NEW: L-shapes, T-shapes, dumbbells
+├── 21_MeshHullPlayground.fsx              # NEW: convex hulls + meshes on obstacles
+├── AllDemos.fsx                           # All 21 demos as inline functions (loaded by RunAll + AutoRun)
 ├── AutoRun.fsx                            # Non-interactive runner (loads AllDemos.fsx — no code duplication)
 └── RunAll.fsx                             # Interactive runner (space/enter to advance)
 
 └── demos_py/                                # Python scripts — demo suite (18 demos + runners)
-├── prelude.py                               # Shared helpers: session, commands, presets, generators, steering, display, batch, ID gen, color palette, advanced shape builders (triangle, convex hull, compound, kinematic), constraint helpers, query helpers, set_body_pose
-├── demo01_hello_drop.py – demo18_kinematic_sweep.py # 18 demos mirroring F# suite
+├── prelude.py                               # Shared helpers: session, commands, presets, generators, steering, display, batch, ID gen, color palette, advanced shape builders (triangle, convex hull, compound, mesh, kinematic), constraint helpers, query helpers, set_body_pose, set_demo_info
+├── demo01_hello_drop.py – demo21_mesh_hull_playground.py # 21 demos mirroring F# suite (18 original + 3 shape demos)
 ├── all_demos.py                             # Demo registry (name, description, run) tuples
 ├── auto_run.py                              # Automated runner with pass/fail summary
 ├── run_all.py                               # Interactive runner with keypress advancement
@@ -311,3 +314,7 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - ConvexHull face computation via MIConvexHull requires at least 4 non-coplanar points. 3 points fall back to flat triangle; <3 fall back to placeholder sphere. [Source: specs/004-proper-shape-rendering]
 - Compound shapes create parent→child entity hierarchies in Stride. Nested compounds are supported but deep nesting (>2 levels) is untested. [Source: specs/004-proper-shape-rendering]
 - ShapeRef resolution uses `ShapeHandle` property (not `Name`) on proto `ShapeReference` type. Lookup is via `SimulationState.RegisteredShapes` sequential scan. [Source: specs/004-proper-shape-rendering]
+- PhysicsClient NuGet repacked to 0.3.0 (from 0.2.0) to expose setDemoMetadata API. Contracts also 0.3.0. Prelude.fsx pins `#r "nuget: PhysicsClient, 0.3.0"`. [Source: specs/004-enhance-demos-shapes]
+- Viewer demo label uses DebugTextSystem.Print at (10, 10); status bar moved to (10, 30). Settings overlay (F2) renders at (20, 60) — no overlap. [Source: specs/004-enhance-demos-shapes]
+- ViewCommand SetDemoMetadata (field 4) is auto-forwarded by server — no PhysicsServer code changes needed for demo metadata transport. [Source: specs/004-enhance-demos-shapes]
+- Proto MeshShape message (field `mesh` in Shape oneof) uses `MeshTriangle` (not `Triangle`) to avoid name conflict with the Triangle shape type. In F# use `MeshShape()` and `MeshTriangle()`, not `Mesh()` and `Triangle()`. [Source: specs/004-enhance-demos-shapes]

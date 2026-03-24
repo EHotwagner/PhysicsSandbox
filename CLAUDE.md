@@ -66,8 +66,8 @@ tests/
   PhysicsSandbox.Scripting.Tests/   # F# unit + surface area tests (20 tests)
   PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (56 tests)
 Scripting/
-  demos/                            # F# demo scripts (15 demos + runners)
-  demos_py/                         # Python demo scripts (15 demos + runners)
+  demos/                            # F# demo scripts (21 demos + runners)
+  demos_py/                         # Python demo scripts (21 demos + runners)
   scripts/                          # Curated F# scripts using Scripting library
   scratch/                          # Gitignored experimentation folder
 ```
@@ -104,7 +104,7 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
-- 004-enhance-demos-shapes: Added F# on .NET 10.0 (services, viewer, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts), Python 3.10+ (demo scripts) + Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, Stride.CommunityToolkit 1.0.0-preview.62, Spectre.Console, grpcio (Python)
+- 004-enhance-demos-shapes: SetDemoMetadata ViewCommand (proto field 4), viewer window title + demo label overlay, 8 demos enhanced with new shapes, 3 new demos (19-21: Shape Gallery, Compound Constructions, Mesh & Hull Playground), makeMeshCmd/setDemoInfo helpers, PhysicsClient 0.3.0
 - 004-proper-shape-rendering: Added F# on .NET 10.0 (PhysicsViewer) + Stride.CommunityToolkit 1.0.0-preview.62 (existing), MIConvexHull (new, convex hull face computation)
 - 004-backlog-fix-test-progress: Test progress script (test-progress.sh) with per-project progress, ETA, failure reporting. Fixed 10 silent TryAdd/TryRemove failures (6 → Result.Error, 1 clearAll → Trace.TraceWarning, 3 cache → Trace.TraceWarning). Pending query expiration (30s timeout, 10s sweep). 6 new constraint builders completing all 10 types. Shared test helpers (F# SharedTestHelpers.fs, C# IntegrationTestHelpers.cs). 77 tasks, 17 new tests.
 
@@ -165,6 +165,15 @@ Viewer needs `openal`, `freetype2`, `sdl2`, `ttf-liberation` system packages. Fr
 
 ### Viewer Custom Shape Rendering
 Triangle, mesh, and convex hull shapes render with actual geometry (custom vertex/index buffers) in both solid and wireframe views. Compound shapes decompose into individually-rendered children. ConvexHull face computation uses MIConvexHull NuGet library. ShapeRef and CachedRef resolve to their underlying shapes before rendering. All 10 shape types render with accurate collision-matching geometry.
+
+### Proto MeshShape vs Triangle Naming
+The proto `MeshShape` message (Shape oneof field `mesh`) uses `MeshTriangle` for its triangle elements — not `Triangle` (which is a separate shape type). In F# scripts use `MeshShape()` and `MeshTriangle()`. In Python use `pb.MeshShape(triangles=[pb.MeshTriangle(...)])`.
+
+### Viewer Demo Label
+The viewer displays a demo name/description overlay at (10, 10) via `DebugTextSystem.Print()`. Status bar (FPS/time/status) is at (10, 30). Demo metadata is transported via `SetDemoMetadata` ViewCommand (field 4) — auto-forwarded by server, no server code changes needed.
+
+### PhysicsClient NuGet Version
+Demo scripts pin `PhysicsClient 0.3.0` (added `setDemoMetadata`). The Prelude.fsx uses `#r "nuget: PhysicsClient, 0.3.0"`. Contracts also at 0.3.0.
 
 ### Stride3D Asset Compiler
 `StrideCompilerSkipBuild=true` skips asset compilation for CI/headless builds. For live GPU runs, build without this flag (requires fonts + FreeImage). The viewer's `.fsproj` defaults to `false` unless overridden.

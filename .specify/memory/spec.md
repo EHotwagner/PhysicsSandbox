@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-24
-**Revision**: Updated with 004-proper-shape-rendering archival
+**Revision**: Updated with 004-enhance-demos-shapes archival
 
 ## Overview
 
@@ -319,6 +319,18 @@ A user creates a compound body (multiple child shapes combined) and sees each ch
 ### US-103: CachedRef and ShapeRef Resolution (P3)
 CachedRef shapes resolve to actual mesh geometry; ShapeRef shapes resolve via RegisteredShapes to their underlying shape's geometry. Both render with accurate collision-matching geometry. [Source: specs/004-proper-shape-rendering]
 
+### US-104: Viewer Window Title and Demo Label (P1)
+When a user runs the physics sandbox, the 3D viewer window displays "PhysicsSandbox Viewer" in the OS title bar. When a demo is loaded, the top-left corner shows the demo name and a short description. Defaults to "Free Mode" when no demo metadata is set. [Source: specs/004-enhance-demos-shapes]
+
+### US-105: Existing Demos Enhanced with New Shape Types (P2)
+The 18 existing demos are enhanced to incorporate newer shape types (Triangle, ConvexHull, Mesh, Compound) where they add visual or physical variety, with at least 8 demos enhanced. [Source: specs/004-enhance-demos-shapes]
+
+### US-106: Three New Shape Showcase Demos (P2)
+Three new demos (19: Shape Gallery, 20: Compound Constructions, 21: Mesh & Hull Playground) showcase all newer shape types with variation in size, orientation, color, and material. Each has F# and Python versions. [Source: specs/004-enhance-demos-shapes]
+
+### US-107: Demo Metadata Transport (P3)
+Each demo sends its name and description via SetDemoMetadata ViewCommand to the viewer. The metadata is transported through the existing ViewCommand stream with no server changes needed. [Source: specs/004-enhance-demos-shapes]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -583,6 +595,17 @@ CachedRef shapes resolve to actual mesh geometry; ShapeRef shapes resolve via Re
 - **FR-260**: Shape rendering MUST correctly update when body poses change during simulation. [Source: specs/004-proper-shape-rendering]
 - **FR-261**: Custom geometry MUST use the existing per-shape-type color palette for visual consistency. [Source: specs/004-proper-shape-rendering]
 - **FR-262**: The viewer MUST maintain interactive frame rates with complex shapes (up to 10,000 triangles per mesh) at current body counts. [Source: specs/004-proper-shape-rendering]
+- **FR-263**: The viewer window MUST display "PhysicsSandbox Viewer" in the OS title bar on launch. [Source: specs/004-enhance-demos-shapes]
+- **FR-264**: The viewer MUST display a demo label (name + description) at top-left (10, 10) using DebugTextSystem, with status bar moved to (10, 30). [Source: specs/004-enhance-demos-shapes]
+- **FR-265**: The demo label MUST update when a SetDemoMetadata ViewCommand is received; defaults to "Free Mode" when no metadata is set. [Source: specs/004-enhance-demos-shapes]
+- **FR-266**: ViewCommand proto MUST include SetDemoMetadata (field 4) with name (string) and description (string). [Source: specs/004-enhance-demos-shapes]
+- **FR-267**: At least 8 existing demos MUST be enhanced with Triangle, ConvexHull, Mesh, or Compound shapes. [Source: specs/004-enhance-demos-shapes]
+- **FR-268**: Three new demos (19, 20, 21) MUST be created with both F# and Python versions, showcasing all newer shape types. [Source: specs/004-enhance-demos-shapes]
+- **FR-269**: All 21 demos MUST call setDemoInfo/set_demo_info with name and description metadata. [Source: specs/004-enhance-demos-shapes]
+- **FR-270**: New demos MUST be registered in AllDemos.fsx, RunAll, AutoRun, all_demos.py, auto_run.py runners. [Source: specs/004-enhance-demos-shapes]
+- **FR-271**: Prelude.fsx MUST include makeMeshCmd helper; prelude.py MUST include make_mesh_cmd. [Source: specs/004-enhance-demos-shapes]
+- **FR-272**: PhysicsClient ViewCommands module MUST expose setDemoMetadata function with .fsi signature. [Source: specs/004-enhance-demos-shapes]
+- **FR-273**: SceneState MUST include DemoName and DemoDescription (string option) fields with .fsi signature. [Source: specs/004-enhance-demos-shapes]
 
 ## Key Entities
 
@@ -651,6 +674,7 @@ CachedRef shapes resolve to actual mesh geometry; ShapeRef shapes resolve via Re
 - **CustomMeshData**: Vertex positions, normals, color, indices, and wireframe edge data generated from proto shape definitions (triangles, meshes, convex hulls). Used to create Stride MeshDraw objects for non-primitive shapes. [Source: specs/004-proper-shape-rendering]
 - **Hull Face**: A triangular face of a convex hull, computed from the input point cloud via MIConvexHull, used for both solid rendering and wireframe display. [Source: specs/004-proper-shape-rendering]
 - **Compound Child Instance**: A positioned and oriented child shape within a compound, rendered as an independent Stride entity attached to the parent body's scene node. [Source: specs/004-proper-shape-rendering]
+- **DemoMetadata (SetDemoMetadata)**: Proto message (name: string, description: string) carried as ViewCommand oneof field 4. Sent once per demo load, received by viewer via StreamViewCommands. [Source: specs/004-enhance-demos-shapes]
 
 ## Edge Cases
 
@@ -732,6 +756,9 @@ CachedRef shapes resolve to actual mesh geometry; ShapeRef shapes resolve via Re
 - Compound with zero children: shows fallback placeholder sphere. [Source: specs/004-proper-shape-rendering]
 - Compound child is itself a compound or mesh: recursive rendering handles nested composition. [Source: specs/004-proper-shape-rendering]
 - Body's shape changes type at runtime: viewer updates to new geometry on next state tick. [Source: specs/004-proper-shape-rendering]
+- Very long demo name/description: DebugTextSystem truncates/wraps naturally without obscuring the 3D view. [Source: specs/004-enhance-demos-shapes]
+- Rapid demo switching (AutoRun mode): demo label updates promptly for each new demo. [Source: specs/004-enhance-demos-shapes]
+- Simulation reset without new demo: label remains showing last demo info until next SetDemoMetadata. [Source: specs/004-enhance-demos-shapes]
 
 ## Success Criteria
 

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-enhance-demos-shapes`
 **Created**: 2026-03-24
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "improve the demos by adding the new shapes and add 3 more showcasing all new shapes in detail with variation. also add a title to the viewer window. also add a label in the top left of the window screen displaying the demo name and description."
 
 ## User Scenarios & Testing *(mandatory)*

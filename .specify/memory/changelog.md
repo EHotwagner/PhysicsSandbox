@@ -1,5 +1,34 @@
 # Merged Features Log
 
+## Enhance Demos with New Shapes and Viewer Labels — 2026-03-24
+**Branch:** 004-enhance-demos-shapes
+**Spec:** specs/004-enhance-demos-shapes
+
+**What was added:**
+- SetDemoMetadata ViewCommand (proto field 4) for transporting demo name/description to viewer
+- Viewer window title "PhysicsSandbox Viewer" via game.Window.Title
+- Demo label overlay at top-left (10, 10) showing current demo name + description; "Free Mode" default
+- 8 existing demos enhanced with Triangle, ConvexHull, Mesh, Compound shapes (01, 03, 04, 06, 09, 10, 13, 14)
+- Demo 19: Shape Gallery — all shape types side-by-side (F# + Python)
+- Demo 20: Compound Constructions — L-shapes, T-shapes, dumbbells (F# + Python)
+- Demo 21: Mesh & Hull Playground — convex hulls + meshes on obstacles (F# + Python)
+- setDemoInfo/set_demo_info metadata calls added to all 21 demos
+- makeMeshCmd/make_mesh_cmd helper in both Prelude.fsx and prelude.py
+
+**New/Modified Components:**
+- `src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto` — SetDemoMetadata message + ViewCommand field 4
+- `src/PhysicsClient/Commands/ViewCommands.fs(i)` — setDemoMetadata function
+- `src/PhysicsViewer/Rendering/SceneManager.fs(i)` — DemoName/DemoDescription fields, applyDemoMetadata
+- `src/PhysicsViewer/Program.fs` — window title, demo label overlay, ViewCommand handling
+- `Scripting/demos/Prelude.fsx` — makeMeshCmd, setDemoInfo, PhysicsClient 0.3.0
+- `Scripting/demos/19_ShapeGallery.fsx`, `20_CompoundConstructions.fsx`, `21_MeshHullPlayground.fsx` — new
+- `Scripting/demos_py/demo19_shape_gallery.py`, `demo20_compound_constructions.py`, `demo21_mesh_hull_playground.py` — new
+- `Scripting/demos_py/prelude.py` — make_mesh_cmd, set_demo_info
+
+**Tasks Completed:** 43/50 tasks (7 test tasks skipped per user request)
+
+---
+
 ## Proper Shape Rendering — 2026-03-24
 **Branch:** 004-proper-shape-rendering
 **Spec:** specs/004-proper-shape-rendering
