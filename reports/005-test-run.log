@@ -1,0 +1,100 @@
+  Determining projects to restore...
+/home/developer/projects/PhysicsSandbox/tests/PhysicsViewer.Tests/PhysicsViewer.Tests.fsproj : warning NU1903: Package 'Microsoft.Build.Tasks.Core' 17.7.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-h4j7-5rxr-p4wc [/home/developer/projects/PhysicsSandbox/PhysicsSandbox.slnx]
+/home/developer/projects/PhysicsSandbox/src/PhysicsViewer/PhysicsViewer.fsproj : warning NU1903: Package 'Microsoft.Build.Tasks.Core' 17.7.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-h4j7-5rxr-p4wc [/home/developer/projects/PhysicsSandbox/PhysicsSandbox.slnx]
+  All projects are up-to-date for restore.
+  No PhysicsSandbox processes found.
+/home/developer/projects/PhysicsSandbox/tests/PhysicsViewer.Tests/PhysicsViewer.Tests.fsproj : warning NU1903: Package 'Microsoft.Build.Tasks.Core' 17.7.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-h4j7-5rxr-p4wc
+/home/developer/projects/PhysicsSandbox/src/PhysicsViewer/PhysicsViewer.fsproj : warning NU1903: Package 'Microsoft.Build.Tasks.Core' 17.7.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-h4j7-5rxr-p4wc
+  PhysicsSandbox.ServiceDefaults -> /home/developer/projects/PhysicsSandbox/src/PhysicsSandbox.ServiceDefaults/bin/Debug/net10.0/PhysicsSandbox.ServiceDefaults.dll
+  PhysicsSandbox.Shared.Contracts -> /home/developer/projects/PhysicsSandbox/src/PhysicsSandbox.Shared.Contracts/bin/Debug/net10.0/PhysicsSandbox.Shared.Contracts.dll
+  PhysicsClient -> /home/developer/projects/PhysicsSandbox/src/PhysicsClient/bin/Debug/net10.0/PhysicsClient.dll
+  Assembly [PhysicsSimulation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null] has already been processed, skip it.
+  Assembly [PhysicsViewer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null] has already been processed, skip it.
+  PhysicsViewer -> /home/developer/projects/PhysicsSandbox/src/PhysicsViewer/bin/Debug/net10.0/linux-x64/PhysicsViewer.dll
+  PhysicsSimulation -> /home/developer/projects/PhysicsSandbox/src/PhysicsSimulation/bin/Debug/net10.0/PhysicsSimulation.dll
+  PhysicsServer -> /home/developer/projects/PhysicsSandbox/src/PhysicsServer/bin/Debug/net10.0/PhysicsServer.dll
+  PhysicsSandbox.Mcp -> /home/developer/projects/PhysicsSandbox/src/PhysicsSandbox.Mcp/bin/Debug/net10.0/PhysicsSandbox.Mcp.dll
+  PhysicsClient.Tests -> /home/developer/projects/PhysicsSandbox/tests/PhysicsClient.Tests/bin/Debug/net10.0/PhysicsClient.Tests.dll
+Test run for /home/developer/projects/PhysicsSandbox/tests/PhysicsClient.Tests/bin/Debug/net10.0/PhysicsClient.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1-dev (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+  Assembly [PhysicsViewer.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null] has already been processed, skip it.
+  PhysicsSandbox.Scripting -> /home/developer/projects/PhysicsSandbox/src/PhysicsSandbox.Scripting/bin/Debug/net10.0/PhysicsSandbox.Scripting.dll
+  Assembly [PhysicsSimulation.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null] has already been processed, skip it.
+  PhysicsViewer.Tests -> /home/developer/projects/PhysicsSandbox/tests/PhysicsViewer.Tests/bin/Debug/net10.0/linux-x64/PhysicsViewer.Tests.dll
+  PhysicsServer.Tests -> /home/developer/projects/PhysicsSandbox/tests/PhysicsServer.Tests/bin/Debug/net10.0/PhysicsServer.Tests.dll
+  PhysicsSimulation.Tests -> /home/developer/projects/PhysicsSandbox/tests/PhysicsSimulation.Tests/bin/Debug/net10.0/PhysicsSimulation.Tests.dll
+Test run for /home/developer/projects/PhysicsSandbox/tests/PhysicsViewer.Tests/bin/Debug/net10.0/linux-x64/PhysicsViewer.Tests.dll (.NETCoreApp,Version=v10.0)
+Test run for /home/developer/projects/PhysicsSandbox/tests/PhysicsServer.Tests/bin/Debug/net10.0/PhysicsServer.Tests.dll (.NETCoreApp,Version=v10.0)
+Test run for /home/developer/projects/PhysicsSandbox/tests/PhysicsSimulation.Tests/bin/Debug/net10.0/PhysicsSimulation.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1-dev (x64)
+VSTest version 18.0.1-dev (x64)
+
+
+VSTest version 18.0.1-dev (x64)
+
+Starting test execution, please wait...
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+A total of 1 test files matched the specified pattern.
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    77, Skipped:     0, Total:    77, Duration: 181 ms - PhysicsClient.Tests.dll (net10.0)
+
+Passed!  - Failed:     0, Passed:    48, Skipped:     0, Total:    48, Duration: 370 ms - PhysicsServer.Tests.dll (net10.0)
+
+Passed!  - Failed:     0, Passed:    99, Skipped:     0, Total:    99, Duration: 732 ms - PhysicsViewer.Tests.dll (net10.0)
+  PhysicsSandbox.Scripting.Tests -> /home/developer/projects/PhysicsSandbox/tests/PhysicsSandbox.Scripting.Tests/bin/Debug/net10.0/PhysicsSandbox.Scripting.Tests.dll
+Test run for /home/developer/projects/PhysicsSandbox/tests/PhysicsSandbox.Scripting.Tests/bin/Debug/net10.0/PhysicsSandbox.Scripting.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1-dev (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+  PhysicsSandbox.AppHost -> /home/developer/projects/PhysicsSandbox/src/PhysicsSandbox.AppHost/bin/Debug/net10.0/PhysicsSandbox.AppHost.dll
+
+Passed!  - Failed:     0, Passed:   114, Skipped:     0, Total:   114, Duration: 1 s - PhysicsSimulation.Tests.dll (net10.0)
+  PhysicsSandbox.Mcp.Tests -> /home/developer/projects/PhysicsSandbox/tests/PhysicsSandbox.Mcp.Tests/bin/Debug/net10.0/PhysicsSandbox.Mcp.Tests.dll
+  PhysicsSandbox.Integration.Tests -> /home/developer/projects/PhysicsSandbox/tests/PhysicsSandbox.Integration.Tests/bin/Debug/net10.0/PhysicsSandbox.Integration.Tests.dll
+Test run for /home/developer/projects/PhysicsSandbox/tests/PhysicsSandbox.Mcp.Tests/bin/Debug/net10.0/PhysicsSandbox.Mcp.Tests.dll (.NETCoreApp,Version=v10.0)
+Test run for /home/developer/projects/PhysicsSandbox/tests/PhysicsSandbox.Integration.Tests/bin/Debug/net10.0/PhysicsSandbox.Integration.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1-dev (x64)
+
+VSTest version 18.0.1-dev (x64)
+
+Starting test execution, please wait...
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    26, Skipped:     0, Total:    26, Duration: 104 ms - PhysicsSandbox.Scripting.Tests.dll (net10.0)
+
+Passed!  - Failed:     0, Passed:    19, Skipped:     0, Total:    19, Duration: 149 ms - PhysicsSandbox.Mcp.Tests.dll (net10.0)
+[xUnit.net 00:02:19.87]     PhysicsSandbox.Integration.Tests.McpHttpTransportTests.McpServer_AcceptsHttpConnections [FAIL]
+  Failed PhysicsSandbox.Integration.Tests.McpHttpTransportTests.McpServer_AcceptsHttpConnections [2 s]
+  Error Message:
+   System.Net.Http.HttpRequestException : Connection refused (localhost:5199)
+---- System.Net.Sockets.SocketException : Connection refused
+  Stack Trace:
+     at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.CreateHttp11ConnectionAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.InjectNewHttp11ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.SocketsHttpHandler.<SendAsync>g__CreateHandlerAndSendAsync|115_0(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.Extensions.Http.Logging.LoggingHttpMessageHandler.<SendCoreAsync>g__Core|4_0(HttpRequestMessage request, Boolean useAsync, CancellationToken cancellationToken)
+   at Microsoft.Extensions.Http.Logging.LoggingScopeHttpMessageHandler.<SendCoreAsync>g__Core|4_0(HttpRequestMessage request, Boolean useAsync, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at PhysicsSandbox.Integration.Tests.McpHttpTransportTests.McpServer_AcceptsHttpConnections() in /home/developer/projects/PhysicsSandbox/tests/PhysicsSandbox.Integration.Tests/McpHttpTransportTests.cs:line 47
+   at PhysicsSandbox.Integration.Tests.McpHttpTransportTests.McpServer_AcceptsHttpConnections() in /home/developer/projects/PhysicsSandbox/tests/PhysicsSandbox.Integration.Tests/McpHttpTransportTests.cs:line 48
+--- End of stack trace from previous location ---
+----- Inner Stack Trace -----
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+
+Failed!  - Failed:     1, Passed:    60, Skipped:     0, Total:    61, Duration: 16 m 34 s - PhysicsSandbox.Integration.Tests.dll (net10.0)

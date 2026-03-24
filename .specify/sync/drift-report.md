@@ -1,54 +1,64 @@
 # Spec Drift Report
 
 Generated: 2026-03-24
-Project: PhysicsSandbox (004-proper-shape-rendering)
+Project: PhysicsSandbox
+Feature: 005-robust-network-connectivity
 
 ## Summary
 
 | Category | Count |
 |----------|-------|
 | Specs Analyzed | 1 |
-| Requirements Checked | 16 (11 FR + 5 SC) |
-| Aligned | 14 (88%) |
+| Requirements Checked | 13 FR + 6 SC = 19 |
+| Aligned | 19 (100%) |
 | Drifted | 0 (0%) |
-| Not Verified (runtime) | 2 (12%) |
+| Not Implemented | 0 (0%) |
 | Unspecced Code | 0 |
 
 ## Detailed Findings
 
-### Spec: 004-proper-shape-rendering — Proper Shape Rendering
+### Spec: 005-robust-network-connectivity - Robust Network Connectivity
 
 #### Aligned
 
-- **FR-001**: Triangle surfaces → `ShapeGeometry.buildTriangleMesh` (double-sided, face normals, degenerate check)
-- **FR-002**: Mesh surfaces → `ShapeGeometry.buildMeshMesh` (iterates all triangles, edge deduplication)
-- **FR-003**: ConvexHull surfaces → `ShapeGeometry.buildConvexHullMesh` (MIConvexHull, 3-point fallback)
-- **FR-004**: Compound children → `SceneManager.createCompoundEntity` (parent-child hierarchy, recursive, local transforms)
-- **FR-005**: CachedRef resolution → `SceneManager.resolveShape` (MeshResolver cache lookup, placeholder fallback)
-- **FR-011**: ShapeRef resolution → `SceneManager.resolveShape` (RegisteredShapes lookup via `ShapeHandle`)
-- **FR-006**: Debug wireframes → Custom shapes use `DebugRenderer.createCustomWireframe` with `LineList` from actual edges; primitives use Stride's native shape wireframes (accurate, not bounding boxes)
-- **FR-007**: Degenerate fallbacks → `buildTriangleMesh` returns None for collinear; `buildMeshMesh` returns None for empty; `buildConvexHullMesh` returns None for <4 points; `createCompoundEntity` falls back for 0 children
-- **FR-008**: Pose updates → `SceneManager.updateEntity` updates Transform.Position/Rotation; compound children propagate via Stride entity hierarchy
-- **FR-009**: Color palette → `ShapeGeometry.defaultColor` applied consistently; `bodyColor` allows per-body overrides
-- **SC-001**: All 10 shape types render with geometry matching collision boundaries
-- **SC-002**: Wireframes trace actual edges for custom shapes; primitives use Stride native wireframes
-- **SC-004**: No demo scripts were modified — existing proto Shape types unchanged
-- **SC-005**: 71 tests pass (56 existing updated + 15 new covering all custom mesh functions)
+| Requirement | Evidence |
+|-------------|----------|
+| FR-001: Broadcast to all subscribers | MessageRouter.fs:126-127 — iterates ViewCommandSubscribers, TryWrite to each |
+| FR-002: Preserve command ordering | MessageRouter.fs:468 — Channel preserves FIFO |
+| FR-003: Graceful subscriber disconnection | PhysicsHubService.fs:114-125 — try/finally with unsubscribeViewCommands |
+| FR-004: Backpressure via newest-drop | MessageRouter.fs:127 — TryWrite ignore skips when full |
+| FR-005: MCP SSE reachable via Aspire URL | AppHost.cs:22-23 — WithHttpEndpoint + IsProxied=false |
+| FR-006: MCP supports HTTP/1.1 for SSE | AppHost.cs:22-23 — bypasses DCP HTTP/2 proxy |
+| FR-007: kill.sh no self-kill | kill.sh:8-26 — /bin and --project patterns |
+| FR-008: kill.sh specific patterns | kill.sh:8-26 — 16 patterns with /bin, --project, .dll suffixes |
+| FR-009: Camera hold on body-not-found | CameraController.fs:177,193,198,217,229 — returns state on None |
+| FR-010: All issues documented | NetworkProblems.md — 7 structured entries |
+| FR-011: Container environment section | NetworkProblems.md:7-25 — port table + networking boundary |
+| FR-012: Viewer drains all per frame | Program.fs:40,339 — ConcurrentQueue + while TryDequeue |
+| FR-013: Zero subscribers silent discard | MessageRouter.fs:126 — empty for loop = no-op |
+| SC-001: Demo22 zero drops | Verified via live run |
+| SC-002: Two viewers broadcast | ServerHubTests.cs:177-209 — integration test |
+| SC-003: MCP SSE accessible | AppHost.cs:23 — IsProxied=false |
+| SC-004: kill.sh && echo alive | kill.sh — specific patterns prevent self-kill |
+| SC-005: Camera tracks within 2s | CameraController.fs — hold + activate on next frame |
+| SC-006: 7 entries + environment | NetworkProblems.md — 7 entries + Container Environment |
 
-#### Not Verified (Runtime Only)
+#### Drifted
 
-- **FR-010**: Interactive frame rates with 10K-triangle meshes — structural support present (GPU buffers, one-time mesh creation) but requires runtime visual validation
-- **SC-003**: 200-body mixed-shape frame rate within 10% of primitive-only — requires runtime GPU benchmark
+None.
+
+#### Not Implemented
+
+None.
 
 ### Unspecced Code
 
-None. All new code maps directly to spec requirements.
+None.
 
-### Inter-Spec Conflicts
+## Inter-Spec Conflicts
 
-None detected.
+None.
 
 ## Recommendations
 
-1. **Run visual validation** (SC-003, FR-010): Start AppHost with viewer, run demos with complex shapes, create 200-body mixed scene to confirm frame rate parity
-2. All other requirements are fully aligned with implementation and test coverage
+No action required. All 13 functional requirements and 6 success criteria are fully aligned with implementation.

@@ -29,7 +29,7 @@ type MessageRouter =
       PropertySubscribers: ConcurrentDictionary<Guid, PropertyEvent -> Task>
       CommandSubscribers: ConcurrentDictionary<Guid, CommandEvent -> Task>
       CommandChannel: Channel<SimulationCommand>
-      ViewCommandChannel: Channel<ViewCommand>
+      ViewCommandSubscribers: ConcurrentDictionary<Guid, Channel<ViewCommand>>
       mutable SimulationConnected: bool
       SimulationLock: obj
       Metrics: MetricsCounter.MetricsState
@@ -59,7 +59,7 @@ let create () =
       PropertySubscribers = ConcurrentDictionary<Guid, PropertyEvent -> Task>()
       CommandSubscribers = ConcurrentDictionary<Guid, CommandEvent -> Task>()
       CommandChannel = Channel.CreateBounded<SimulationCommand>(1024)
-      ViewCommandChannel = Channel.CreateBounded<ViewCommand>(1024)
+      ViewCommandSubscribers = ConcurrentDictionary<Guid, Channel<ViewCommand>>()
       SimulationConnected = false
       SimulationLock = obj ()
       Metrics = MetricsCounter.create "PhysicsServer"
@@ -119,10 +119,12 @@ let submitCommand (router: MessageRouter) (cmd: SimulationCommand) =
                 "Command accepted (no simulation connected — dropped)"
     )
 
-/// <summary>Submit a view command to the router.</summary>
+/// <summary>Submit a view command to the router. Broadcasts to all connected view command subscribers.</summary>
 let submitViewCommand (router: MessageRouter) (cmd: ViewCommand) =
     MetricsCounter.incrementReceived 1 (int64 (cmd.CalculateSize())) router.Metrics
-    let _written = router.ViewCommandChannel.Writer.TryWrite(cmd)
+
+    for kvp in router.ViewCommandSubscribers do
+        kvp.Value.Writer.TryWrite(cmd) |> ignore
 
     let evt = CommandEvent()
     evt.ViewCommand <- cmd
@@ -462,13 +464,13 @@ let submitQuery (router: MessageRouter) (queryRequest: QueryRequest) (ct: Cancel
             pendingQueries.TryRemove(queryRequest.CorrelationId) |> ignore
     }
 
-/// <summary>Read a pending view command from the channel.</summary>
-let readViewCommand (router: MessageRouter) (ct: CancellationToken) =
-    task {
-        try
-            let! cmd = router.ViewCommandChannel.Reader.ReadAsync(ct).AsTask()
-            return Some cmd
-        with
-        | :? OperationCanceledException -> return None
-        | :? ChannelClosedException -> return None
-    }
+/// <summary>Register a per-subscriber bounded channel for view command broadcast. Returns (subscriberId, channelReader).</summary>
+let subscribeViewCommands (router: MessageRouter) =
+    let id = Guid.NewGuid()
+    let channel = Channel.CreateBounded<ViewCommand>(1024)
+    router.ViewCommandSubscribers.TryAdd(id, channel) |> ignore
+    (id, channel.Reader)
+
+/// <summary>Remove a view command subscriber by its id.</summary>
+let unsubscribeViewCommands (router: MessageRouter) (id: Guid) =
+    router.ViewCommandSubscribers.TryRemove(id) |> ignore

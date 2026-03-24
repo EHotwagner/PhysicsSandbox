@@ -104,15 +104,24 @@ type PhysicsHubService(router: MessageRouter) =
             do! tcs.Task
         }
 
-    /// <summary>Stream pending view commands to the viewer. Reads from the view command channel until the client disconnects.</summary>
+    /// <summary>Stream view commands to the viewer via per-subscriber broadcast channel. Each viewer gets its own bounded channel.</summary>
     override _.StreamViewCommands
         (request: StateRequest, responseStream: IServerStreamWriter<ViewCommand>, context: ServerCallContext)
         =
         task {
-            while not context.CancellationToken.IsCancellationRequested do
-                match! readViewCommand router context.CancellationToken with
-                | Some cmd -> do! responseStream.WriteAsync(cmd)
-                | None -> ()
+            let (subId, reader) = subscribeViewCommands router
+            System.Diagnostics.Trace.TraceInformation($"ViewCommand subscriber {subId} connected")
+            try
+                while not context.CancellationToken.IsCancellationRequested do
+                    try
+                        let! cmd = reader.ReadAsync(context.CancellationToken).AsTask()
+                        do! responseStream.WriteAsync(cmd)
+                    with
+                    | :? System.OperationCanceledException -> ()
+                    | :? System.Threading.Channels.ChannelClosedException -> ()
+            finally
+                unsubscribeViewCommands router subId
+                System.Diagnostics.Trace.TraceInformation($"ViewCommand subscriber {subId} disconnected")
         }
 
     /// <summary>Submit a batch of simulation commands and return per-command results with total timing.</summary>

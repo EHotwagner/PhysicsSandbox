@@ -19,6 +19,7 @@ builder.AddProject<Projects.PhysicsClient>("client")
 builder.AddProject<Projects.PhysicsSandbox_Mcp>("mcp")
     .WithReference(server)
     .WaitFor(server)
-    .WithHttpEndpoint(port: 5199, name: "http");
+    .WithHttpEndpoint(port: 5199, name: "http")
+    .WithEndpoint("http", e => e.IsProxied = false);
 
 builder.Build().Run();

@@ -1,23 +1,22 @@
 {
   "generated": "2026-03-24T00:00:00Z",
   "project": "PhysicsSandbox",
+  "feature": "005-robust-network-connectivity",
   "summary": {
     "specs_analyzed": 1,
-    "requirements_checked": 16,
-    "aligned": 14,
+    "requirements_checked": 19,
+    "aligned": 19,
     "drifted": 0,
     "not_implemented": 0,
-    "not_verified_runtime": 2,
     "unspecced_features": 0
   },
   "specs": [
     {
-      "id": "004-proper-shape-rendering",
-      "title": "Proper Shape Rendering",
-      "aligned": ["FR-001","FR-002","FR-003","FR-004","FR-005","FR-006","FR-007","FR-008","FR-009","FR-011","SC-001","SC-002","SC-004","SC-005"],
+      "id": "005-robust-network-connectivity",
+      "title": "Robust Network Connectivity",
+      "aligned": ["FR-001","FR-002","FR-003","FR-004","FR-005","FR-006","FR-007","FR-008","FR-009","FR-010","FR-011","FR-012","FR-013","SC-001","SC-002","SC-003","SC-004","SC-005","SC-006"],
       "drifted": [],
-      "not_implemented": [],
-      "not_verified_runtime": ["FR-010","SC-003"]
+      "not_implemented": []
     }
   ],
   "unspecced": [],

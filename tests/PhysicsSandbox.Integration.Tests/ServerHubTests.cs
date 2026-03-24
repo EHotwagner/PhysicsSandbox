@@ -172,4 +172,39 @@ public class ServerHubTests
         var ack = await client.SendViewCommandAsync(viewCommand);
         Assert.True(ack.Success);
     }
+
+    [Fact]
+    public async Task StreamViewCommands_BroadcastToMultipleSubscribers()
+    {
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnect();
+        await using var _ = app;
+
+        var client = new PhysicsHub.PhysicsHubClient(channel);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+        // Two viewers subscribe to ViewCommands
+        var stream1 = client.StreamViewCommands(new StateRequest(), cancellationToken: cts.Token);
+        var stream2 = client.StreamViewCommands(new StateRequest(), cancellationToken: cts.Token);
+
+        // Small delay to let both streams register
+        await Task.Delay(200);
+
+        // Send a view command
+        var viewCommand = new ViewCommand
+        {
+            SetZoom = new SetZoom { Level = 4.2 }
+        };
+
+        await client.SendViewCommandAsync(viewCommand);
+
+        // Both subscribers should receive the command
+        var hasNext1 = await stream1.ResponseStream.MoveNext(cts.Token);
+        var hasNext2 = await stream2.ResponseStream.MoveNext(cts.Token);
+
+        Assert.True(hasNext1);
+        Assert.True(hasNext2);
+        Assert.Equal(4.2, stream1.ResponseStream.Current.SetZoom.Level);
+        Assert.Equal(4.2, stream2.ResponseStream.Current.SetZoom.Level);
+    }
 }
