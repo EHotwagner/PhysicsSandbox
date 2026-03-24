@@ -1,5 +1,28 @@
 # Merged Features Log
 
+## Proper Shape Rendering — 2026-03-24
+**Branch:** 004-proper-shape-rendering
+**Spec:** specs/004-proper-shape-rendering
+
+**What was added:**
+- Custom mesh rendering for Triangle, Mesh, ConvexHull shapes (vertex/index buffers with per-face normals, double-sided faces)
+- Compound shape decomposition into individually-rendered children with correct local transforms
+- ShapeRef resolution via RegisteredShapes (ShapeHandle lookup)
+- CachedRef flows through custom mesh pipeline after MeshResolver resolution
+- Debug wireframes with actual geometry edges (LineList from deduplicated edge sets)
+- Degenerate shape fallbacks (collinear triangles, empty meshes, <4-point hulls → visible placeholders)
+- MIConvexHull 1.1.19 dependency for convex hull face computation
+
+**New/Modified Components:**
+- `src/PhysicsViewer/Rendering/ShapeGeometry.fs(i)` — CustomMeshData type, buildTriangleMesh, buildMeshMesh, buildConvexHullMesh, isCustomShape, buildCustomMesh dispatcher
+- `src/PhysicsViewer/Rendering/SceneManager.fs(i)` — createModelFromMeshData, createCompoundEntity, createCustomEntity, ShapeRef resolution in resolveShape
+- `src/PhysicsViewer/Rendering/DebugRenderer.fs` — createCustomWireframe (LineList), createShapeWireframe dispatch
+- `tests/PhysicsViewer.Tests/SceneManagerTests.fs` — 15 new tests (custom mesh, convex hull, degenerate, color palette)
+
+**Tasks Completed:** 59/59 tasks
+
+---
+
 ## Backlog Fixes and Test Progress Reporting — 2026-03-23
 **Branch:** 004-backlog-fix-test-progress
 **Spec:** specs/004-backlog-fix-test-progress

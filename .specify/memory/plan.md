@@ -1,12 +1,12 @@
 # PhysicsSandbox — Main Implementation Plan
 
-**Last Updated**: 2026-03-23
-**Revision**: Updated with 004-backlog-fix-test-progress archival
+**Last Updated**: 2026-03-24
+**Revision**: Updated with 004-proper-shape-rendering archival
 
 ## Technical Context
 
 **Language/Version**: F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
-**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1 (local NuGet, 10 shape types, 10 constraint types, sweep/overlap queries, collision filtering, material properties), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, includes Stride.BepuPhysics 4.3.0.2507 + Stride.BepuPhysics.Debug 4.3.0.2507 transitively), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 + ModelContextProtocol.AspNetCore 1.1.* (MCP server — HTTP/SSE transport)
+**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1 (local NuGet, 10 shape types, 10 constraint types, sweep/overlap queries, collision filtering, material properties), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, includes Stride.BepuPhysics 4.3.0.2507 + Stride.BepuPhysics.Debug 4.3.0.2507 transitively), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 + ModelContextProtocol.AspNetCore 1.1.* (MCP server — HTTP/SSE transport), MIConvexHull 1.1.19 (convex hull face computation for viewer custom mesh rendering)
 **Storage**: Append-only protobuf binary files at `~/.config/PhysicsSandbox/recordings/` (recording sessions), JSON metadata per session. In-memory physics world and stateless routing otherwise.
 **Testing**: xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x
 **Target Platform**: Linux (rootless Podman for containers)
@@ -53,8 +53,8 @@ src/
 │
 ├── PhysicsViewer/                       # F# — 3D viewer (Stride3D + gRPC client)
 │   ├── Rendering/
-│   │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, per-body color, wireframe
-│   │   ├── ShapeGeometry.fsi/.fs        # Primitive type selection, bounding size, default color palette
+│   │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, per-body color, wireframe, custom mesh/compound/ShapeRef rendering
+│   │   ├── ShapeGeometry.fsi/.fs        # Shape→geometry dispatch: primitives (type/size), custom mesh (Triangle/Mesh/ConvexHull → CustomMeshData), color palette
 │   │   ├── DebugRenderer.fsi/.fs        # Wireframe overlay, constraint line visualization, F3 toggle
 │   │   ├── CameraController.fsi/.fs     # Camera state, input, REPL commands
 │   │   └── FpsCounter.fsi/.fs           # Smoothed FPS calculation, logging, threshold warnings
@@ -158,7 +158,7 @@ tests/
 │   ├── StaticBodyTrackingTests.fs       # Static body state tracking tests
 │   ├── SurfaceAreaTests.fs              # Public API baseline verification
 │   └── StateDecompositionTests.fs       # buildTickState, detectPropertyEvents, state decomposition tests
-├── PhysicsViewer.Tests/                 # F# — unit tests (56 tests)
+├── PhysicsViewer.Tests/                 # F# — unit tests (71 tests)
 │   ├── SceneManagerTests.fs             # Shape classification, state accessors
 │   ├── CameraControllerTests.fs         # Camera math, command application
 │   ├── FpsCounterTests.fs               # FPS calculation, logging interval, threshold tests
@@ -307,3 +307,7 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - MessageRouter `disposeExpirationTimer()` is exported but never called during server shutdown. Timer resource may not be cleaned up on graceful exit. [Source: specs/004-backlog-fix-test-progress]
 - Pending query timeout (30s) is hardcoded in MessageRouter. Not configurable without code change. [Source: specs/004-backlog-fix-test-progress]
 - Demo Prelude.fsx still only has ball-socket and hinge constraint helpers. The 6 new Scripting library builders are not yet promoted to Prelude. [Source: specs/004-backlog-fix-test-progress]
+- Custom shape rendering uses `VertexPositionNormalColor` with per-face normals (flat shading) and double-sided faces (no backface culling). Winding order from physics meshes is not guaranteed consistent. [Source: specs/004-proper-shape-rendering]
+- ConvexHull face computation via MIConvexHull requires at least 4 non-coplanar points. 3 points fall back to flat triangle; <3 fall back to placeholder sphere. [Source: specs/004-proper-shape-rendering]
+- Compound shapes create parent→child entity hierarchies in Stride. Nested compounds are supported but deep nesting (>2 levels) is untested. [Source: specs/004-proper-shape-rendering]
+- ShapeRef resolution uses `ShapeHandle` property (not `Name`) on proto `ShapeReference` type. Lookup is via `SimulationState.RegisteredShapes` sequential scan. [Source: specs/004-proper-shape-rendering]

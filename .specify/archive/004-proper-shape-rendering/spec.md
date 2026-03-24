@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-proper-shape-rendering`
 **Created**: 2026-03-24
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "Build proper rendering for the missing shapes"
 
 ## User Scenarios & Testing *(mandatory)*

@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
-**Last Updated**: 2026-03-23
-**Revision**: Updated with 004-backlog-fix-test-progress archival
+**Last Updated**: 2026-03-24
+**Revision**: Updated with 004-proper-shape-rendering archival
 
 ## Overview
 
@@ -307,6 +307,18 @@ A developer scripting physics constraints has typed builder functions for all 10
 ### US-099: Shared Test Helpers (P5)
 Test utility functions (`getPublicMembers`, `assertContains`, `StartAppAndConnect`) consolidated into shared locations — `tests/SharedTestHelpers.fs` (F#, 6 projects) and `IntegrationTestHelpers.cs` (C#, 14 test files). Zero duplicates. [Source: specs/004-backlog-fix-test-progress]
 
+### US-100: Triangle and Mesh Rendering (P1)
+A user creates triangle or mesh bodies in the physics simulation and sees actual geometry rendered in the 3D viewer — triangular surfaces for triangles, complete mesh surfaces for meshes — rather than bounding-box cubes. [Source: specs/004-proper-shape-rendering]
+
+### US-101: Convex Hull Rendering (P2)
+A user creates a convex hull body from a point cloud and sees the convex hull surface rendered in the viewer, showing the actual convex envelope of the points. [Source: specs/004-proper-shape-rendering]
+
+### US-102: Compound Shape Rendering (P2)
+A user creates a compound body (multiple child shapes combined) and sees each child shape rendered individually at its correct local offset and orientation, rather than a single bounding-box cube. [Source: specs/004-proper-shape-rendering]
+
+### US-103: CachedRef and ShapeRef Resolution (P3)
+CachedRef shapes resolve to actual mesh geometry; ShapeRef shapes resolve via RegisteredShapes to their underlying shape's geometry. Both render with accurate collision-matching geometry. [Source: specs/004-proper-shape-rendering]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -560,6 +572,17 @@ Test utility functions (`getPublicMembers`, `assertContains`, `StartAppAndConnec
 - **FR-249**: System MUST provide Scripting library builder functions for all 10 constraint types supported by BepuFSharp. [Source: specs/004-backlog-fix-test-progress]
 - **FR-250**: System MUST consolidate duplicated test helper functions into shared locations referenced by all test projects. [Source: specs/004-backlog-fix-test-progress]
 - **FR-251**: The test progress display MUST work with both standard and headless build configurations. [Source: specs/004-backlog-fix-test-progress]
+- **FR-252**: The viewer MUST render triangle shapes as flat triangular surfaces using actual vertex positions from proto data. [Source: specs/004-proper-shape-rendering]
+- **FR-253**: The viewer MUST render mesh shapes as complete surfaces built from all triangles in the mesh definition. [Source: specs/004-proper-shape-rendering]
+- **FR-254**: The viewer MUST render convex hull shapes as closed convex surfaces derived from the input point cloud (via MIConvexHull). [Source: specs/004-proper-shape-rendering]
+- **FR-255**: The viewer MUST render compound shapes by individually rendering each child shape at its local offset and orientation. [Source: specs/004-proper-shape-rendering]
+- **FR-256**: The viewer MUST render CachedRef shapes by resolving the underlying mesh data and displaying actual geometry. [Source: specs/004-proper-shape-rendering]
+- **FR-257**: The viewer MUST render ShapeRef shapes by resolving the reference to its underlying registered shape and rendering that shape's geometry. [Source: specs/004-proper-shape-rendering]
+- **FR-258**: The viewer MUST display correct debug wireframes for all shape types, tracing actual geometry edges rather than bounding boxes. [Source: specs/004-proper-shape-rendering]
+- **FR-259**: Degenerate shapes (zero-area triangles, empty meshes, sub-4-point hulls, empty compounds) MUST fall back to a visible placeholder rather than becoming invisible. [Source: specs/004-proper-shape-rendering]
+- **FR-260**: Shape rendering MUST correctly update when body poses change during simulation. [Source: specs/004-proper-shape-rendering]
+- **FR-261**: Custom geometry MUST use the existing per-shape-type color palette for visual consistency. [Source: specs/004-proper-shape-rendering]
+- **FR-262**: The viewer MUST maintain interactive frame rates with complex shapes (up to 10,000 triangles per mesh) at current body counts. [Source: specs/004-proper-shape-rendering]
 
 ## Key Entities
 
@@ -625,6 +648,9 @@ Test utility functions (`getPublicMembers`, `assertContains`, `StartAppAndConnec
 - **PropertySnapshot**: Late-joiner backfill message — all existing BodyProperties + constraints + registered shapes + mesh geometries. [Source: specs/004-state-stream-optimization]
 - **PendingQueryEntry**: Wrapper for `TaskCompletionSource<QueryResponse>` with `CreatedAt: DateTime` timestamp. Keyed by CorrelationId. States: Created → Resolved | Expired (TimeoutException) | Cancelled. [Source: specs/004-backlog-fix-test-progress]
 - **Constraint Builder**: Stateless typed function in Scripting library that constructs proto `SimulationCommand → AddConstraint → ConstraintType` from domain parameters. 10 types: BallSocket, Hinge, Weld, DistanceLimit, DistanceSpring, SwingLimit, TwistLimit, LinearAxisMotor, AngularMotor, PointOnLine. [Source: specs/004-backlog-fix-test-progress]
+- **CustomMeshData**: Vertex positions, normals, color, indices, and wireframe edge data generated from proto shape definitions (triangles, meshes, convex hulls). Used to create Stride MeshDraw objects for non-primitive shapes. [Source: specs/004-proper-shape-rendering]
+- **Hull Face**: A triangular face of a convex hull, computed from the input point cloud via MIConvexHull, used for both solid rendering and wireframe display. [Source: specs/004-proper-shape-rendering]
+- **Compound Child Instance**: A positioned and oriented child shape within a compound, rendered as an independent Stride entity attached to the parent body's scene node. [Source: specs/004-proper-shape-rendering]
 
 ## Edge Cases
 
@@ -700,6 +726,12 @@ Test utility functions (`getPublicMembers`, `assertContains`, `StartAppAndConnec
 - Static→dynamic transition: PropertyEvent.body_updated with motion_type=dynamic. Body starts appearing in TickState on next tick. [Source: specs/004-state-stream-optimization]
 - Client misses tick (slow consumer): pose data is always-latest (next tick overwrites). PropertySnapshot backfill on reconnect ensures convergence. [Source: specs/004-state-stream-optimization]
 - Simulation paused and resumed: no special handling — pose data stops changing when paused, ticks naturally become smaller. [Source: specs/004-state-stream-optimization]
+- Triangle with degenerate geometry (collinear/coincident vertices): falls back to visible placeholder sphere. [Source: specs/004-proper-shape-rendering]
+- Mesh with zero triangles: shows fallback placeholder. [Source: specs/004-proper-shape-rendering]
+- ConvexHull with fewer than 4 points: degrades gracefully (3 points → flat triangle, ≤2 → placeholder sphere). [Source: specs/004-proper-shape-rendering]
+- Compound with zero children: shows fallback placeholder sphere. [Source: specs/004-proper-shape-rendering]
+- Compound child is itself a compound or mesh: recursive rendering handles nested composition. [Source: specs/004-proper-shape-rendering]
+- Body's shape changes type at runtime: viewer updates to new geometry on next state tick. [Source: specs/004-proper-shape-rendering]
 
 ## Success Criteria
 
@@ -809,3 +841,8 @@ Test utility functions (`getPublicMembers`, `assertContains`, `StartAppAndConnec
 - **SC-104**: All 10 constraint types have Scripting library builders (up from 4). [Source: specs/004-backlog-fix-test-progress]
 - **SC-105**: Duplicated test helpers exist in exactly one shared location, zero copy-pasted instances. [Source: specs/004-backlog-fix-test-progress]
 - **SC-106**: All existing tests continue to pass after all changes (362+ tests). [Source: specs/004-backlog-fix-test-progress]
+- **SC-107**: All 10 physics shape types render with geometry matching their collision boundaries — no bounding-box approximations remain. [Source: specs/004-proper-shape-rendering]
+- **SC-108**: Debug wireframes for all shape types trace actual geometry edges, not axis-aligned bounding boxes. [Source: specs/004-proper-shape-rendering]
+- **SC-109**: A scene with 200 mixed-shape bodies (meshes up to 10K triangles) renders at comparable frame rate to primitive-only bodies (within 10%). [Source: specs/004-proper-shape-rendering]
+- **SC-110**: Existing demo scripts display correctly in the viewer without modification. [Source: specs/004-proper-shape-rendering]
+- **SC-111**: All existing viewer tests pass, and new tests cover geometry generation for each newly rendered shape type (71 total). [Source: specs/004-proper-shape-rendering]
