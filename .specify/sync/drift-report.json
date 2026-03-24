@@ -1,53 +1,25 @@
 {
-  "generated": "2026-03-23T00:00:00Z",
+  "generated": "2026-03-24T00:00:00Z",
   "project": "PhysicsSandbox",
-  "feature": "004-backlog-fix-test-progress",
   "summary": {
     "specs_analyzed": 1,
-    "requirements_checked": 9,
-    "aligned": 8,
-    "drifted": 1,
+    "requirements_checked": 16,
+    "aligned": 14,
+    "drifted": 0,
     "not_implemented": 0,
+    "not_verified_runtime": 2,
     "unspecced_features": 0
   },
   "specs": [
     {
-      "id": "004-backlog-fix-test-progress",
-      "title": "Backlog Fixes and Test Progress Reporting",
-      "aligned": [
-        "FR-001",
-        "FR-002",
-        "FR-003",
-        "FR-004b",
-        "FR-005",
-        "FR-006",
-        "FR-007",
-        "FR-009"
-      ],
-      "drifted": [
-        {
-          "requirement": "FR-004a",
-          "spec_text": "All 7 body registry TryAdd/TryRemove in SimulationCommands return Result.Error with descriptive message",
-          "actual": "6/7 fixed. clearAll function silently counts TryRemove failures into registryWarnings counter instead of returning Result.Error",
-          "location": "src/PhysicsClient/Commands/SimulationCommands.fs:307-308",
-          "severity": "minor"
-        }
-      ],
-      "not_implemented": []
+      "id": "004-proper-shape-rendering",
+      "title": "Proper Shape Rendering",
+      "aligned": ["FR-001","FR-002","FR-003","FR-004","FR-005","FR-006","FR-007","FR-008","FR-009","FR-011","SC-001","SC-002","SC-004","SC-005"],
+      "drifted": [],
+      "not_implemented": [],
+      "not_verified_runtime": ["FR-010","SC-003"]
     }
   ],
   "unspecced": [],
-  "conflicts": [],
-  "observations": [
-    {
-      "area": "MessageRouter timer disposal",
-      "detail": "disposeExpirationTimer() exported but never called during shutdown",
-      "severity": "info"
-    },
-    {
-      "area": "Timeout configurability",
-      "detail": "FR-005 mentions configurable timeout but 30s is hardcoded. Matches spec assumption default.",
-      "severity": "info"
-    }
-  ]
+  "conflicts": []
 }

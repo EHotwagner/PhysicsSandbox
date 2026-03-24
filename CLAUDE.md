@@ -1,6 +1,6 @@
 # PhysicsSandbox Development Guidelines
 
-Last updated: 2026-03-23
+Last updated: 2026-03-24
 
 ## Active Technologies
 - F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts)
@@ -38,6 +38,8 @@ Last updated: 2026-03-23
 - In-memory (physics world, mesh caches, state caches). Append-only protobuf binary files for MCP recordings. (004-state-stream-optimization)
 - F# on .NET 10.0 (PhysicsClient, PhysicsServer, Scripting), C# on .NET 10.0 (Integration Tests), Bash (test progress script) + xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x, Google.Protobuf 3.x (004-backlog-fix-test-progress)
 - N/A (in-memory ConcurrentDictionary for pending queries) (004-backlog-fix-test-progress)
+- F# on .NET 10.0 (PhysicsViewer) + Stride.CommunityToolkit 1.0.0-preview.62 (existing), MIConvexHull (new, convex hull face computation) (004-proper-shape-rendering)
+- N/A (in-memory rendering only) (004-proper-shape-rendering)
 
 ## Project Structure
 
@@ -100,9 +102,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 004-proper-shape-rendering: Added F# on .NET 10.0 (PhysicsViewer) + Stride.CommunityToolkit 1.0.0-preview.62 (existing), MIConvexHull (new, convex hull face computation)
 - 004-backlog-fix-test-progress: Test progress script (test-progress.sh) with per-project progress, ETA, failure reporting. Fixed 10 silent TryAdd/TryRemove failures (6 → Result.Error, 1 clearAll → Trace.TraceWarning, 3 cache → Trace.TraceWarning). Pending query expiration (30s timeout, 10s sweep). 6 new constraint builders completing all 10 types. Shared test helpers (F# SharedTestHelpers.fs, C# IntegrationTestHelpers.cs). 77 tasks, 17 new tests.
 - 004-state-stream-optimization: Split SimulationState into lean TickState (pose-only, dynamic bodies) + PropertyEvent stream (semi-static on change/backfill). StreamProperties RPC, ExcludeVelocity opt-out, constraints/shapes via property channel. ~69% bandwidth reduction at 200 bodies. 108/109 tasks, 306+ unit tests, 12 integration tests.
-- 004-mcp-mesh-logging: MCP recording for FetchMeshes RPC — MeshFetchEvent (EntryType=3) records requested IDs, hits/misses. Published via CommandEvent audit stream. New query_mesh_fetches tool. 17 tasks.
 
 ## Environment
 
@@ -159,8 +161,8 @@ Viewer needs `openal`, `freetype2`, `sdl2`, `ttf-liberation` system packages. Fr
 ### Stride Create3DPrimitive Size Semantics
 `Bepu3DPhysicsOptions.Size` interpretation varies by primitive type: Sphere/Capsule/Cylinder use Size.X as **radius** (not diameter); Cube uses full extents. When computing sizes from physics dimensions, pass radius directly — do not double it. This was the root cause of the original shape sizing bug.
 
-### Viewer Debug Wireframes for Complex Shapes
-Convex hull, mesh, and triangle shapes are rendered as bounding-box approximations in both the solid view and debug wireframe overlay. Procedural mesh wireframes that trace the actual collision geometry are not implemented — significant scope requiring custom vertex buffer generation from proto vertex/triangle data. Compound shapes render per-child wireframes correctly.
+### Viewer Custom Shape Rendering
+Triangle, mesh, and convex hull shapes render with actual geometry (custom vertex/index buffers) in both solid and wireframe views. Compound shapes decompose into individually-rendered children. ConvexHull face computation uses MIConvexHull NuGet library. ShapeRef and CachedRef resolve to their underlying shapes before rendering. All 10 shape types render with accurate collision-matching geometry.
 
 ### Stride3D Asset Compiler
 `StrideCompilerSkipBuild=true` skips asset compilation for CI/headless builds. For live GPU runs, build without this flag (requires fonts + FreeImage). The viewer's `.fsproj` defaults to `false` unless overridden.
