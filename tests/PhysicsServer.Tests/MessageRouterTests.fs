@@ -70,39 +70,118 @@ let ``SubmitViewCommand succeeds with no viewer connected`` () =
     Assert.True(ack.Success)
 
 [<Fact>]
-let ``readViewCommand returns submitted ViewCommand`` () =
+let ``subscribeViewCommands receives submitted ViewCommand`` () =
     task {
         let router = create ()
         use cts = new CancellationTokenSource()
+
+        let (subId, reader) = subscribeViewCommands router
 
         let cmd = ViewCommand()
         cmd.SetZoom <- SetZoom(Level = 3.0)
         submitViewCommand router cmd |> ignore
 
-        let! result = readViewCommand router cts.Token
-        Assert.True(result.IsSome)
-        Assert.Equal(3.0, result.Value.SetZoom.Level)
+        let! result = reader.ReadAsync(cts.Token).AsTask()
+        Assert.Equal(3.0, result.SetZoom.Level)
+
+        unsubscribeViewCommands router subId
     }
 
 [<Fact>]
-let ``readViewCommand returns None on cancellation`` () =
+let ``subscribeViewCommands reader cancelled on cancellation`` () =
     task {
         let router = create ()
         use cts = new CancellationTokenSource()
         cts.Cancel()
 
-        let! result = readViewCommand router cts.Token
-        Assert.True(result.IsNone)
+        let (_subId, reader) = subscribeViewCommands router
+
+        let! ex = Assert.ThrowsAnyAsync<OperationCanceledException>(fun () ->
+            reader.ReadAsync(cts.Token).AsTask() :> Task)
+        Assert.NotNull(ex)
     }
 
 [<Fact>]
-let ``readViewCommand blocks when no commands available`` () =
+let ``subscribeViewCommands reader blocks when no commands available`` () =
     task {
         let router = create ()
         use cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50.0))
 
-        let! result = readViewCommand router cts.Token
-        Assert.True(result.IsNone)
+        let (_subId, reader) = subscribeViewCommands router
+
+        let! ex = Assert.ThrowsAnyAsync<OperationCanceledException>(fun () ->
+            reader.ReadAsync(cts.Token).AsTask() :> Task)
+        Assert.NotNull(ex)
+    }
+
+[<Fact>]
+let ``ViewCommand broadcast delivers to multiple subscribers in order`` () =
+    task {
+        let router = create ()
+        use cts = new CancellationTokenSource()
+
+        let (sub1Id, reader1) = subscribeViewCommands router
+        let (sub2Id, reader2) = subscribeViewCommands router
+
+        let cmd1 = ViewCommand()
+        cmd1.SetZoom <- SetZoom(Level = 1.0)
+        let cmd2 = ViewCommand()
+        cmd2.SetZoom <- SetZoom(Level = 2.0)
+        let cmd3 = ViewCommand()
+        cmd3.SetZoom <- SetZoom(Level = 3.0)
+
+        submitViewCommand router cmd1 |> ignore
+        submitViewCommand router cmd2 |> ignore
+        submitViewCommand router cmd3 |> ignore
+
+        // Both subscribers receive all 3 commands in order
+        let! r1a = reader1.ReadAsync(cts.Token).AsTask()
+        let! r1b = reader1.ReadAsync(cts.Token).AsTask()
+        let! r1c = reader1.ReadAsync(cts.Token).AsTask()
+        Assert.Equal(1.0, r1a.SetZoom.Level)
+        Assert.Equal(2.0, r1b.SetZoom.Level)
+        Assert.Equal(3.0, r1c.SetZoom.Level)
+
+        let! r2a = reader2.ReadAsync(cts.Token).AsTask()
+        let! r2b = reader2.ReadAsync(cts.Token).AsTask()
+        let! r2c = reader2.ReadAsync(cts.Token).AsTask()
+        Assert.Equal(1.0, r2a.SetZoom.Level)
+        Assert.Equal(2.0, r2b.SetZoom.Level)
+        Assert.Equal(3.0, r2c.SetZoom.Level)
+
+        unsubscribeViewCommands router sub1Id
+        unsubscribeViewCommands router sub2Id
+    }
+
+[<Fact>]
+let ``ViewCommand broadcast with zero subscribers drops silently`` () =
+    let router = create ()
+
+    let cmd = ViewCommand()
+    cmd.SetZoom <- SetZoom(Level = 5.0)
+    let ack = submitViewCommand router cmd
+
+    Assert.True(ack.Success)
+
+[<Fact>]
+let ``ViewCommand subscriber disconnect does not affect other subscribers`` () =
+    task {
+        let router = create ()
+        use cts = new CancellationTokenSource()
+
+        let (sub1Id, _reader1) = subscribeViewCommands router
+        let (_sub2Id, reader2) = subscribeViewCommands router
+
+        // Disconnect subscriber 1
+        unsubscribeViewCommands router sub1Id
+
+        // Subscriber 2 still receives commands
+        let cmd = ViewCommand()
+        cmd.SetZoom <- SetZoom(Level = 7.0)
+        submitViewCommand router cmd |> ignore
+
+        let! result = reader2.ReadAsync(cts.Token).AsTask()
+        Assert.Equal(7.0, result.SetZoom.Level)
     }
 
 [<Fact>]

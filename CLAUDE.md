@@ -44,6 +44,8 @@ Last updated: 2026-03-24
 - N/A (in-memory only, no persistence changes) (004-enhance-demos-shapes)
 - F# on .NET 10.0 (viewer, client, scripting), C# on .NET 10.0 (contracts), Python 3.10+ (demo scripts) + Stride.CommunityToolkit 1.0.0-preview.62 (viewer), Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, grpcio (Python) (004-camera-smooth-demos)
 - N/A (in-memory camera state only) (004-camera-smooth-demos)
+- F# on .NET 10.0 (services, MCP, client, viewer), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, System.Threading.Channels (in-box) (005-robust-network-connectivity)
+- N/A (in-memory channel/subscriber state only) (005-robust-network-connectivity)
 
 ## Project Structure
 
@@ -106,6 +108,7 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 005-robust-network-connectivity: ViewCommand broadcast (ConcurrentDictionary subscriber pattern), MCP SSE endpoint fix (isProxied=false), NetworkProblems.md consolidation, container environment docs
 - 004-camera-smooth-demos: 9 new ViewCommand proto messages (SmoothCamera, CameraLookAt, CameraFollow, CameraOrbit, CameraChase, CameraFrameBodies, CameraShake, CameraStop, SetNarration), CameraMode DU state machine with smoothstep interpolation, 6 body-relative camera modes, narration overlay at (10,50), 10 new client functions, 10 F#/Python scripting helpers, Demo22 Camera Showcase, all 42 demos enhanced with cinematic camera + narration
 - 004-enhance-demos-shapes: SetDemoMetadata ViewCommand (proto field 4), viewer window title + demo label overlay, 8 demos enhanced with new shapes, 3 new demos (19-21: Shape Gallery, Compound Constructions, Mesh & Hull Playground), makeMeshCmd/setDemoInfo helpers, PhysicsClient 0.3.0
 - 004-proper-shape-rendering: Added F# on .NET 10.0 (PhysicsViewer) + Stride.CommunityToolkit 1.0.0-preview.62 (existing), MIConvexHull (new, convex hull face computation)

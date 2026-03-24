@@ -96,5 +96,8 @@ val disposeExpirationTimer: unit -> unit
 /// Pending query completions, keyed by correlation ID.
 val internal pendingQueries: System.Collections.Concurrent.ConcurrentDictionary<string, PendingQueryEntry>
 
-/// Read a pending view command.
-val readViewCommand: MessageRouter -> CancellationToken -> Task<ViewCommand option>
+/// Register a per-subscriber bounded channel for view command broadcast.
+val subscribeViewCommands: MessageRouter -> System.Guid * System.Threading.Channels.ChannelReader<ViewCommand>
+
+/// Remove a view command subscriber.
+val unsubscribeViewCommands: MessageRouter -> System.Guid -> unit

@@ -4,6 +4,28 @@ Structured log of Aspire, gRPC, port, certificate, and service connectivity issu
 
 ---
 
+## Container Environment
+
+**Runtime**: Podman (rootless)
+**Networking**: All services communicate internally via localhost. Only the Aspire dashboard is exposed externally.
+
+| Port  | Typical Use       | Notes |
+|-------|-------------------|-------|
+| 4173  | Vite preview      | |
+| 5000  | .NET HTTP         | |
+| 5001  | .NET HTTPS        | |
+| 5137  | Vite dev          | |
+| 5173  | Vite dev          | |
+| 5199  | MCP SSE (HTTP)    | isProxied=false, bypasses DCP |
+| 8080  | General HTTP      | |
+| 8081  | General HTTP      | |
+| 18888 | Aspire Dashboard  | Only externally-exposed port (pending container rebuild) |
+| 50051 | gRPC              | |
+
+**Networking boundary**: Server, Simulation, Viewer, Client, and MCP all run inside the container. Aspire DCP allocates dynamic internal ports behind the mapped ports above. MCP clients (including Claude Code) operate within the container.
+
+---
+
 ### MCP SSE endpoint unreachable via DCP proxy — 2026-03-23
 
 **Context**: Testing MCP recording tools by curling `http://localhost:5180/sse`
@@ -51,5 +73,25 @@ Structured log of Aspire, gRPC, port, certificate, and service connectivity issu
 **Context**: Running `./kill.sh && dotnet build src/PhysicsViewer` fails with exit code 144 (SIGKILL).
 **Error**: `Exit code 144` — the bash process running the chained command is killed.
 **Root Cause**: `pkill -f "PhysicsViewer"` matches the FULL command line of all processes. The bash shell running `./kill.sh && dotnet build src/PhysicsViewer` has "PhysicsViewer" in its arguments, so `pkill -9 -f` kills it. Same issue with any pattern like `PhysicsSandbox.AppHost`, `PhysicsServer`, etc. — the cwd path `/home/developer/projects/PhysicsSandbox` or chained commands contain these strings.
-**Resolution**: Changed kill patterns from bare names (`PhysicsViewer`) to `.dll` suffixes (`PhysicsViewer.dll`). Only actual .NET runtime host processes have `.dll` in their command line.
+**Resolution**: Changed kill patterns from bare names (`PhysicsViewer`) to `/bin` path suffixes (e.g., `PhysicsViewer/bin`) and `--project` patterns. Only actual .NET runtime host processes and `dotnet run` invocations match these patterns.
 **Prevention**: Always use specific executable patterns in `pkill -f`. Bare substrings match too broadly (editors, build tools, shell sessions, cwd paths).
+
+---
+
+### Body-not-found cancels camera mode immediately — 2026-03-24
+
+**Context**: Implementing body-relative camera modes (Follow, Orbit, Chase). Demo scripts send CameraFollow on a freshly-created body.
+**Error**: No error — silent behavior. Camera mode is immediately cancelled; the follow/orbit/chase never activates.
+**Root Cause**: `updateCameraMode` cancelled any body-relative mode (Following, Orbiting, Chasing, Framing) when the body ID was not found in the `bodyPositions` map: `| Following bodyId -> match Map.tryFind bodyId bodyPositions with | None -> { state with ActiveMode = None }`. A newly-created body may not appear in the simulation state for 1-2 frames (16-33ms at 60Hz).
+**Resolution**: Changed body-not-found behavior to hold position and keep mode active: `| None -> state`. The mode stays active until the body appears.
+**Prevention**: Body-relative modes must tolerate delayed body appearance. Never cancel a mode on body-not-found — hold position and wait.
+
+---
+
+### ViewCommand single-consumer channel replaced with per-subscriber broadcast — 2026-03-24
+
+**Context**: 005-robust-network-connectivity feature. The single-consumer `Channel<ViewCommand>` caused round-robin distribution when multiple viewers subscribed (only one viewer received each command).
+**Error**: Architecture limitation — not a runtime error. With N viewers, each viewer received ~1/N of the commands.
+**Root Cause**: `Channel.Reader.ReadAsync` dequeues one item per call. When two `StreamViewCommands` RPCs read from the same channel, commands are distributed round-robin instead of broadcast.
+**Resolution**: Replaced `ViewCommandChannel: Channel<ViewCommand>` with `ViewCommandSubscribers: ConcurrentDictionary<Guid, Channel<ViewCommand>>`. Each `StreamViewCommands` RPC gets its own bounded channel (1024). `submitViewCommand` iterates all subscriber channels and calls `TryWrite` on each (newest-drop if full). Zero subscribers = silent discard.
+**Prevention**: Never use a single-consumer channel for fan-out delivery. Use per-subscriber channels or callback registries for broadcast semantics.
