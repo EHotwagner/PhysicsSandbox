@@ -3,6 +3,8 @@ module PhysicsViewer.DebugRenderer
 open Stride.Core.Mathematics
 open Stride.Engine
 open Stride.Games
+open Stride.Graphics
+open Stride.Rendering
 open Stride.CommunityToolkit.Engine
 open Stride.CommunityToolkit.Games
 open Stride.CommunityToolkit.Rendering.ProceduralModels
@@ -31,6 +33,39 @@ let private protoQuatToStride (v: Vec4) =
     if isNull v then Quaternion.Identity
     else Quaternion(float32 v.X, float32 v.Y, float32 v.Z, float32 v.W)
 
+/// Create a wireframe entity from custom mesh wireframe data (LineList).
+let private createCustomWireframe (game: Game) (scene: Scene) (meshData: ShapeGeometry.CustomMeshData) (pos: Vector3) (rot: Quaternion) =
+    if meshData.WireframePositions.Length = 0 || meshData.WireframeIndices.Length = 0 then
+        None
+    else
+        let wireColor = StrideColor(0uy, 255uy, 0uy, 128uy)
+        let material = game.CreateFlatMaterial(System.Nullable<StrideColor>(wireColor))
+        let gd = game.GraphicsDevice
+        let vertices =
+            meshData.WireframePositions
+            |> Array.map (fun v -> VertexPositionNormalColor(v, Vector3.UnitY, wireColor))
+        let vertexBuffer = Stride.Graphics.Buffer.Vertex.New<VertexPositionNormalColor>(gd, vertices)
+        let indexBuffer = Stride.Graphics.Buffer.Index.New<int>(gd, meshData.WireframeIndices)
+        let meshDraw =
+            MeshDraw(
+                PrimitiveType = PrimitiveType.LineList,
+                DrawCount = meshData.WireframeIndices.Length,
+                IndexBuffer = IndexBufferBinding(indexBuffer, true, meshData.WireframeIndices.Length),
+                VertexBuffers = [|
+                    VertexBufferBinding(vertexBuffer, VertexPositionNormalColor.Layout, vertices.Length)
+                |])
+        let mesh = Mesh(Draw = meshDraw)
+        let model = Model()
+        model.Meshes.Add(mesh)
+        model.Materials.Add(MaterialInstance(material))
+        let entity = Entity()
+        let mc = entity.GetOrCreate<ModelComponent>()
+        mc.Model <- model
+        entity.Transform.Position <- pos
+        entity.Transform.Rotation <- rot
+        entity.Scene <- scene
+        Some entity
+
 /// Create a single wireframe primitive entity.
 let private createPrimitiveWireframe (game: Game) (scene: Scene) (shape: Shape) (pos: Vector3) (rot: Quaternion) =
     let primType = ShapeGeometry.primitiveType shape
@@ -39,11 +74,23 @@ let private createPrimitiveWireframe (game: Game) (scene: Scene) (shape: Shape) 
     let size = ShapeGeometry.shapeSize shape
     let options = Primitive3DEntityOptions(Material = material, Size = size)
     let entity = game.Create3DPrimitive(primType, options)
-    // No artificial scaling — wireframe matches physics bounds exactly (FR-009)
     entity.Transform.Position <- pos
     entity.Transform.Rotation <- rot
     entity.Scene <- scene
     entity
+
+/// Create a wireframe entity for any shape (custom or primitive).
+let private createShapeWireframe (game: Game) (scene: Scene) (shape: Shape) (pos: Vector3) (rot: Quaternion) =
+    if ShapeGeometry.isCustomShape shape then
+        let color = StrideColor(0uy, 255uy, 0uy, 128uy)
+        match ShapeGeometry.buildCustomMesh shape color with
+        | Some meshData ->
+            match createCustomWireframe game scene meshData pos rot with
+            | Some entity -> entity
+            | None -> createPrimitiveWireframe game scene shape pos rot
+        | None -> createPrimitiveWireframe game scene shape pos rot
+    else
+        createPrimitiveWireframe game scene shape pos rot
 
 /// Create wireframe entities for a body. Returns a list (>1 for compound shapes).
 let private createWireframeEntities (game: Game) (scene: Scene) (body: Body) =
@@ -57,17 +104,14 @@ let private createWireframeEntities (game: Game) (scene: Scene) (body: Body) =
             if not (isNull child.Shape) then
                 let childLocalPos = protoVec3ToStride child.LocalPosition
                 let childLocalRot = protoQuatToStride child.LocalOrientation
-                // Transform child local position by parent body rotation, then add body position
                 let mutable worldPos = Vector3.Zero
                 Vector3.Transform(&childLocalPos, &bodyRot, &worldPos)
                 Vector3.Add(&worldPos, &bodyPos, &worldPos)
-                // Combine rotations: parent * child
                 let mutable worldRot = Quaternion.Identity
                 Quaternion.Multiply(&bodyRot, &childLocalRot, &worldRot)
-                yield createPrimitiveWireframe game scene child.Shape worldPos worldRot ]
+                yield createShapeWireframe game scene child.Shape worldPos worldRot ]
     else
-        // Simple shape: single wireframe entity
-        [ createPrimitiveWireframe game scene body.Shape bodyPos bodyRot ]
+        [ createShapeWireframe game scene body.Shape bodyPos bodyRot ]
 
 /// Color for constraint type visualization.
 let private constraintColor (cs: ConstraintState) =
@@ -122,7 +166,6 @@ let updateShapes (game: Game) (scene: Scene) (state: DebugState) (simState: Simu
 
     let incomingIds = simState.Bodies |> Seq.map (fun b -> b.Id) |> Set.ofSeq
 
-    // Remove stale
     let entitiesToRemove =
         state.WireframeEntities |> Map.filter (fun id _ -> not (Set.contains id incomingIds))
     for kvp in entitiesToRemove do
@@ -135,13 +178,11 @@ let updateShapes (game: Game) (scene: Scene) (state: DebugState) (simState: Simu
     for body in simState.Bodies do
         match Map.tryFind body.Id updated with
         | Some entities ->
-            // Update position of first entity (simple shapes); compounds are recreated
             match entities with
             | [ single ] ->
                 single.Transform.Position <- protoVec3ToStride body.Position
                 single.Transform.Rotation <- protoQuatToStride body.Orientation
             | _ ->
-                // Compound: remove old and recreate (children may have moved)
                 for e in entities do e.Scene <- null
                 let newEntities = createWireframeEntities game scene body
                 updated <- Map.add body.Id newEntities updated
@@ -155,7 +196,6 @@ let updateConstraints (game: Game) (scene: Scene) (state: DebugState) (simState:
     if not state.Enabled || isNull simState then state
     else
 
-    // Remove all old constraint lines and recreate (simpler than diffing)
     for kvp in state.ConstraintEntities do
         kvp.Value.Scene <- null
 

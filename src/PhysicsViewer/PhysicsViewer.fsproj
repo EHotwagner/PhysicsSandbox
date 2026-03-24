@@ -35,6 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
     <PackageReference Include="Stride.CommunityToolkit" Version="1.0.0-preview.62" />
     <PackageReference Include="Stride.CommunityToolkit.Skyboxes" Version="1.0.0-preview.62" />
     <PackageReference Include="Stride.CommunityToolkit.Linux" Version="1.0.0-preview.62" />
