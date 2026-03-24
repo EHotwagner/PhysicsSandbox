@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BepuFSharp" Version="0.2.0-beta.1" />
+    <PackageReference Include="BepuFSharp" Version="0.3.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.*" />
   </ItemGroup>
 
