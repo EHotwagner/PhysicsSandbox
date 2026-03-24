@@ -2,7 +2,7 @@
 
 **Feature Branch**: `005-robust-network-connectivity`
 **Created**: 2026-03-24
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "Fix issues from NetworkProblems.md and camera-commands-debugging reports. Make all MCP/services/dashboard connections more robust. Document all findings. Podman container with exposed ports: 4173, 5000, 5001, 5137, 5173, 8080, 8081, 50051."
 
 ## Clarifications

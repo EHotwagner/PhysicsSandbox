@@ -1,5 +1,32 @@
 # Merged Features Log
 
+## Robust Network Connectivity — 2026-03-24
+**Branch:** 005-robust-network-connectivity
+**Spec:** specs/005-robust-network-connectivity
+
+**What was added:**
+- ViewCommand per-subscriber broadcast (ConcurrentDictionary<Guid, Channel<ViewCommand>>) replacing single-consumer Channel
+- subscribeViewCommands/unsubscribeViewCommands functions in MessageRouter
+- StreamViewCommands uses per-subscriber channel with try/finally cleanup
+- MCP SSE endpoint isProxied=false in AppHost to bypass DCP HTTP/2 proxy
+- NetworkProblems.md consolidated with container environment section (port table, networking boundary) and 7 structured entries
+- Viewer 60 FPS when unfocused (WindowMinimumUpdateRate/MinimizedMinimumUpdateRate = 16ms)
+- 6 new broadcast unit tests (ordering, multi-subscriber, disconnect, zero-sub, backpressure)
+- 1 new integration test (two-viewer broadcast)
+
+**New/Modified Components:**
+- `src/PhysicsServer/Hub/MessageRouter.fs(i)` — ViewCommandSubscribers, subscribeViewCommands, unsubscribeViewCommands, removed readViewCommand
+- `src/PhysicsServer/Services/PhysicsHubService.fs` — per-subscriber StreamViewCommands with Trace logging
+- `src/PhysicsSandbox.AppHost/AppHost.cs` — MCP .WithEndpoint("http", e => e.IsProxied = false)
+- `src/PhysicsViewer/Program.fs` — WindowMinimumUpdateRate 16ms
+- `reports/NetworkProblems.md` — Container Environment section + 2 new entries
+- `tests/PhysicsServer.Tests/MessageRouterTests.fs` — 6 new/updated tests
+- `tests/PhysicsSandbox.Integration.Tests/ServerHubTests.cs` — BroadcastToMultipleSubscribers test
+
+**Tasks Completed:** 29/29 tasks
+
+---
+
 ## Smooth Camera Controls and Demo Narration — 2026-03-24
 **Branch:** 004-camera-smooth-demos
 **Spec:** specs/004-camera-smooth-demos

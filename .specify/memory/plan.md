@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-24
-**Revision**: Updated with 004-camera-smooth-demos archival
+**Revision**: Updated with 005-robust-network-connectivity archival
 
 ## Technical Context
 
@@ -32,7 +32,7 @@ src/
 │   ├── Hub/
 │   │   ├── StateCache.fsi/.fs           # TickState caching for late joiners (dual tick + property cache)
 │   │   ├── MeshCache.fsi/.fs             # Server-side mesh geometry cache (ConcurrentDictionary)
-│   │   ├── MessageRouter.fsi/.fs        # Command/state routing, state decomposition (TickState + PropertyEvent), subscriber mgmt, batch routing
+│   │   ├── MessageRouter.fsi/.fs        # Command/state routing, state decomposition (TickState + PropertyEvent), subscriber mgmt, batch routing, ViewCommand per-subscriber broadcast (ConcurrentDictionary<Guid, Channel<ViewCommand>>)
 │   │   └── MetricsCounter.fsi/.fs       # Thread-safe per-service metrics tracking (Interlocked, mesh cache, tick vs property counters)
 │   ├── Services/
 │   │   ├── PhysicsHubService.fsi/.fs    # Client/viewer-facing gRPC (StreamState sends TickState, StreamProperties sends PropertyEvents)
@@ -246,6 +246,7 @@ Scripting/                                   # All scripting folders consolidate
 - Viewer connects to server via same Aspire service discovery env vars
 - Client connects to server via same Aspire service discovery env vars (fallback: `http://localhost:5180`)
 - MCP server connects to PhysicsServer via Aspire service discovery (`services__server__https__0` / `services__server__http__0` env vars); falls back to CLI arg or `https://localhost:7180` for standalone use
+- MCP HTTP endpoint: port 5199, `isProxied = false` — bypasses Aspire DCP proxy for HTTP/1.1 SSE compatibility
 - Viewer settings persisted at `~/.config/PhysicsSandbox/viewer-settings.json` (resolution, fullscreen, AA, shadows, texture filtering, VSync)
 - Stride3D uses OpenGL graphics API (`<StrideGraphicsApi>OpenGL</StrideGraphicsApi>`) for container/GPU-passthrough compatibility
 - Stride asset compiler disabled by default (`StrideCompilerSkipBuild`); builds without it for CI, enable for live runs with GPU
@@ -327,3 +328,8 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - PhysicsClient NuGet repacked to 0.4.0 (from 0.3.0) to expose smooth camera + narration commands. Contracts also 0.4.0. Prelude.fsx pins `#r "nuget: PhysicsClient, 0.4.0"`. [Source: specs/004-camera-smooth-demos]
 - Narration label at (10, 50) — below demo label (10, 10) and status bar (10, 30). Uses Color.Yellow via DebugTextSystem.Print for readability. [Source: specs/004-camera-smooth-demos]
 - Do not use Stride's Add3DCameraController() alongside custom CameraController — they fight for input. Use Add3DCamera() only and apply transforms manually. [Source: specs/004-camera-smooth-demos]
+- ViewCommand single-consumer Channel replaced with per-subscriber ConcurrentDictionary<Guid, Channel<ViewCommand>> broadcast. Never use single-consumer channel for fan-out delivery. [Source: specs/005-robust-network-connectivity]
+- MCP SSE endpoint requires isProxied=false on WithHttpEndpoint to bypass Aspire DCP HTTP/2 proxy. Without it, SSE clients get "HTTP/1.x request sent to HTTP/2 only endpoint." [Source: specs/005-robust-network-connectivity]
+- kill.sh uses /bin path patterns (e.g., PhysicsViewer/bin) and --project flags. Bare process name patterns in pkill -f match the calling shell and kill it (exit code 144). [Source: specs/005-robust-network-connectivity]
+- Stride3D throttles to 15 FPS when viewer window loses focus. Set WindowMinimumUpdateRate.MinimumElapsedTime and MinimizedMinimumUpdateRate.MinimumElapsedTime to 16ms to maintain 60 FPS. [Source: specs/005-robust-network-connectivity]
+- All services run inside Podman container via localhost. Only Aspire dashboard (port 18888) is exposed externally. MCP clients (Claude Code) operate within the container. [Source: specs/005-robust-network-connectivity]

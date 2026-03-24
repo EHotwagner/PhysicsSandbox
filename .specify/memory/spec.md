@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-24
-**Revision**: Updated with 004-camera-smooth-demos archival
+**Revision**: Updated with 005-robust-network-connectivity archival
 
 ## Overview
 
@@ -349,6 +349,24 @@ Demo22_CameraShowcase (~40 seconds) demonstrates smooth moves, body-relative mod
 ### US-113: Enhance All Existing Demos with Camera and Narration (P3)
 All 42 demo scripts (21 F# + 21 Python) enhanced with cinematic camera sequences (3-6 moves per demo) and narration labels. All legacy instant camera calls migrated to smooth/body-relative system. [Source: specs/004-camera-smooth-demos]
 
+### US-114: ViewCommand Broadcast Delivery (P1)
+ViewCommand delivery system broadcasts each command to all connected subscribers via per-subscriber bounded channels, replacing single-consumer round-robin. Graceful disconnect, newest-drop backpressure, zero-subscriber silent discard. [Source: specs/005-robust-network-connectivity]
+
+### US-115: MCP SSE Connectivity Through DCP Proxy (P2)
+MCP SSE endpoint reachable via Aspire-published URL without manual dynamic port discovery. DCP proxy bypassed via isProxied=false on the HTTP endpoint. All MCP clients operate within the container. [Source: specs/005-robust-network-connectivity]
+
+### US-116: Reliable Process Cleanup (P2)
+kill.sh terminates all PhysicsSandbox processes using /bin path and --project patterns without killing the calling shell, editor, or build processes. [Source: specs/005-robust-network-connectivity]
+
+### US-117: Consolidated Network Problem Documentation (P3)
+All known network connectivity issues documented in reports/NetworkProblems.md with structured entries (Context, Error, Root Cause, Resolution, Prevention) plus container environment section with port table. [Source: specs/005-robust-network-connectivity]
+
+### US-118: Body-Relative Camera Mode Resilience (P3)
+Camera modes hold position when target body not yet in simulation state rather than cancelling. Mode activates once body appears. No timeout — mode remains active indefinitely until body appears or explicit cancellation. [Source: specs/005-robust-network-connectivity]
+
+### US-119: Viewer 60 FPS When Unfocused (P3)
+Stride3D viewer maintains 60 FPS even when window loses focus or is minimized, preventing command loss from throttled frame rates during demo script execution. [Source: specs/005-robust-network-connectivity]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -643,6 +661,18 @@ All 42 demo scripts (21 F# + 21 Python) enhanced with cinematic camera sequences
 - **FR-290**: All 21 existing Python demos MUST be enhanced to match F# counterparts with equivalent camera sequences and narration. [Source: specs/004-camera-smooth-demos]
 - **FR-291**: All existing instant camera calls in demos MUST be migrated to the new smooth/body-relative camera system. [Source: specs/004-camera-smooth-demos]
 - **FR-292**: The ViewCommand viewer queue MUST use ConcurrentQueue with a drain-all-per-frame loop to handle rapid commands arriving faster than the frame rate. [Source: specs/004-camera-smooth-demos]
+- **FR-293**: The ViewCommand delivery system MUST broadcast each command to all connected subscribers via per-subscriber bounded channels (not round-robin single consumer). [Source: specs/005-robust-network-connectivity]
+- **FR-294**: The ViewCommand delivery system MUST preserve command ordering per subscriber — channels preserve FIFO. [Source: specs/005-robust-network-connectivity]
+- **FR-295**: The system MUST handle subscriber disconnection gracefully — removing a subscriber does not affect delivery to remaining subscribers. [Source: specs/005-robust-network-connectivity]
+- **FR-296**: The ViewCommand delivery system MUST apply backpressure to slow subscribers via newest-drop (TryWrite returns false, command skipped for that subscriber only). [Source: specs/005-robust-network-connectivity]
+- **FR-297**: The MCP SSE endpoint MUST be reachable via the Aspire-published URL without manual dynamic port discovery (isProxied=false). [Source: specs/005-robust-network-connectivity]
+- **FR-298**: The MCP endpoint MUST support HTTP/1.1 connections for SSE transport by bypassing the DCP HTTP/2 proxy. [Source: specs/005-robust-network-connectivity]
+- **FR-299**: The process cleanup script MUST terminate all PhysicsSandbox service processes without killing the calling shell, editor, or build processes. [Source: specs/005-robust-network-connectivity]
+- **FR-300**: The process cleanup script MUST use /bin path and --project patterns specific enough to avoid false matches. [Source: specs/005-robust-network-connectivity]
+- **FR-301**: All known network connectivity issues MUST be documented in reports/NetworkProblems.md following the structured entry format. [Source: specs/005-robust-network-connectivity]
+- **FR-302**: NetworkProblems.md MUST include a container environment section with Podman runtime, port mapping table, and networking boundary. [Source: specs/005-robust-network-connectivity]
+- **FR-303**: The ViewCommand broadcast system MUST silently discard commands when no subscribers are connected — no buffering, no error, no replay. [Source: specs/005-robust-network-connectivity]
+- **FR-304**: The viewer MUST maintain 60 FPS when unfocused or minimized via WindowMinimumUpdateRate and MinimizedMinimumUpdateRate set to 16ms. [Source: specs/005-robust-network-connectivity]
 
 ## Key Entities
 
@@ -716,6 +746,7 @@ All 42 demo scripts (21 F# + 21 Python) enhanced with cinematic camera sequences
 - **Camera Transition**: In-progress smooth interpolation — startPos, startTarget, startZoom, endPos, endTarget, endZoom, elapsed, duration. Smoothstep easing applied each frame. [Source: specs/004-camera-smooth-demos]
 - **Narration Label**: Single string displayed at screen position (10, 50) via DebugTextSystem.Print. Set via SetNarration ViewCommand, cleared by sending empty text. Independent of demo metadata overlay. [Source: specs/004-camera-smooth-demos]
 - **Body Position Map**: Transient Map<string, Vector3> built each frame from latestSimState.Bodies. Used by body-relative camera modes to resolve bodyId → world position. Not persisted. [Source: specs/004-camera-smooth-demos]
+- **ViewCommand Subscriber**: A connected viewer instance with a unique Guid, a bounded Channel<ViewCommand>(1024), and a connection lifecycle (subscribe on StreamViewCommands connect, unsubscribe on disconnect). Registered in MessageRouter.ViewCommandSubscribers ConcurrentDictionary. [Source: specs/005-robust-network-connectivity]
 
 ## Edge Cases
 
@@ -808,7 +839,10 @@ All 42 demo scripts (21 F# + 21 Python) enhanced with cinematic camera sequences
 - Orbit with 0 degrees: no movement, completes immediately. [Source: specs/004-camera-smooth-demos]
 - Shake issued during smooth transition: shake applies additively on top. [Source: specs/004-camera-smooth-demos]
 - ViewCommand single-slot Volatile.Write drops rapid commands: replaced with ConcurrentQueue drain loop. [Source: specs/004-camera-smooth-demos]
-- Duplicate viewer processes compete for ViewCommands (single-consumer channel): stale viewer steals half the commands. Fixed by kill.sh .dll suffix patterns. [Source: specs/004-camera-smooth-demos]
+- Duplicate viewer processes compete for ViewCommands (single-consumer channel): stale viewer steals half the commands. Fixed by kill.sh .dll suffix patterns and broadcast subscriber pattern. [Source: specs/004-camera-smooth-demos, specs/005-robust-network-connectivity]
+- ViewCommand broadcast subscriber list modified during publish (concurrent add/remove): ConcurrentDictionary iteration is snapshot-safe; new/removed subscribers take effect on next publish. [Source: specs/005-robust-network-connectivity]
+- Viewer connects but never reads from stream (backpressure): per-subscriber channel fills to 1024, subsequent commands skipped for that subscriber via TryWrite newest-drop. [Source: specs/005-robust-network-connectivity]
+- ViewCommands sent before any viewer connected: silently dropped (no buffering, no replay). [Source: specs/005-robust-network-connectivity]
 
 ## Success Criteria
 
@@ -932,3 +966,9 @@ All 42 demo scripts (21 F# + 21 Python) enhanced with cinematic camera sequences
 - **SC-118**: Continuous camera modes (follow, chase) track moving bodies with no perceptible lag. [Source: specs/004-camera-smooth-demos]
 - **SC-119**: Each enhanced demo contains 3-6 camera moves and narration labels for every distinct phase. [Source: specs/004-camera-smooth-demos]
 - **SC-120**: No legacy instant camera calls remain in any demo script after enhancement. [Source: specs/004-camera-smooth-demos]
+- **SC-121**: All 42 demo scripts complete with 100% ViewCommand delivery to connected viewers (zero silent command drops). [Source: specs/005-robust-network-connectivity]
+- **SC-122**: Two simultaneously connected viewers both receive every ViewCommand (broadcast verified via integration test). [Source: specs/005-robust-network-connectivity]
+- **SC-123**: MCP SSE clients can connect using the Aspire-published URL on the first attempt without manual port discovery. [Source: specs/005-robust-network-connectivity]
+- **SC-124**: kill.sh terminates all processes and returns exit code 0 without killing the calling shell (./kill.sh && echo "alive" prints "alive"). [Source: specs/005-robust-network-connectivity]
+- **SC-125**: Camera modes targeting newly-created bodies begin tracking within 2 seconds of the body appearing. [Source: specs/005-robust-network-connectivity]
+- **SC-126**: NetworkProblems.md contains 7+ structured entries plus container environment documentation. [Source: specs/005-robust-network-connectivity]
