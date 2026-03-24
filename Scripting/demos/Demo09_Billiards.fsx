@@ -22,6 +22,7 @@ module Demo09 =
 
         // Camera: top-down above the table
         setCamera s (0.0, 6.0, 0.1) (0.0, 0.0, 0.0) |> ignore
+        setDemoInfo s "Demo 09: Billiards" "Billiard ball collision mechanics — break shot and rebounds."
 
         // Batch-create 15 balls in triangle + 1 cue ball
         let r = 0.1

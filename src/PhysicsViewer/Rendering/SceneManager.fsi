@@ -26,3 +26,12 @@ val simulationTime: SceneState -> float
 
 /// Get whether the simulation is running from the last applied state.
 val isRunning: SceneState -> bool
+
+/// Apply demo metadata from a SetDemoMetadata view command.
+val applyDemoMetadata: SetDemoMetadata -> SceneState -> SceneState
+
+/// Get the current demo name.
+val demoName: SceneState -> string option
+
+/// Get the current demo description.
+val demoDescription: SceneState -> string option

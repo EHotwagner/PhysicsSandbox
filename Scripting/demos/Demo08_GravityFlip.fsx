@@ -17,6 +17,7 @@ module Demo08 =
         resetSimulation s
 
         setCamera s (6.0, 5.0, 6.0) (0.0, 2.0, 0.0) |> ignore
+        setDemoInfo s "Demo 08: Gravity Flip" "Gravity direction reversal — objects fly up then fall back down."
 
         // Mix of light objects: beach balls, dice, and small marbles
         let rng = System.Random(77)

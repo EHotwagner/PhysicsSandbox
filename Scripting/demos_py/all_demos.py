@@ -1,4 +1,4 @@
-"""All 15 demos registered as (name, description, run) tuples."""
+"""All 18 demos (15 original + 3 new shape demos) registered as (name, description, run) tuples."""
 
 from Scripting.demos_py.demo01_hello_drop import name as n01, description as d01, run as r01
 from Scripting.demos_py.demo02_bouncing_marbles import name as n02, description as d02, run as r02
@@ -15,6 +15,9 @@ from Scripting.demos_py.demo12_collision_pit import name as n12, description as 
 from Scripting.demos_py.demo13_force_frenzy import name as n13, description as d13, run as r13
 from Scripting.demos_py.demo14_domino_cascade import name as n14, description as d14, run as r14
 from Scripting.demos_py.demo15_overload import name as n15, description as d15, run as r15
+from Scripting.demos_py.demo19_shape_gallery import name as n19, description as d19, run as r19
+from Scripting.demos_py.demo20_compound_constructions import name as n20, description as d20, run as r20
+from Scripting.demos_py.demo21_mesh_hull_playground import name as n21, description as d21, run as r21
 
 demos = [
     (n01, d01, r01),
@@ -32,4 +35,7 @@ demos = [
     (n13, d13, r13),
     (n14, d14, r14),
     (n15, d15, r15),
+    (n19, d19, r19),
+    (n20, d20, r20),
+    (n21, d21, r21),
 ]

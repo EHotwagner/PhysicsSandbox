@@ -21,6 +21,7 @@ module Demo15 =
         resetSimulation s
         let totalSw = System.Diagnostics.Stopwatch.StartNew()
         setCamera s (20.0, 12.0, 20.0) (0.0, 2.0, 0.0) |> ignore
+        setDemoInfo s "Demo 15: Overload" "System stress test — as many bodies as possible."
         let pyramidIds =
             timed "Act 1 — pyramid + stack + row" (fun () ->
                 let pIds = pyramid s 7 (Some (-5.0, 0.0, 0.0)) |> ok

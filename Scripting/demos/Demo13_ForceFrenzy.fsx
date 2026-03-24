@@ -17,6 +17,7 @@ module Demo13 =
     let run (s: Session) =
         resetSimulation s
         setCamera s (0.0, 12.0, 20.0) (0.0, 3.0, 0.0) |> ignore
+        setDemoInfo s "Demo 13: Force Frenzy" "Force application stress — constant forces pushing bodies around."
 
         // Tight 8x10 grid (0.7m spacing) — bodies will collide when forces hit
         let ids =

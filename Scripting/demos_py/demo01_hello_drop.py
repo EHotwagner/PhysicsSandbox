@@ -18,6 +18,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
 )
 
 name = "Hello Drop"
@@ -29,6 +30,7 @@ def run(session):
 
     # Camera: wide side view to see all objects
     set_camera(session, (8.0, 6.0, 10.0), (0.0, 3.0, 0.0))
+    set_demo_info(session, "Demo 01: Hello Drop", "Six different shapes fall side by side.")
 
     drop_height = 10.0
 

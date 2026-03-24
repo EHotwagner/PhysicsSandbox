@@ -14,6 +14,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     set_gravity,
     sleep,
     stack,
@@ -30,6 +31,7 @@ def run(session):
 
     # Act 1: Build the stage
     set_camera(session, (12.0, 8.0, 12.0), (0.0, 2.0, 0.0))
+    set_demo_info(session, "Demo 10: Chaos", "Large-scale chaotic system.")
     print("  Act 1: Building the stage...")
 
     # Pyramid on the left

@@ -17,6 +17,7 @@ let run s =
     resetSimulation s
     // Start focused on the pyramid
     setCamera s (0.0, 4.0, 12.0) (0.0, 0.5, 5.0) |> ignore
+    setDemoInfo s "Demo 04: Bowling Alley" "Bowling pins and ball collision — strike mechanics in action."
     // 6x5 brick wall — small bricks (10cm cubes) so the boulder clearly smashes through
     let brickIds =
         [ for row in 0 .. 4 do

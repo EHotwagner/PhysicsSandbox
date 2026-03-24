@@ -272,6 +272,11 @@ def set_zoom(session: Session, level: float) -> pb.CommandAck:
         set_zoom=pb.SetZoom(level=level)))
 
 
+def set_demo_info(session: Session, name: str, description: str) -> None:
+    _send_view(session, pb.ViewCommand(
+        set_demo_metadata=pb.SetDemoMetadata(name=name, description=description)))
+
+
 # ─── Message Construction Helpers ───────────────────────────────────────────
 
 
@@ -668,6 +673,18 @@ def make_compound_cmd(body_id: str, pos: tuple[float, float, float],
     return pb.SimulationCommand(add_body=pb.AddBody(
         id=body_id, position=to_vec3(*pos), mass=mass,
         shape=pb.Shape(compound=pb.Compound(children=compound_children))))
+
+
+def make_mesh_cmd(body_id: str, pos: tuple[float, float, float],
+                   triangles: list[tuple[tuple[float, float, float],
+                                         tuple[float, float, float],
+                                         tuple[float, float, float]]],
+                   mass: float) -> pb.SimulationCommand:
+    mesh_tris = [pb.MeshTriangle(a=to_vec3(*a), b=to_vec3(*b), c=to_vec3(*c))
+                 for a, b, c in triangles]
+    return pb.SimulationCommand(add_body=pb.AddBody(
+        id=body_id, position=to_vec3(*pos), mass=mass,
+        shape=pb.Shape(mesh=pb.MeshShape(triangles=mesh_tris))))
 
 
 # ─── Kinematic & Filter Helpers ────────────────────────────────────────────

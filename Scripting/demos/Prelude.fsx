@@ -1,7 +1,7 @@
 // Shared preamble for all demo scripts
 // Usage: #load "Prelude.fsx" at the top of any demo script
 
-#r "nuget: PhysicsClient, 0.2.0"
+#r "nuget: PhysicsClient, 0.3.0"
 #r "nuget: Microsoft.Extensions.Logging.Abstractions"
 #r "nuget: Spectre.Console"
 
@@ -246,6 +246,23 @@ let makeCompoundCmd (id: string) (pos: float * float * float) (children: (Shape 
     cmd.AddBody <- body
     cmd
 
+let makeMeshCmd (id: string) (pos: float * float * float) (triangles: ((float * float * float) * (float * float * float) * (float * float * float)) list) (mass: float) =
+    let mesh = MeshShape()
+    for (a, b, c) in triangles do
+        let tri = MeshTriangle()
+        tri.A <- toVec3 a; tri.B <- toVec3 b; tri.C <- toVec3 c
+        mesh.Triangles.Add(tri)
+    let shape = Shape()
+    shape.Mesh <- mesh
+    let body = AddBody()
+    body.Id <- id
+    body.Position <- toVec3 pos
+    body.Mass <- mass
+    body.Shape <- shape
+    let cmd = SimulationCommand()
+    cmd.AddBody <- body
+    cmd
+
 // ─── Kinematic & Filter Helpers ───────────────────────────────────────
 
 let withMotionType (mt: BodyMotionType) (cmd: SimulationCommand) =
@@ -297,6 +314,11 @@ let querySweepSphere (s: Session) (radius: float) (startPos: float * float * flo
         let h = resp.Closest
         Some (h.BodyId, (h.Position.X, h.Position.Y, h.Position.Z), (h.Normal.X, h.Normal.Y, h.Normal.Z), h.Distance)
     else None
+
+// ─── Demo Info ───────────────────────────────────────────────────────
+
+let setDemoInfo (s: Session) (name: string) (description: string) =
+    setDemoMetadata s name description |> ignore
 
 // ─── Standalone Runner ────────────────────────────────────────────────
 

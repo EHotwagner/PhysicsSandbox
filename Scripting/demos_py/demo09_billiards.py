@@ -10,6 +10,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     set_gravity,
     sleep,
 )
@@ -26,6 +27,7 @@ def run(session):
 
     # Camera: overhead billiards view
     set_camera(session, (0.0, 10.0, 0.1), (0.0, 0.0, 0.0))
+    set_demo_info(session, "Demo 09: Billiards", "Billiard ball collision mechanics.")
 
     # Batch-create 15 balls in triangle + 1 cue ball
     r = 0.1

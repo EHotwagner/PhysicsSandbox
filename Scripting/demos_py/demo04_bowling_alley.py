@@ -9,6 +9,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     sleep,
 )
 
@@ -19,6 +20,7 @@ description = "Launch a bowling ball at a pyramid of bricks."
 def run(session):
     reset_simulation(session)
     set_camera(session, (-5.0, 3.0, 3.0), (3.0, 1.0, 0.0))
+    set_demo_info(session, "Demo 04: Bowling Alley", "Bowling pins and ball collision.")
     pyramid(session, 4, pos=(5.0, 0.0, 0.0))
     print("  Built pyramid (4 layers)")
     ball = bowling_ball(session, pos=(-3.0, 0.15, 0.0))

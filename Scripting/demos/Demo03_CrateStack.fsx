@@ -16,6 +16,7 @@ let name = "Crate Stack"
 let run s =
     resetSimulation s
     setCamera s (8.0, 7.0, 4.0) (0.0, 5.0, 0.0) |> ignore
+    setDemoInfo s "Demo 03: Crate Stack" "Stacking dynamics — crates piled high with careful placement."
     // Build tower from lighter boxes (2kg each instead of 20kg default crates)
     let ids =
         [ for i in 0 .. 11 do

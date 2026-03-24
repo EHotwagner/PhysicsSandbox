@@ -14,6 +14,7 @@ let name = "Hello Drop"
 let run s =
     resetSimulation s
     setCamera s (8.0, 6.0, 10.0) (0.0, 3.0, 0.0) |> ignore
+    setDemoInfo s "Demo 01: Hello Drop" "Six different shapes fall side by side — spheres, boxes, capsule, cylinder with bouncy/sticky materials."
     let dropHeight = 10.0
 
     // Original shapes

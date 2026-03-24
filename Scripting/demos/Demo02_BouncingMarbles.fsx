@@ -13,6 +13,7 @@ let name = "Bouncing Marbles"
 let run s =
     resetSimulation s
     setCamera s (5.0, 8.0, 5.0) (0.0, 1.0, 0.0) |> ignore
+    setDemoInfo s "Demo 02: Bouncing Marbles" "Two waves of 75 marbles rain down and pile up with varied sizes and masses."
     let rng = System.Random(42)
     let wave1 =
         [ for i in 0 .. 74 do

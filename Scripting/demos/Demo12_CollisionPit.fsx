@@ -17,6 +17,7 @@ module Demo12 =
     let run (s: Session) =
         resetSimulation s
         setCamera s (8.0, 10.0, 8.0) (0.0, 2.0, 0.0) |> ignore
+        setDemoInfo s "Demo 12: Collision Pit" "Collision detection pit — bodies bouncing in a confined space."
 
         // Build the pit
         timed "Pit walls setup" (fun () ->

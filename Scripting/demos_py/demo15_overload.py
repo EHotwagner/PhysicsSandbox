@@ -14,6 +14,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     set_gravity,
     sleep,
     stack,
@@ -30,6 +31,7 @@ def run(session):
     reset_simulation(session)
     total_start = _time.perf_counter()
     set_camera(session, (20.0, 12.0, 20.0), (0.0, 2.0, 0.0))
+    set_demo_info(session, "Demo 15: Overload", "System stress test.")
     with timed("Act 1 — pyramid + stack + row"):
         pyramid_ids = pyramid(session, 7, (-5.0, 0.0, 0.0))
         stack(session, 10, (5.0, 0.0, 0.0))

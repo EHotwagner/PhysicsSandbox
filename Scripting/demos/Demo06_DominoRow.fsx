@@ -19,6 +19,7 @@ module Demo06 =
 
         // Camera: side view along the row
         setCamera s (-2.0, 3.0, 6.0) (5.0, 0.5, 0.0) |> ignore
+        setDemoInfo s "Demo 06: Domino Row" "Classic domino chain reaction — one push topples them all."
 
         // Batch-create 20 dominoes — pre-generate IDs for push reference
         let ids = [ for _ in 0..19 -> nextId "box" ]

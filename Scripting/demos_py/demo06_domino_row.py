@@ -11,6 +11,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     sleep,
 )
 
@@ -23,6 +24,7 @@ def run(session):
 
     # Camera: side view along the row
     set_camera(session, (-2.0, 3.0, 6.0), (5.0, 0.5, 0.0))
+    set_demo_info(session, "Demo 06: Domino Row", "Classic domino chain reaction.")
 
     # Batch-create 20 dominoes — pre-generate IDs for push reference
     ids = [next_id("box") for _ in range(20)]

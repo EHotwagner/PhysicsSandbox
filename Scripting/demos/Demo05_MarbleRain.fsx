@@ -14,6 +14,7 @@ let name = "Marble Rain"
 let run s =
     resetSimulation s
     setCamera s (6.0, 10.0, 6.0) (0.0, 0.0, 0.0) |> ignore
+    setDemoInfo s "Demo 05: Marble Rain" "Continuous marble rain — hundreds of marbles falling from the sky."
     let ids = randomSpheres s 20 (Some 42) |> ok
     printfn "  Wave 1: %d random spheres raining down..." ids.Length
     runFor s 3.0

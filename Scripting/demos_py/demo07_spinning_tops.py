@@ -14,6 +14,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     wireframe,
 )
 
@@ -26,6 +27,7 @@ def run(session):
 
     # Camera: top-down angled view
     set_camera(session, (0.0, 10.0, 8.0), (0.0, 0.5, 0.0))
+    set_demo_info(session, "Demo 07: Spinning Tops", "Spinning top physics.")
 
     # Place 6 objects in a ring (radius 2m), alternating spheres and boxes
     radius = 2.0
