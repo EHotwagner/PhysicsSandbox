@@ -22,7 +22,7 @@ Last updated: 2026-03-24
 - N/A (local NuGet feed at `~/.local/share/nuget-local/`) (004-scripting-nuget-package)
 - F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient (F# NuGet), prelude.py (Python), existing Prelude.fsx helpers (004-improve-demos)
 - N/A (stateless scripts communicating with running physics server) (004-improve-demos)
-- F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0→0.2.0 (local NuGet), Stride.CommunityToolkit.Bepu 1.0.0-preview.62 (already includes Stride.BepuPhysics 4.3.0.2507 + Stride.BepuPhysics.Debug 4.3.0.2507 transitively), Spectre.Console, ModelContextProtocol.AspNetCore 1.1.* (005-stride-bepu-integration)
+- F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0→0.2.0 (local NuGet), Stride.CommunityToolkit.Bepu 1.0.0-preview.62, Spectre.Console, ModelContextProtocol.AspNetCore 1.1.* (005-stride-bepu-integration)
 - In-memory (physics world, shape cache, constraint registry, metrics counters) (005-stride-bepu-integration)
 - F# on .NET 10.0 (PhysicsViewer project) + Stride.CommunityToolkit 1.0.0-preview.62 (rendering), Stride.CommunityToolkit.Bepu 1.0.0-preview.62 (Bepu3DPhysicsOptions, Create3DPrimitive), Grpc.Net.Client 2.x (server communication), System.Text.Json (settings persistence) (005-viewer-settings-sizing-fix)
 - JSON file at `~/.config/PhysicsSandbox/viewer-settings.json` (005-viewer-settings-sizing-fix)
