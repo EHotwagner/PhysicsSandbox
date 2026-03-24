@@ -17,9 +17,10 @@ module Demo07 =
     let run (s: Session) =
         resetSimulation s
 
-        // Camera: top-down angled view
-        setCamera s (0.0, 10.0, 8.0) (0.0, 0.5, 0.0) |> ignore
         setDemoInfo s "Demo 07: Spinning Tops" "Spinning top physics — angular momentum and precession."
+        setNarration s "Top-down view — placing 6 objects in a ring"
+        smoothCamera s (0.0, 10.0, 8.0) (0.0, 0.5, 0.0) 1.5
+        sleep 1700
 
         // Place 6 objects in a ring (radius 2m), alternating spheres and boxes
         let radius = 2.0
@@ -54,6 +55,7 @@ module Demo07 =
               makeTorqueCmd ids.[4] (0.0, -600.0, 0.0)
               makeTorqueCmd ids.[5] (-200.0, 400.0, 0.0) ]
         batchAdd s torqueCmds
+        setNarration s "All objects spinning with strong torques"
         printfn "  All spinning..."
         runFor s 2.0
 
@@ -69,18 +71,24 @@ module Demo07 =
                 let iz = -sin angle * 8.0
                 makeImpulseCmd ids.[i] (ix, 0.5, iz) ]
         batchAdd s impulseCmds
+        setNarration s "Pushed inward — COLLISION!"
         printfn "  Pushed inward — COLLISION!"
 
         // Camera drops to side view for dramatic impact
-        setCamera s (5.0, 3.0, 5.0) (0.0, 0.5, 0.0) |> ignore
+        smoothCamera s (5.0, 3.0, 5.0) (0.0, 0.5, 0.0) 1.0
+        sleep 1200
+        shakeCamera s 0.2 0.5
         runFor s 3.0
 
         // Let chaos settle
         wireframe s false |> ignore
-        setCamera s (4.0, 2.0, 4.0) (0.0, 0.3, 0.0) |> ignore
+        setNarration s "Settling down — angular momentum dissipating"
+        smoothCamera s (4.0, 2.0, 4.0) (0.0, 0.3, 0.0) 1.5
+        sleep 1700
         printfn "  Settling..."
         runFor s 2.0
 
+        clearNarration s
         listBodies s
 
 runStandalone Demo07.name Demo07.run

@@ -16,7 +16,9 @@ module Demo12 =
 
     let run (s: Session) =
         resetSimulation s
-        setCamera s (8.0, 10.0, 8.0) (0.0, 2.0, 0.0) |> ignore
+        setNarration s "Building the collision pit"
+        smoothCamera s (8.0, 10.0, 8.0) (0.0, 2.0, 0.0) 1.5
+        sleep 1700
         setDemoInfo s "Demo 12: Collision Pit" "Collision detection pit — bodies bouncing in a confined space."
 
         // Build the pit
@@ -40,11 +42,14 @@ module Demo12 =
                     let y = 6.0 + rng.NextDouble() * 2.0
                     makeSphereCmd (nextId "sphere") (x, y, z) (0.15 + rng.NextDouble() * 0.1) (0.3 + rng.NextDouble() * 1.0) ]
             batchAdd s wave1)
+        setNarration s "Wave 1: 40 large spheres raining down"
         printfn "  Wave 1: 40 large spheres dropping..."
         runFor s 3.0
 
         // Wave 2: 60 small marbles from higher up
-        setCamera s (5.0, 8.0, 5.0) (0.0, 3.0, 0.0) |> ignore
+        setNarration s "Wave 2: 60 small marbles from above"
+        smoothCamera s (5.0, 8.0, 5.0) (0.0, 3.0, 0.0) 1.5
+        sleep 1700
         timed "Wave 2 — 60 small marbles" (fun () ->
             let wave2 =
                 [ for i in 0 .. 59 do
@@ -65,13 +70,17 @@ module Demo12 =
                     let y = 12.0 + rng.NextDouble() * 3.0
                     makeSphereCmd (nextId "sphere") (x, y, z) 0.2 3.0 ]
             batchAdd s wave3)
+        setNarration s "Wave 3: Heavy boulders incoming — IMPACT!"
         printfn "  Wave 3: 20 heavy spheres — IMPACT!"
         runFor s 4.0
 
         // Close-up view
-        setCamera s (3.0, 2.0, 3.0) (0.0, 1.5, 0.0) |> ignore
+        setNarration s "Close-up of the overflowing pit"
+        smoothCamera s (3.0, 2.0, 3.0) (0.0, 1.5, 0.0) 1.5
+        sleep 1700
         printfn "  Close-up of the overflowing pit"
         sleep 1500
+        clearNarration s
         status s
 
 runStandalone Demo12.name Demo12.run

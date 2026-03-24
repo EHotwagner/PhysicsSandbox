@@ -9,7 +9,9 @@ open PhysicsClient.ViewCommands
 
 let run (s: Session) =
     resetSimulation s
-    setCamera s (10.0, 8.0, 10.0) (0.0, 2.0, 0.0) |> ignore
+    setNarration s "Building the walled query arena"
+    smoothCamera s (10.0, 8.0, 10.0) (0.0, 2.0, 0.0) 1.5
+    sleep 1700
     setDemoInfo s "Demo 17: Query Range" "Raycasts, overlap tests, and sweep casts with varied geometry."
 
     // Build walled pit (4 static walls)
@@ -52,10 +54,14 @@ let run (s: Session) =
     printfn "  Dropped %d bodies into the pit" bodyIds.Length
 
     // Let them settle for 3 seconds
+    setNarration s "Dropping bodies into the pit — settling..."
     runFor s 3.0
     printfn "  Bodies settled\n"
 
     // Fire 5 downward raycasts from different X positions
+    setNarration s "Firing 5 downward raycasts across the pit"
+    smoothCamera s (6.0, 12.0, 6.0) (0.0, 1.0, 0.0) 1.5
+    sleep 1700
     printfn "  --- Raycasts ---"
     for x in [ -2.0; -1.0; 0.0; 1.0; 2.0 ] do
         let hits = queryRaycast s (x, 10.0, 0.0) (0.0, -1.0, 0.0) 20.0
@@ -66,12 +72,18 @@ let run (s: Session) =
             printfn "  Raycast at X=%.0f: no hit" x
 
     // Overlap sphere at pit center
+    setNarration s "Overlap test — sphere query at pit center"
+    smoothCamera s (4.0, 6.0, 4.0) (0.0, 1.0, 0.0) 1.0
+    sleep 1200
     printfn ""
     printfn "  --- Overlap ---"
     let overlapped = queryOverlapSphere s 2.0 (0.0, 1.0, 0.0)
     printfn "  Overlap at center: %d bodies" overlapped.Length
 
     // Sweep cast across the pit
+    setNarration s "Sweep cast — sphere sweeping across the pit"
+    smoothCamera s (0.0, 4.0, 8.0) (0.0, 1.0, 0.0) 1.0
+    sleep 1200
     printfn ""
     printfn "  --- Sweep ---"
     let sweepResult = querySweepSphere s 0.3 (-3.0, 1.0, 0.0) (1.0, 0.0, 0.0) 6.0
@@ -80,5 +92,6 @@ let run (s: Session) =
         printfn "  Sweep: hit %s at distance %.2f" bodyId dist
     | None ->
         printfn "  Sweep: no hit"
+    clearNarration s
 
 runStandalone "Query Range" run

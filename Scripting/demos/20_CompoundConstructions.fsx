@@ -8,7 +8,9 @@ open PhysicsSandbox.Shared.Contracts
 
 let run (s: Session) =
     resetSimulation s
-    setCamera s (6.0, 8.0, 10.0) (0.0, 2.0, 0.0) |> ignore
+    setNarration s "Compound Constructions — L-shapes, T-shapes, dumbbells"
+    smoothCamera s (6.0, 8.0, 10.0) (0.0, 2.0, 0.0) 1.5
+    sleep 1700
     setDemoInfo s "Demo 20: Compound Constructions" "Complex compound shapes — L-shapes, T-shapes, dumbbells — colliding and stacking."
     let h = 8.0
     for i in 0 .. 4 do
@@ -47,10 +49,17 @@ let run (s: Session) =
       ds2.Sphere <- dsp2
       batchAdd s [ makeCompoundCmd (nextId "dumbbell") (x, h + 6.0, float i * 0.3 - 0.5) [(ds1, (-0.35, 0.0, 0.0)); (ds2, (0.35, 0.0, 0.0))] 3.0
                    |> withColorAndMaterial (Some (makeColor (float i * 0.25) 0.8 0.3 1.0)) None ]
+    setNarration s "Dropping compound shapes — watch them collide and stack"
     printfn "  Dropping L-shapes, T-shapes, and dumbbells..."
     runFor s 5.0
-    setCamera s (3.0, 2.0, 6.0) (0.0, 1.0, 0.0) |> ignore
+    setNarration s "Close-up of the compound pile"
+    smoothCamera s (3.0, 2.0, 6.0) (0.0, 1.0, 0.0) 2.0
+    sleep 2200
     runFor s 2.0
+    setNarration s "Orbiting the construction site"
+    smoothCamera s (-3.0, 3.0, 6.0) (0.0, 1.0, 0.0) 2.0
+    sleep 2200
+    clearNarration s
     listBodies s
 
 runStandalone "Demo 20: Compound Constructions" run

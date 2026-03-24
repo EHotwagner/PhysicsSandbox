@@ -21,7 +21,8 @@ type SceneState =
       SimRunning: bool
       Wireframe: bool
       DemoName: string option
-      DemoDescription: string option }
+      DemoDescription: string option
+      NarrationText: string option }
 
 /// Creates an empty scene state.
 let create () =
@@ -31,7 +32,8 @@ let create () =
       SimRunning = false
       Wireframe = false
       DemoName = None
-      DemoDescription = None }
+      DemoDescription = None
+      NarrationText = None }
 
 let private protoVec3ToStride (v: Vec3) =
     if isNull v then Vector3.Zero
@@ -292,3 +294,10 @@ let demoName (state: SceneState) = state.DemoName
 
 /// Gets the current demo description.
 let demoDescription (state: SceneState) = state.DemoDescription
+
+/// Apply a narration text update. Empty string clears narration.
+let applyNarration (text: string) (state: SceneState) =
+    { state with NarrationText = if System.String.IsNullOrEmpty(text) then None else Some text }
+
+/// Gets the current narration text.
+let narrationText (state: SceneState) = state.NarrationText

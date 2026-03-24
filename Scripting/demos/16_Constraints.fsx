@@ -55,8 +55,10 @@ let run (s: Session) =
 
     // ── Act 1: Pendulum Chain ──────────────────────────────────────
     // 5 spheres linked by ball-socket + distance-limit constraints
+    setNarration s "Act 1: Building a pendulum chain"
+    smoothCamera s (0.0, 8.0, 10.0) (0.0, 5.0, 0.0) 1.5
+    sleep 1700
     printfn "  Act 1: Pendulum Chain"
-    setCamera s (0.0, 8.0, 10.0) (0.0, 5.0, 0.0) |> ignore
     setDemoInfo s "Demo 16: Constraints" "Pendulum chains, hinged bridges, and welded structures."
 
     // Static anchor at the top
@@ -93,15 +95,18 @@ let run (s: Session) =
 
     runFor s 1.0
     // Disturb the first sphere
+    setNarration s "Disturbing the pendulum — watch it swing!"
     printfn "  Disturbing pendulum..."
     batchAdd s [ makeImpulseCmd pendIds.[0] (5.0, 0.0, 0.0) ]
     runFor s 4.0
 
     // ── Act 2: Hinged Bridge ───────────────────────────────────────
     // 6 planks linked by hinge constraints between two pillars
+    setNarration s "Act 2: Constructing a hinged bridge"
     printfn "\n  Act 2: Hinged Bridge"
     resetSimulation s
-    setCamera s (0.0, 5.0, 8.0) (0.0, 3.0, 0.0) |> ignore
+    smoothCamera s (0.0, 5.0, 8.0) (0.0, 3.0, 0.0) 1.5
+    sleep 1700
 
     // Two static pillars
     let pillarL = nextId "box"
@@ -129,6 +134,7 @@ let run (s: Session) =
 
     runFor s 1.0
     // Drop heavy spheres on the bridge
+    setNarration s "Dropping heavy weights onto the bridge"
     printfn "  Dropping weights on bridge..."
     batchAdd s [
         makeSphereCmd (nextId "sphere") (-1.0, 8.0, 0.0) 0.3 5.0 |> withColorAndMaterial (Some projectileColor) None
@@ -137,9 +143,11 @@ let run (s: Session) =
 
     // ── Act 3: Weld Cluster ────────────────────────────────────────
     // 4 boxes welded into a cross, dropped onto a pile
+    setNarration s "Act 3: Welded cross dropping onto a pile"
     printfn "\n  Act 3: Weld Cluster"
     resetSimulation s
-    setCamera s (4.0, 6.0, 6.0) (0.0, 2.0, 0.0) |> ignore
+    smoothCamera s (4.0, 6.0, 6.0) (0.0, 2.0, 0.0) 1.5
+    sleep 1700
 
     // Create a pile of spheres to land on
     let pileCmds =
@@ -167,9 +175,12 @@ let run (s: Session) =
     printfn "  Welded cross dropping onto pile..."
     runFor s 3.0
 
-    setCamera s (2.0, 2.0, 4.0) (0.0, 1.0, 0.0) |> ignore
+    setNarration s "Close-up — cross tumbles as one rigid body"
+    smoothCamera s (2.0, 2.0, 4.0) (0.0, 1.0, 0.0) 1.5
+    sleep 1700
     printfn "  Cross should tumble as one rigid body"
     runFor s 2.0
+    clearNarration s
     printfn "  Constraints demo complete — 4 types: ball-socket, distance-limit, hinge, weld"
 
 runStandalone "Constraints" run

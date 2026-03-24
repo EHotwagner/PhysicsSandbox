@@ -4,6 +4,7 @@ from random import Random
 
 from Scripting.demos_py.prelude import (
     batch_add,
+    clear_narration,
     list_bodies,
     make_box_cmd,
     make_sphere_cmd,
@@ -11,9 +12,11 @@ from Scripting.demos_py.prelude import (
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
     set_gravity,
+    set_narration,
+    sleep,
+    smooth_camera,
 )
 
 name = "Gravity Flip"
@@ -23,7 +26,9 @@ description = "Light objects under four gravity directions — up, sideways, dia
 def run(session):
     reset_simulation(session)
 
-    set_camera(session, (6.0, 5.0, 6.0), (0.0, 2.0, 0.0))
+    set_narration(session, "25 objects settling under normal gravity")
+    smooth_camera(session, (6.0, 5.0, 6.0), (0.0, 2.0, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 08: Gravity Flip", "Gravity reversal — objects fly up.")
 
     # Mix of light objects: beach balls, dice, and small marbles
@@ -57,29 +62,38 @@ def run(session):
     print("  Settled. Now the fun begins...")
 
     # Phase 1: REVERSE — objects fly upward
-    set_camera(session, (5.0, 1.0, 5.0), (0.0, 6.0, 0.0))
+    set_narration(session, "GRAVITY REVERSED — objects fly upward!")
+    smooth_camera(session, (5.0, 1.0, 5.0), (0.0, 6.0, 0.0), 1.5)
+    sleep(1700)
     print("  GRAVITY UP!")
     set_gravity(session, (0.0, 15.0, 0.0))
     run_for(session, 2.0)
 
     # Phase 2: SIDEWAYS — everything slides east
+    set_narration(session, "GRAVITY EAST — everything slides sideways")
     print("  GRAVITY EAST!")
     set_gravity(session, (12.0, 0.0, 0.0))
-    set_camera(session, (-8.0, 4.0, 4.0), (2.0, 2.0, 0.0))
+    smooth_camera(session, (-8.0, 4.0, 4.0), (2.0, 2.0, 0.0), 1.5)
+    sleep(1700)
     run_for(session, 2.0)
 
     # Phase 3: DIAGONAL — pulls to a corner
+    set_narration(session, "GRAVITY DIAGONAL — pulling to a corner")
     print("  GRAVITY DIAGONAL!")
     set_gravity(session, (-8.0, -5.0, 8.0))
-    set_camera(session, (4.0, 6.0, -6.0), (-2.0, 1.0, 2.0))
+    smooth_camera(session, (4.0, 6.0, -6.0), (-2.0, 1.0, 2.0), 1.5)
+    sleep(1700)
     run_for(session, 2.0)
 
     # Phase 4: RESTORED — everything falls back
+    set_narration(session, "Gravity restored — everything falls back down")
     print("  Gravity restored — everything falls!")
     set_gravity(session, (0.0, -9.81, 0.0))
-    set_camera(session, (6.0, 5.0, 6.0), (0.0, 1.0, 0.0))
+    smooth_camera(session, (6.0, 5.0, 6.0), (0.0, 1.0, 0.0), 1.5)
+    sleep(1700)
     run_for(session, 2.5)
 
+    clear_narration(session)
     list_bodies(session)
 
 

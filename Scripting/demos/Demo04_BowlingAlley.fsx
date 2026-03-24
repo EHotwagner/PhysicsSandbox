@@ -15,9 +15,10 @@ let name = "Bowling Alley"
 
 let run s =
     resetSimulation s
-    // Start focused on the pyramid
-    setCamera s (0.0, 4.0, 12.0) (0.0, 0.5, 5.0) |> ignore
     setDemoInfo s "Demo 04: Bowling Alley" "Bowling pins and ball collision — strike mechanics in action."
+    setNarration s "Building the brick wall target"
+    smoothCamera s (0.0, 4.0, 12.0) (0.0, 0.5, 5.0) 1.5
+    sleep 1700
     // 6x5 brick wall — small bricks (10cm cubes) so the boulder clearly smashes through
     let brickIds =
         [ for row in 0 .. 4 do
@@ -37,13 +38,22 @@ let run s =
                  |> withColorAndMaterial (Some targetColor) None ]
     printfn "  Wrecking ball ready"
     runFor s 1.0
+    setNarration s "Admiring the colorful brick wall"
     printfn "  Admiring the wall..."
     sleep 1500
+    setNarration s "SMASH — wrecking ball launched!"
+    smoothCamera s (0.0, 2.0, 8.0) (0.0, 0.5, 5.0) 1.0
+    sleep 1200
+    shakeCamera s 0.3 0.5
     printfn "  SMASH!"
     batchAdd s [ makeImpulseCmd ballId (0.0, 0.0, 100.0) ]
     runFor s 2.5
+    setNarration s "Debris settling — surveying the damage"
+    smoothCamera s (0.0, 6.0, 5.0) (0.0, 0.0, 5.0) 1.5
+    sleep 1700
     printfn "  Debris settling..."
     runFor s 3.0
+    clearNarration s
     listBodies s
 
 runStandalone name run

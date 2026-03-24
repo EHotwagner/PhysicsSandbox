@@ -18,12 +18,15 @@ module Demo11 =
     let run (s: Session) =
         resetSimulation s
         setDemoInfo s "Demo 11: Body Scaling" "Bodies with variable mass and scale — watch the heavy ones dominate."
+        setNarration s "Progressive body count stress test"
         let tiers = [50; 100; 200; 500]
         for tier in tiers do
             printfn "  === Tier: %d bodies ===" tier
             resetSimulation s
             let dist = if tier <= 100 then 10.0 elif tier <= 200 then 18.0 else 30.0
-            setCamera s (dist, dist * 0.6, dist) (0.0, 2.0, 0.0) |> ignore
+            setNarration s (sprintf "Tier %d — spawning bodies in tight grid" tier)
+            smoothCamera s (dist, dist * 0.6, dist) (0.0, 2.0, 0.0) 1.2
+            sleep 1400
             let rng = System.Random(tier)
             let cols = int (sqrt (float tier))
             timed (sprintf "Tier %d setup" tier) (fun () ->
@@ -43,6 +46,7 @@ module Demo11 =
                 runFor s 3.0)
             // Smash bowling spheres into the pile from different directions
             let bowlingCount = max 3 (tier / 20)
+            setNarration s (sprintf "Tier %d — launching %d bowling spheres!" tier bowlingCount)
             printfn "  Launching %d bowling spheres!" bowlingCount
             let bowlingIds =
                 [ for i in 0 .. bowlingCount - 1 do
@@ -58,6 +62,7 @@ module Demo11 =
             timed (sprintf "Tier %d chaos (12s)" tier) (fun () ->
                 runFor s 6.0
                 // Second volley from above
+                setNarration s (sprintf "Tier %d — aerial bombardment from above!" tier)
                 printfn "  Aerial bombardment!"
                 for i in 0 .. bowlingCount / 2 do
                     let x = rng.NextDouble() * 4.0 - 2.0
@@ -67,6 +72,7 @@ module Demo11 =
                     pushVec s bid (0.0, -20.0, 0.0) |> ignore
                 runFor s 6.0)
             printfn "  Tier %d complete" tier
+        clearNarration s
         printfn "  All tiers complete — check [TIME] markers for degradation"
         status s
 

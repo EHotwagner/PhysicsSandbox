@@ -18,6 +18,7 @@ from Scripting.demos_py.demo15_overload import name as n15, description as d15, 
 from Scripting.demos_py.demo19_shape_gallery import name as n19, description as d19, run as r19
 from Scripting.demos_py.demo20_compound_constructions import name as n20, description as d20, run as r20
 from Scripting.demos_py.demo21_mesh_hull_playground import name as n21, description as d21, run as r21
+from Scripting.demos_py.demo22_camera_showcase import name as n22, description as d22, run as r22
 
 demos = [
     (n01, d01, r01),
@@ -38,4 +39,5 @@ demos = [
     (n19, d19, r19),
     (n20, d20, r20),
     (n21, d21, r21),
+    (n22, d22, r22),
 ]

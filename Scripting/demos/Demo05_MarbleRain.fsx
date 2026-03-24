@@ -13,9 +13,12 @@ let name = "Marble Rain"
 
 let run s =
     resetSimulation s
-    setCamera s (6.0, 10.0, 6.0) (0.0, 0.0, 0.0) |> ignore
     setDemoInfo s "Demo 05: Marble Rain" "Continuous marble rain — hundreds of marbles falling from the sky."
+    setNarration s "High angle — watching the sky for incoming marbles"
+    smoothCamera s (6.0, 10.0, 6.0) (0.0, 0.0, 0.0) 1.5
+    sleep 1700
     let ids = randomSpheres s 20 (Some 42) |> ok
+    setNarration s "Wave 1 — random spheres raining down"
     printfn "  Wave 1: %d random spheres raining down..." ids.Length
     runFor s 3.0
     let rng = System.Random(99)
@@ -29,9 +32,16 @@ let run s =
               makeBoxCmd (nextId "box") (x, y, z) (half, half, half) 2.0
               |> withColorAndMaterial (Some colors.[i % colors.Length]) None ]
     batchAdd s wave2
+    setNarration s "Wave 2 — 50 colorful crates joining the pile"
     printfn "  Wave 2: 50 colorful crates joining the pile!"
-    setCamera s (4.0, 6.0, 4.0) (0.0, 1.0, 0.0) |> ignore
-    runFor s 60.0
+    smoothCamera s (4.0, 6.0, 4.0) (0.0, 1.0, 0.0) 1.5
+    sleep 1700
+    runFor s 30.0
+    setNarration s "Closing in on the pile"
+    smoothCamera s (2.0, 3.0, 2.0) (0.0, 0.5, 0.0) 2.0
+    sleep 2200
+    runFor s 28.0
+    clearNarration s
     printfn "  Settled."
     listBodies s
 

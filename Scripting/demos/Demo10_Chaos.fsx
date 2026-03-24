@@ -21,8 +21,10 @@ module Demo10 =
         resetSimulation s
 
         // Act 1: Build the stage
-        setCamera s (12.0, 8.0, 12.0) (0.0, 2.0, 0.0) |> ignore
         setDemoInfo s "Demo 10: Chaos" "Large-scale chaotic system — many bodies with random forces."
+        setNarration s "Act 1 — Building the stage: pyramid, stack, row"
+        smoothCamera s (12.0, 8.0, 12.0) (0.0, 2.0, 0.0) 1.5
+        sleep 1700
         printfn "  Act 1: Building the stage..."
 
         // Pyramid on the left
@@ -39,7 +41,9 @@ module Demo10 =
         sleep 800
 
         // Act 2: Barrage from the side at pyramid and stack
-        setCamera s (0.0, 6.0, 14.0) (0.0, 2.0, 0.0) |> ignore
+        setNarration s "Act 2 — Side barrage incoming!"
+        smoothCamera s (0.0, 6.0, 14.0) (0.0, 2.0, 0.0) 1.5
+        sleep 1700
         printfn "  Act 2: Side barrage!"
 
         // Spawn 10 spheres to the right, launch at the pyramid (-4, ~2, 0)
@@ -58,7 +62,10 @@ module Demo10 =
         runFor s 3.0
 
         // Act 3: Boulder attack on whatever's left
-        setCamera s (-10.0, 3.0, 6.0) (0.0, 2.0, 0.0) |> ignore
+        setNarration s "Act 3 — Boulder attack on the debris!"
+        smoothCamera s (-10.0, 3.0, 6.0) (0.0, 2.0, 0.0) 1.5
+        sleep 1700
+        shakeCamera s 0.2 0.5
         printfn "  Act 3: Boulder attack!"
 
         let rock = boulder s (Some (-8.0, 1.0, 0.0)) None None |> ok
@@ -66,19 +73,25 @@ module Demo10 =
         runFor s 3.0
 
         // Act 4: Gravity chaos
+        setNarration s "Act 4 — Gravity reversed! Everything goes up!"
         printfn "  Act 4: Gravity chaos!"
-        setCamera s (8.0, 2.0, 8.0) (0.0, 3.0, 0.0) |> ignore
+        smoothCamera s (8.0, 2.0, 8.0) (0.0, 3.0, 0.0) 1.0
+        sleep 1200
         setGravity s (0.0, 8.0, 0.0) |> ignore
         runFor s 2.0
 
+        setNarration s "Gravity sideways — diagonal pull!"
         setGravity s (5.0, 0.0, 5.0) |> ignore
-        setCamera s (-6.0, 4.0, -6.0) (2.0, 2.0, 2.0) |> ignore
+        smoothCamera s (-6.0, 4.0, -6.0) (2.0, 2.0, 2.0) 1.0
+        sleep 1200
         runFor s 2.0
 
         // Act 5: Spin everything remaining
+        setNarration s "Act 5 — Gravity restored, wireframe view"
         printfn "  Act 5: Spin everything!"
         setGravity s (0.0, -9.81, 0.0) |> ignore
-        setCamera s (10.0, 6.0, 10.0) (0.0, 1.0, 0.0) |> ignore
+        smoothCamera s (10.0, 6.0, 10.0) (0.0, 1.0, 0.0) 1.5
+        sleep 1700
 
         // Wireframe for dramatic effect
         wireframe s true |> ignore
@@ -86,14 +99,16 @@ module Demo10 =
         wireframe s false |> ignore
 
         // Final camera sweep (tighter pacing)
+        setNarration s "Final sweep — orbiting the destruction"
         printfn "  Final: Camera sweep"
         for angle in 0..6 do
             let a = float angle * 0.9
             let cx = 10.0 * cos a
             let cz = 10.0 * sin a
-            setCamera s (cx, 5.0, cz) (0.0, 1.0, 0.0) |> ignore
-            sleep 300
+            smoothCamera s (cx, 5.0, cz) (0.0, 1.0, 0.0) 0.5
+            sleep 700
 
+        clearNarration s
         printfn "  Chaos complete!"
         status s
 

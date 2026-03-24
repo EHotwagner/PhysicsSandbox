@@ -2,14 +2,17 @@
 
 from Scripting.demos_py.prelude import (
     batch_add,
+    clear_narration,
     make_color,
     make_compound_cmd,
     next_id,
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
+    set_narration,
+    sleep,
+    smooth_camera,
     with_color_and_material,
 )
 
@@ -29,7 +32,9 @@ def _sphere_shape(r):
 
 def run(session):
     reset_simulation(session)
-    set_camera(session, (0.0, 8.0, 12.0), (0.0, 2.0, 0.0))
+    set_narration(session, "Compound Constructions — L-shapes, T-shapes, and dumbbells")
+    smooth_camera(session, (0.0, 8.0, 12.0), (0.0, 2.0, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 20: Compound Constructions", "L-shapes, T-shapes, and dumbbells from compound bodies.")
 
     cmds = []
@@ -70,19 +75,25 @@ def run(session):
     print(f"  Dropped {len(cmds)} compound bodies: 3 L-shapes, 3 T-shapes, 3 dumbbells")
 
     # Watch them fall and tumble
+    set_narration(session, "Watching compound bodies tumble and collide")
     run_for(session, 4.0)
 
     # Side view to see how they settled
-    set_camera(session, (8.0, 3.0, 0.0), (0.0, 0.5, 0.0))
+    set_narration(session, "Side view — interesting resting poses")
+    smooth_camera(session, (8.0, 3.0, 0.0), (0.0, 0.5, 0.0), 1.5)
+    sleep(1700)
     print("  Side view — compound shapes have interesting resting poses")
     run_for(session, 2.0)
 
     # Overhead
-    set_camera(session, (0.0, 10.0, 0.1), (0.0, 0.0, 0.0))
+    set_narration(session, "Overhead view of all compound shapes")
+    smooth_camera(session, (0.0, 10.0, 0.1), (0.0, 0.0, 0.0), 1.5)
+    sleep(1700)
     print("  Overhead view")
     run_for(session, 1.5)
 
     print("  Compound constructions complete!")
+    clear_narration(session)
 
 
 if __name__ == "__main__":

@@ -12,7 +12,9 @@ open PhysicsSandbox.Shared.Contracts
 let run (s: Session) =
     // 1. Reset and set camera
     resetSimulation s
-    setCamera s (10.0, 6.0, 10.0) (0.0, 1.0, 0.0) |> ignore
+    setNarration s "Setting up the kinematic bulldozer arena"
+    smoothCamera s (10.0, 6.0, 10.0) (0.0, 1.0, 0.0) 1.5
+    sleep 1700
     setDemoInfo s "Demo 18: Kinematic Sweep" "Kinematic bulldozer plows through dynamic spheres."
     printfn "  Setting up kinematic sweep demo..."
 
@@ -45,6 +47,9 @@ let run (s: Session) =
     runFor s 1.0
 
     // 5. Drive spinning bulldozer forward — linear velocity + angular spin
+    setNarration s "Bulldozer advancing — spinning through the grid!"
+    smoothCamera s (0.0, 8.0, 12.0) (0.0, 1.0, 0.0) 1.5
+    sleep 1700
     let speed = 2.0 // m/s forward
     let spin = 5.0  // rad/s around Y axis
     printfn "  %d dynamic spheres + 1 spinning kinematic bulldozer" sphereCmds.Length
@@ -58,11 +63,14 @@ let run (s: Session) =
     pause s |> ignore
 
     // 6. Final camera sweep and status
+    setNarration s "Sweep complete — overhead survey"
     printfn "  Sweep complete! Final overview..."
-    setCamera s (0.0, 10.0, 12.0) (0.0, 0.5, 0.0) |> ignore
-    sleep 1000
-    setCamera s (8.0, 4.0, 8.0) (0.0, 0.5, 0.0) |> ignore
-    sleep 1000
+    smoothCamera s (0.0, 10.0, 12.0) (0.0, 0.5, 0.0) 1.5
+    sleep 1700
+    setNarration s "Close-up of the aftermath"
+    smoothCamera s (8.0, 4.0, 8.0) (0.0, 0.5, 0.0) 1.5
+    sleep 1700
+    clearNarration s
     listBodies s
 
 runStandalone "Kinematic Sweep" run

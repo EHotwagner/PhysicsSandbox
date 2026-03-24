@@ -4,15 +4,17 @@ from random import Random
 
 from Scripting.demos_py.prelude import (
     batch_add,
+    clear_narration,
     make_box_cmd,
     make_sphere_cmd,
     next_id,
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
+    set_narration,
     sleep,
+    smooth_camera,
     status,
     timed,
 )
@@ -23,7 +25,9 @@ description = "Three waves of varied spheres dropped into a walled pit — maxim
 
 def run(session):
     reset_simulation(session)
-    set_camera(session, (8.0, 10.0, 8.0), (0.0, 2.0, 0.0))
+    set_narration(session, "Building the collision pit")
+    smooth_camera(session, (8.0, 10.0, 8.0), (0.0, 2.0, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 12: Collision Pit", "Collision detection pit.")
 
     # Build the pit
@@ -52,7 +56,9 @@ def run(session):
     run_for(session, 3.0)
 
     # Wave 2: 60 small marbles
-    set_camera(session, (5.0, 8.0, 5.0), (0.0, 3.0, 0.0))
+    set_narration(session, "Wave 2 — 60 small marbles raining down")
+    smooth_camera(session, (5.0, 8.0, 5.0), (0.0, 3.0, 0.0), 1.5)
+    sleep(1700)
     with timed("Wave 2 — 60 small marbles"):
         wave2 = []
         for _ in range(60):
@@ -65,6 +71,7 @@ def run(session):
     run_for(session, 4.0)
 
     # Wave 3: 20 heavy spheres
+    set_narration(session, "Wave 3 — 20 heavy spheres incoming!")
     with timed("Wave 3 — 20 heavy spheres"):
         wave3 = []
         for _ in range(20):
@@ -77,9 +84,12 @@ def run(session):
     run_for(session, 4.0)
 
     # Close-up view
-    set_camera(session, (3.0, 2.0, 3.0), (0.0, 1.5, 0.0))
+    set_narration(session, "Close-up of the overflowing pit")
+    smooth_camera(session, (3.0, 2.0, 3.0), (0.0, 1.5, 0.0), 1.5)
+    sleep(1700)
     print("  Close-up of the overflowing pit")
     sleep(1500)
+    clear_narration(session)
     status(session)
 
 

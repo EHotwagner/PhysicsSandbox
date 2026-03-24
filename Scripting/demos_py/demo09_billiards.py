@@ -2,6 +2,7 @@
 
 from Scripting.demos_py.prelude import (
     batch_add,
+    clear_narration,
     launch,
     list_bodies,
     make_sphere_cmd,
@@ -9,10 +10,11 @@ from Scripting.demos_py.prelude import (
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
     set_gravity,
+    set_narration,
     sleep,
+    smooth_camera,
 )
 
 name = "Billiards"
@@ -26,7 +28,9 @@ def run(session):
     set_gravity(session, (0.0, -9.81, 0.0))
 
     # Camera: overhead billiards view
-    set_camera(session, (0.0, 10.0, 0.1), (0.0, 0.0, 0.0))
+    set_narration(session, "Overhead view — billiard table formation")
+    smooth_camera(session, (0.0, 10.0, 0.1), (0.0, 0.0, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 09: Billiards", "Billiard ball collision mechanics.")
 
     # Batch-create 15 balls in triangle + 1 cue ball
@@ -48,25 +52,34 @@ def run(session):
     sleep(1500)
 
     # Camera: dramatic low angle
-    set_camera(session, (-3.0, 1.5, 2.0), (1.0, 0.0, 0.0))
+    set_narration(session, "Dramatic low angle — cue ball ready")
+    smooth_camera(session, (-3.0, 1.5, 2.0), (1.0, 0.0, 0.0), 1.5)
+    sleep(1700)
 
     run_for(session, 0.5)
 
     # BREAK!
+    set_narration(session, "BREAK! Cue ball launched!")
     print("  BREAK!")
     launch(session, cue_id, (1.5, 0.0, 0.0), 15.0)
 
     # Low angle during the break to see balls scatter
-    set_camera(session, (-1.0, 0.4, 1.5), (1.0, 0.1, 0.0))
+    set_narration(session, "Low angle — balls scattering across the table")
+    smooth_camera(session, (-1.0, 0.4, 1.5), (1.0, 0.1, 0.0), 1.0)
+    sleep(1200)
     run_for(session, 2.0)
 
     # Pull back to see the spread
-    set_camera(session, (0.0, 5.0, 3.0), (0.0, 0.0, 0.0))
+    set_narration(session, "Pulling back — watching the spread")
+    smooth_camera(session, (0.0, 5.0, 3.0), (0.0, 0.0, 0.0), 1.5)
+    sleep(1700)
     run_for(session, 2.0)
 
     # Top-down aftermath
-    set_camera(session, (0.0, 8.0, 0.1), (0.0, 0.0, 0.0))
-    sleep(1000)
+    set_narration(session, "Top-down aftermath — final ball positions")
+    smooth_camera(session, (0.0, 8.0, 0.1), (0.0, 0.0, 0.0), 1.5)
+    sleep(1700)
+    clear_narration(session)
     list_bodies(session)
 
 

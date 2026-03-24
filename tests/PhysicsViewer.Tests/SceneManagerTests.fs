@@ -355,3 +355,20 @@ let ``create returns state with running false`` () =
 let ``create returns state with wireframe false`` () =
     let state = create ()
     Assert.False(isWireframe state)
+
+// ---------------------------------------------------------------------------
+// T038: SceneManager narration tests
+// ---------------------------------------------------------------------------
+
+[<Fact>]
+let ``applyNarration sets NarrationText`` () =
+    let state = create () |> applyNarration "Hello, world!"
+    Assert.Equal(Some "Hello, world!", narrationText state)
+
+[<Fact>]
+let ``applyNarration with empty string clears NarrationText`` () =
+    let state =
+        create ()
+        |> applyNarration "Some narration"
+        |> applyNarration ""
+    Assert.Equal(None, narrationText state)

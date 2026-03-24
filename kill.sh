@@ -4,17 +4,25 @@ set -euo pipefail
 # Kill all PhysicsSandbox-related processes
 # Used by start.sh and integration tests to avoid port conflicts
 
+# Match against actual binary paths to avoid killing shell sessions or build commands
 PATTERNS=(
-    "PhysicsSandbox.AppHost"
-    "PhysicsServer"
-    "PhysicsSimulation"
-    "PhysicsViewer"
-    "PhysicsClient"
-    "PhysicsSandbox.Mcp"
-    "Aspire.Dashboard"
+    "PhysicsSandbox.AppHost/bin"
+    "PhysicsServer/bin"
+    "PhysicsSimulation/bin"
+    "PhysicsViewer/bin"
+    "PhysicsClient/bin"
+    "PhysicsSandbox.Mcp/bin"
+    "--project.*PhysicsSandbox.AppHost"
+    "--project.*PhysicsServer"
+    "--project.*PhysicsSimulation"
+    "--project.*PhysicsViewer"
+    "--project.*PhysicsClient"
+    "--project.*PhysicsSandbox.Mcp"
+    "Aspire.Dashboard.dll"
     "tools/dcp "
     "tools/ext/dcpctrl"
     "tools/ext/bin/dcpproc"
+    "testhost.dll.*PhysicsSandbox"
 )
 
 FOUND=false

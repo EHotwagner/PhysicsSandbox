@@ -1,22 +1,27 @@
 module PhysicsViewer.CameraController
 
+open System
 open Stride.Core.Mathematics
 open Stride.Engine
 open Stride.Input
 open PhysicsSandbox.Shared.Contracts
 
-/// <summary>
-/// Represents the current state of the orbit camera, including position, look-at target, up vector, and zoom level.
-/// </summary>
+/// Discriminated union representing active camera behavior modes.
+type CameraMode =
+    | Transitioning of startPos: Vector3 * startTarget: Vector3 * startZoom: float * endPos: Vector3 * endTarget: Vector3 * endZoom: float * elapsed: float32 * duration: float32
+    | LookingAt of bodyId: string * startTarget: Vector3 * elapsed: float32 * duration: float32
+    | Following of bodyId: string
+    | Orbiting of bodyId: string * startAngle: float32 * totalDegrees: float32 * radius: float32 * height: float32 * elapsed: float32 * duration: float32
+    | Chasing of bodyId: string * offset: Vector3
+    | Framing of bodyIds: string list
+    | Shaking of basePosition: Vector3 * baseTarget: Vector3 * intensity: float32 * elapsed: float32 * duration: float32
+
 type CameraState =
-    { /// <summary>The world-space position of the camera eye.</summary>
-      Position: Vector3
-      /// <summary>The world-space point the camera looks at.</summary>
+    { Position: Vector3
       Target: Vector3
-      /// <summary>The camera's up direction vector used for orientation.</summary>
       Up: Vector3
-      /// <summary>The zoom multiplier applied to the camera distance from the target (1.0 = default).</summary>
-      ZoomLevel: float }
+      ZoomLevel: float
+      ActiveMode: CameraMode option }
 
 /// <summary>
 /// Creates a default camera state positioned at (10, 8, 10) looking at the origin with Y-up and zoom level 1.0.
@@ -26,7 +31,8 @@ let defaultCamera () =
     { Position = Vector3(10f, 8f, 10f)
       Target = Vector3.Zero
       Up = Vector3.UnitY
-      ZoomLevel = 1.0 }
+      ZoomLevel = 1.0
+      ActiveMode = None }
 
 let private protoVec3ToStride (v: Vec3) =
     if isNull v then Vector3.Zero
@@ -120,10 +126,146 @@ let applyInput (input: InputManager) (dt: float32) (state: CameraState) =
 
     { state with Position = pos; Target = tgt }
 
-/// <summary>
-/// Applies the camera state to a Stride camera entity's transform, computing the final eye position
-/// with zoom scaling and setting the look-at rotation.
-/// </summary>
+// ─── Smoothstep & Interpolation ─────────────────────────────────────────
+
+/// Smoothstep easing: 3t^2 - 2t^3 (clamped to [0,1]).
+let smoothstep (t: float32) =
+    let t' = max 0f (min 1f t)
+    t' * t' * (3f - 2f * t')
+
+let private lerpVec3 (a: Vector3) (b: Vector3) (t: float32) =
+    let mutable aa = a
+    let mutable bb = b
+    let mutable result = Unchecked.defaultof<Vector3>
+    Vector3.Lerp(&aa, &bb, t, &result)
+    result
+
+let private lerpFloat (a: float) (b: float) (t: float32) =
+    a + (b - a) * float t
+
+// ─── Camera Mode Update ────────────────────────────────────────────────
+
+let private rng = Random()
+
+/// Cancel any active camera mode, keeping current interpolated position.
+let cancelMode (state: CameraState) =
+    { state with ActiveMode = None }
+
+/// Advance the active camera mode by dt seconds using body positions for lookups.
+let updateCameraMode (dt: float32) (bodyPositions: Map<string, Vector3>) (state: CameraState) =
+    match state.ActiveMode with
+    | None -> state
+    | Some mode ->
+        match mode with
+        | Transitioning (startPos, startTarget, startZoom, endPos, endTarget, endZoom, elapsed, duration) ->
+            if duration <= 0f then
+                { state with Position = endPos; Target = endTarget; ZoomLevel = endZoom; ActiveMode = None }
+            else
+                let newElapsed = elapsed + dt
+                if newElapsed >= duration then
+                    { state with Position = endPos; Target = endTarget; ZoomLevel = endZoom; ActiveMode = None }
+                else
+                    let t = smoothstep (newElapsed / duration)
+                    { state with
+                        Position = lerpVec3 startPos endPos t
+                        Target = lerpVec3 startTarget endTarget t
+                        ZoomLevel = lerpFloat startZoom endZoom t
+                        ActiveMode = Some (Transitioning (startPos, startTarget, startZoom, endPos, endTarget, endZoom, newElapsed, duration)) }
+
+        | LookingAt (bodyId, startTarget, elapsed, duration) ->
+            match Map.tryFind bodyId bodyPositions with
+            | None -> state // body not yet in sim — hold position and wait
+            | Some bodyPos ->
+                if duration <= 0f then
+                    { state with Target = bodyPos; ActiveMode = None }
+                else
+                    let newElapsed = elapsed + dt
+                    if newElapsed >= duration then
+                        { state with Target = bodyPos; ActiveMode = None }
+                    else
+                        let t = smoothstep (newElapsed / duration)
+                        { state with
+                            Target = lerpVec3 startTarget bodyPos t
+                            ActiveMode = Some (LookingAt (bodyId, startTarget, newElapsed, duration)) }
+
+        | Following bodyId ->
+            match Map.tryFind bodyId bodyPositions with
+            | None -> state // body not yet in sim — hold position and wait
+            | Some bodyPos -> { state with Target = bodyPos }
+
+        | Orbiting (bodyId, startAngle, totalDegrees, radius, height, elapsed, duration) ->
+            match Map.tryFind bodyId bodyPositions with
+            | None -> state // body not yet in sim — hold position and wait
+            | Some bodyPos ->
+                if duration <= 0f then
+                    { state with ActiveMode = None }
+                else
+                    let newElapsed = elapsed + dt
+                    let finished = newElapsed >= duration
+                    let t = if finished then 1f else newElapsed / duration
+                    let angle = startAngle + t * totalDegrees * (float32 Math.PI / 180f)
+                    let x = bodyPos.X + radius * cos angle
+                    let z = bodyPos.Z + radius * sin angle
+                    let newPos = Vector3(x, bodyPos.Y + height, z)
+                    let newMode =
+                        if finished then None
+                        else Some (Orbiting (bodyId, startAngle, totalDegrees, radius, height, newElapsed, duration))
+                    { state with Position = newPos; Target = bodyPos; ActiveMode = newMode }
+
+        | Chasing (bodyId, offset) ->
+            match Map.tryFind bodyId bodyPositions with
+            | None -> state // body not yet in sim — hold position and wait
+            | Some bodyPos ->
+                let mutable bp = bodyPos
+                let mutable off = offset
+                let mutable newPos = Unchecked.defaultof<Vector3>
+                Vector3.Add(&bp, &off, &newPos)
+                { state with Position = newPos; Target = bodyPos }
+
+        | Framing bodyIds ->
+            let positions =
+                bodyIds |> List.choose (fun id -> Map.tryFind id bodyPositions)
+            if positions.IsEmpty then
+                state // no bodies found yet — hold position and wait
+            else
+                let mutable minV = positions.Head
+                let mutable maxV = positions.Head
+                for p in positions.Tail do
+                    minV <- Vector3(min minV.X p.X, min minV.Y p.Y, min minV.Z p.Z)
+                    maxV <- Vector3(max maxV.X p.X, max maxV.Y p.Y, max maxV.Z p.Z)
+                let center = lerpVec3 minV maxV 0.5f
+                let mutable extent = Unchecked.defaultof<Vector3>
+                let mutable mn = minV
+                let mutable mx = maxV
+                Vector3.Subtract(&mx, &mn, &extent)
+                let size = max extent.X (max extent.Y extent.Z)
+                let dist = max 5f (size * 1.5f)
+                let camPos = Vector3(center.X + dist * 0.5f, center.Y + dist * 0.4f, center.Z + dist * 0.5f)
+                { state with Position = camPos; Target = center }
+
+        | Shaking (basePosition, baseTarget, intensity, elapsed, duration) ->
+            let newElapsed = elapsed + dt
+            if newElapsed >= duration then
+                { state with Position = basePosition; Target = baseTarget; ActiveMode = None }
+            else
+                let ox = (float32 (rng.NextDouble()) - 0.5f) * 2f * intensity
+                let oy = (float32 (rng.NextDouble()) - 0.5f) * 2f * intensity
+                let oz = (float32 (rng.NextDouble()) - 0.5f) * 2f * intensity
+                let shakeOffset = Vector3(ox, oy, oz)
+                let mutable bp = basePosition
+                let mutable so = shakeOffset
+                let mutable newPos = Unchecked.defaultof<Vector3>
+                Vector3.Add(&bp, &so, &newPos)
+                { state with
+                    Position = newPos
+                    ActiveMode = Some (Shaking (basePosition, baseTarget, intensity, newElapsed, duration)) }
+
+/// Returns true if a camera mode is currently active.
+let isActive (state: CameraState) = state.ActiveMode.IsSome
+
+/// Set the active camera mode.
+let setMode (mode: CameraMode) (state: CameraState) =
+    { state with ActiveMode = Some mode }
 /// <param name="state">The camera state containing position, target, up, and zoom.</param>
 /// <param name="entity">The Stride Entity whose Transform will be updated.</param>
 let applyToCamera (state: CameraState) (entity: Entity) =

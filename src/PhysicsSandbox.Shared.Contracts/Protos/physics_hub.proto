@@ -143,7 +143,69 @@ message ViewCommand {
     ToggleWireframe toggle_wireframe = 2;
     SetZoom set_zoom = 3;
     SetDemoMetadata set_demo_metadata = 4;
+    SmoothCamera smooth_camera = 5;
+    CameraLookAt camera_look_at = 6;
+    CameraFollow camera_follow = 7;
+    CameraOrbit camera_orbit = 8;
+    CameraChase camera_chase = 9;
+    CameraFrameBodies camera_frame_bodies = 10;
+    CameraShake camera_shake = 11;
+    CameraStop camera_stop = 12;
+    SetNarration set_narration = 13;
   }
+}
+
+// Smooth interpolation from current camera state to target over duration
+message SmoothCamera {
+  Vec3 position = 1;
+  Vec3 target = 2;
+  Vec3 up = 3;
+  double duration_seconds = 4;
+  double zoom_level = 5;  // 0 = keep current zoom
+}
+
+// Smoothly orient camera to face a body
+message CameraLookAt {
+  string body_id = 1;
+  double duration_seconds = 2;  // 0 = instant
+}
+
+// Continuously track a body (camera target follows body each frame)
+message CameraFollow {
+  string body_id = 1;
+}
+
+// Revolve camera around a body over specified duration
+message CameraOrbit {
+  string body_id = 1;
+  double duration_seconds = 2;
+  double degrees = 3;  // 0 = full 360
+}
+
+// Continuously follow a body with fixed relative offset
+message CameraChase {
+  string body_id = 1;
+  Vec3 offset = 2;
+}
+
+// Auto-position camera to keep all listed bodies in view
+message CameraFrameBodies {
+  repeated string body_ids = 1;
+}
+
+// Apply camera shake effect
+message CameraShake {
+  double intensity = 1;
+  double duration_seconds = 2;
+}
+
+// Cancel any active camera mode (hold current position)
+message CameraStop {
+}
+
+// Set or clear the narration label overlay
+message SetNarration {
+  string text = 1;  // Empty string = clear narration
 }
 
 message SetDemoMetadata {

@@ -8,7 +8,9 @@ open PhysicsSandbox.Shared.Contracts
 
 let run (s: Session) =
     resetSimulation s
-    setCamera s (8.0, 8.0, 12.0) (0.0, 2.0, 0.0) |> ignore
+    setNarration s "Mesh & Hull Playground — convex hulls and triangle meshes"
+    smoothCamera s (8.0, 8.0, 12.0) (0.0, 2.0, 0.0) 1.5
+    sleep 1700
     setDemoInfo s "Demo 21: Mesh & Hull Playground" "Convex hulls and triangle meshes of varied complexity tumbling through obstacles."
     for i in 0 .. 2 do
       let x = float i * 3.0 - 3.0
@@ -41,10 +43,17 @@ let run (s: Session) =
       let x = float i * 1.5 - 3.5
       batchAdd s [ makeTriangleCmd (nextId "tri") (x, h + 6.0, float i * 0.2 - 0.5) (-0.25, -0.2, -0.2) (0.25, -0.2, -0.2) (0.0, 0.25, 0.2) 0.8
                    |> withColorAndMaterial (Some (makeColor 1.0 (float i * 0.15) 0.3 1.0)) None ]
+    setNarration s "Dropping hulls and meshes — tumbling through obstacles"
     printfn "  Dropping tetrahedra, octahedra, mesh pyramids, and triangles onto obstacles..."
     runFor s 5.0
-    setCamera s (4.0, 2.0, 7.0) (0.0, 1.0, 0.0) |> ignore
+    setNarration s "Close-up of the mesh and hull pile"
+    smoothCamera s (4.0, 2.0, 7.0) (0.0, 1.0, 0.0) 2.0
+    sleep 2200
     runFor s 2.0
+    setNarration s "Wide angle — full playground view"
+    smoothCamera s (-5.0, 5.0, 10.0) (0.0, 1.0, 0.0) 2.0
+    sleep 2200
+    clearNarration s
     listBodies s
 
 runStandalone "Demo 21: Mesh & Hull Playground" run
