@@ -277,6 +277,58 @@ def set_demo_info(session: Session, name: str, description: str) -> None:
         set_demo_metadata=pb.SetDemoMetadata(name=name, description=description)))
 
 
+def smooth_camera(session: Session, position: tuple[float, float, float],
+                  target: tuple[float, float, float], duration_seconds: float) -> None:
+    _send_view(session, pb.ViewCommand(
+        smooth_camera=pb.SmoothCamera(
+            position=to_vec3(*position), target=to_vec3(*target),
+            up=to_vec3(0, 1, 0), duration_seconds=duration_seconds)))
+
+
+def look_at_body(session: Session, body_id: str, duration_seconds: float) -> None:
+    _send_view(session, pb.ViewCommand(
+        camera_look_at=pb.CameraLookAt(body_id=body_id, duration_seconds=duration_seconds)))
+
+
+def follow_body(session: Session, body_id: str) -> None:
+    _send_view(session, pb.ViewCommand(
+        camera_follow=pb.CameraFollow(body_id=body_id)))
+
+
+def orbit_body(session: Session, body_id: str, duration_seconds: float, degrees: float = 360.0) -> None:
+    _send_view(session, pb.ViewCommand(
+        camera_orbit=pb.CameraOrbit(body_id=body_id, duration_seconds=duration_seconds, degrees=degrees)))
+
+
+def chase_body(session: Session, body_id: str, offset: tuple[float, float, float]) -> None:
+    _send_view(session, pb.ViewCommand(
+        camera_chase=pb.CameraChase(body_id=body_id, offset=to_vec3(*offset))))
+
+
+def frame_bodies(session: Session, body_ids: list[str]) -> None:
+    _send_view(session, pb.ViewCommand(
+        camera_frame_bodies=pb.CameraFrameBodies(body_ids=body_ids)))
+
+
+def shake_camera(session: Session, intensity: float, duration_seconds: float) -> None:
+    _send_view(session, pb.ViewCommand(
+        camera_shake=pb.CameraShake(intensity=intensity, duration_seconds=duration_seconds)))
+
+
+def stop_camera(session: Session) -> None:
+    _send_view(session, pb.ViewCommand(camera_stop=pb.CameraStop()))
+
+
+def set_narration(session: Session, text: str) -> None:
+    _send_view(session, pb.ViewCommand(
+        set_narration=pb.SetNarration(text=text)))
+
+
+def clear_narration(session: Session) -> None:
+    _send_view(session, pb.ViewCommand(
+        set_narration=pb.SetNarration(text="")))
+
+
 # ─── Message Construction Helpers ───────────────────────────────────────────
 
 

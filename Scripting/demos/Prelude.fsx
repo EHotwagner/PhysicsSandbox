@@ -1,7 +1,7 @@
 // Shared preamble for all demo scripts
 // Usage: #load "Prelude.fsx" at the top of any demo script
 
-#r "nuget: PhysicsClient, 0.3.0"
+#r "nuget: PhysicsClient, 0.4.0"
 #r "nuget: Microsoft.Extensions.Logging.Abstractions"
 #r "nuget: Spectre.Console"
 
@@ -319,6 +319,38 @@ let querySweepSphere (s: Session) (radius: float) (startPos: float * float * flo
 
 let setDemoInfo (s: Session) (name: string) (description: string) =
     setDemoMetadata s name description |> ignore
+
+// ─── Camera & Narration Helpers ──────────────────────────────────────
+
+let smoothCamera (s: Session) (pos: float * float * float) (target: float * float * float) (durationSeconds: float) =
+    PhysicsClient.ViewCommands.smoothCamera s pos target durationSeconds |> ignore
+
+let lookAtBody (s: Session) (bodyId: string) (durationSeconds: float) =
+    PhysicsClient.ViewCommands.cameraLookAt s bodyId durationSeconds |> ignore
+
+let followBody (s: Session) (bodyId: string) =
+    PhysicsClient.ViewCommands.cameraFollow s bodyId |> ignore
+
+let orbitBody (s: Session) (bodyId: string) (durationSeconds: float) (degrees: float) =
+    PhysicsClient.ViewCommands.cameraOrbit s bodyId durationSeconds degrees |> ignore
+
+let chaseBody (s: Session) (bodyId: string) (offset: float * float * float) =
+    PhysicsClient.ViewCommands.cameraChase s bodyId offset |> ignore
+
+let frameBodies (s: Session) (bodyIds: string list) =
+    PhysicsClient.ViewCommands.cameraFrameBodies s bodyIds |> ignore
+
+let shakeCamera (s: Session) (intensity: float) (durationSeconds: float) =
+    PhysicsClient.ViewCommands.cameraShake s intensity durationSeconds |> ignore
+
+let stopCamera (s: Session) =
+    PhysicsClient.ViewCommands.cameraStop s |> ignore
+
+let setNarration (s: Session) (text: string) =
+    PhysicsClient.ViewCommands.setNarration s text |> ignore
+
+let clearNarration (s: Session) =
+    PhysicsClient.ViewCommands.setNarration s "" |> ignore
 
 // ─── Standalone Runner ────────────────────────────────────────────────
 

@@ -12,8 +12,8 @@ let ``SceneManager public API matches baseline`` () =
     Assert.NotNull(t)
     let members = getPublicMembers t
     let expected = [|
-        "applyState"; "applyWireframe"; "create"
-        "isRunning"; "isWireframe"; "simulationTime"
+        "applyNarration"; "applyState"; "applyWireframe"; "create"
+        "isRunning"; "isWireframe"; "narrationText"; "simulationTime"
     |]
     for name in expected do
         Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
@@ -34,7 +34,8 @@ let ``CameraController public API matches baseline`` () =
     let members = getPublicMembers t
     let expected = [|
         "applyInput"; "applySetCamera"; "applySetZoom"; "applyToCamera"
-        "defaultCamera"; "position"; "target"; "zoomLevel"
+        "cancelMode"; "defaultCamera"; "isActive"; "position"
+        "setMode"; "smoothstep"; "target"; "updateCameraMode"; "zoomLevel"
     |]
     for name in expected do
         Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")

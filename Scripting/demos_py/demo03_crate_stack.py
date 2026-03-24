@@ -2,14 +2,16 @@
 
 from Scripting.demos_py.prelude import (
     bowling_ball,
+    clear_narration,
     launch,
     list_bodies,
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
+    set_narration,
     sleep,
+    smooth_camera,
     stack,
 )
 
@@ -21,7 +23,9 @@ def run(session):
     reset_simulation(session)
 
     # Camera: side view, framing the full tower
-    set_camera(session, (8.0, 7.0, 4.0), (0.0, 5.0, 0.0))
+    set_narration(session, "Side view — framing the 12-crate tower")
+    smooth_camera(session, (8.0, 7.0, 4.0), (0.0, 5.0, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 03: Crate Stack", "Stacking dynamics with crates.")
 
     # Build a tall stack of 12 crates
@@ -42,15 +46,20 @@ def run(session):
     run_for(session, 2.0)
 
     # Camera move to see the debris
-    set_camera(session, (5.0, 3.0, 5.0), (0.0, 2.0, 0.0))
+    set_narration(session, "Watching the debris scatter and settle")
+    smooth_camera(session, (5.0, 3.0, 5.0), (0.0, 2.0, 0.0), 1.5)
+    sleep(1700)
     print("  Watching debris settle...")
     run_for(session, 2.5)
 
     # Top-down view of the aftermath
-    set_camera(session, (0.0, 12.0, 0.1), (0.0, 0.0, 0.0))
+    set_narration(session, "Overhead view — surveying the destruction")
+    smooth_camera(session, (0.0, 12.0, 0.1), (0.0, 0.0, 0.0), 1.5)
+    sleep(1700)
     print("  Overhead view of destruction")
     sleep(1500)
 
+    clear_narration(session)
     list_bodies(session)
 
 

@@ -2,12 +2,14 @@
 # Any change to this file must be reviewed and intentional.
 
 ## PhysicsViewer.SceneManager
+applyNarration
 applyState
 applyWireframe
 classifyShape
 create
 isRunning
 isWireframe
+narrationText
 simulationTime
 
 ## PhysicsViewer.CameraController
@@ -15,9 +17,14 @@ applyInput
 applySetCamera
 applySetZoom
 applyToCamera
+cancelMode
 defaultCamera
+isActive
 position
+setMode
+smoothstep
 target
+updateCameraMode
 zoomLevel
 
 ## PhysicsViewer.ViewerClient

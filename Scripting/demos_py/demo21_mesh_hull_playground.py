@@ -4,6 +4,7 @@ import math
 
 from Scripting.demos_py.prelude import (
     batch_add,
+    clear_narration,
     make_box_cmd,
     make_color,
     make_convex_hull_cmd,
@@ -12,8 +13,10 @@ from Scripting.demos_py.prelude import (
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
+    set_narration,
+    sleep,
+    smooth_camera,
     with_color_and_material,
 )
 
@@ -75,7 +78,9 @@ def _wedge_mesh(scale=0.35):
 
 def run(session):
     reset_simulation(session)
-    set_camera(session, (0.0, 10.0, 14.0), (0.0, 2.0, 0.0))
+    set_narration(session, "Mesh & Hull Playground — hulls and meshes vs obstacles")
+    smooth_camera(session, (0.0, 10.0, 14.0), (0.0, 2.0, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 21: Mesh & Hull Playground", "Convex hulls and meshes bounce off obstacles.")
 
     cmds = []
@@ -121,10 +126,13 @@ def run(session):
     print(f"  Dropped 5 convex hulls + 5 meshes onto 3 obstacle platforms")
 
     # Watch them bounce and collide
+    set_narration(session, "Hulls and meshes bouncing off obstacle platforms")
     run_for(session, 4.0)
 
     # Low angle view
-    set_camera(session, (6.0, 2.0, 8.0), (0.0, 1.0, 0.0))
+    set_narration(session, "Low-angle view of settled shapes")
+    smooth_camera(session, (6.0, 2.0, 8.0), (0.0, 1.0, 0.0), 1.5)
+    sleep(1700)
     print("  Low-angle view of settled shapes")
     run_for(session, 2.0)
 
@@ -135,13 +143,16 @@ def run(session):
         pts = _icosahedron_points(0.5)
         cmd = make_convex_hull_cmd(next_id("hull"), (x, 12.0, 0.0), pts, 5.0)
         cmds2.append(with_color_and_material(cmd, color=make_color(1.0, 1.0, 1.0)))
+    set_narration(session, "Wave 2 — 3 large white convex hulls incoming!")
     batch_add(session, cmds2)
     print("  Wave 2: 3 large white convex hulls incoming!")
 
-    set_camera(session, (0.0, 8.0, 10.0), (0.0, 2.0, 0.0))
+    smooth_camera(session, (0.0, 8.0, 10.0), (0.0, 2.0, 0.0), 1.5)
+    sleep(1700)
     run_for(session, 3.0)
 
     print("  Mesh & hull playground complete!")
+    clear_narration(session)
 
 
 if __name__ == "__main__":

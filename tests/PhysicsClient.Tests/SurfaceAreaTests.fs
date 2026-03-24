@@ -43,6 +43,16 @@ let ``ViewCommands public API matches baseline`` () =
     assertContains members "setCamera"
     assertContains members "setZoom"
     assertContains members "wireframe"
+    assertContains members "smoothCamera"
+    assertContains members "smoothCameraWithZoom"
+    assertContains members "setNarration"
+    assertContains members "cameraLookAt"
+    assertContains members "cameraFollow"
+    assertContains members "cameraOrbit"
+    assertContains members "cameraChase"
+    assertContains members "cameraFrameBodies"
+    assertContains members "cameraShake"
+    assertContains members "cameraStop"
 
 [<Fact>]
 let ``Presets public API matches baseline`` () =

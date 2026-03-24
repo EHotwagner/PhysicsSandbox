@@ -17,9 +17,10 @@ module Demo06 =
     let run (s: Session) =
         resetSimulation s
 
-        // Camera: side view along the row
-        setCamera s (-2.0, 3.0, 6.0) (5.0, 0.5, 0.0) |> ignore
         setDemoInfo s "Demo 06: Domino Row" "Classic domino chain reaction — one push topples them all."
+        setNarration s "Side view — placing 20 dominoes in a row"
+        smoothCamera s (-2.0, 3.0, 6.0) (5.0, 0.5, 0.0) 1.5
+        sleep 1700
 
         // Batch-create 20 dominoes — pre-generate IDs for push reference
         let ids = [ for _ in 0..19 -> nextId "box" ]
@@ -36,20 +37,29 @@ module Demo06 =
         runFor s 1.0
 
         // Push the first domino
+        setNarration s "Toppling the first domino — chain reaction begins"
         printfn "  Toppling first domino..."
         push s firstId East 3.0 |> ignore
 
         // Track the cascade with camera
-        setCamera s (0.0, 2.5, 4.0) (2.0, 0.3, 0.0) |> ignore
+        setNarration s "Cascade starting — dominoes 1-7"
+        smoothCamera s (0.0, 2.5, 4.0) (2.0, 0.3, 0.0) 1.0
+        sleep 1200
         runFor s 2.0
-        setCamera s (3.0, 2.5, 4.0) (5.0, 0.3, 0.0) |> ignore
+        setNarration s "Mid-row — dominoes 8-14 falling"
+        smoothCamera s (3.0, 2.5, 4.0) (5.0, 0.3, 0.0) 1.0
+        sleep 1200
         runFor s 2.0
-        setCamera s (6.0, 2.5, 4.0) (8.0, 0.3, 0.0) |> ignore
+        setNarration s "Final stretch — dominoes 15-20"
+        smoothCamera s (6.0, 2.5, 4.0) (8.0, 0.3, 0.0) 1.0
+        sleep 1200
         runFor s 2.0
 
         // Pan camera to the end
-        setCamera s (12.0, 2.0, 4.0) (9.0, 0.0, 0.0) |> ignore
-        sleep 500
+        setNarration s "All dominoes down — end of the line"
+        smoothCamera s (12.0, 2.0, 4.0) (9.0, 0.0, 0.0) 1.5
+        sleep 1700
+        clearNarration s
         listBodies s
 
 runStandalone Demo06.name Demo06.run

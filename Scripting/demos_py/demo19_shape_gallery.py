@@ -4,6 +4,7 @@ import math
 
 from Scripting.demos_py.prelude import (
     batch_add,
+    clear_narration,
     make_box_cmd,
     make_capsule_cmd,
     make_color,
@@ -17,8 +18,10 @@ from Scripting.demos_py.prelude import (
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
+    set_narration,
+    sleep,
+    smooth_camera,
     with_color_and_material,
 )
 
@@ -30,7 +33,9 @@ description = "All shape types displayed side by side — sphere, box, capsule, 
 
 def run(session):
     reset_simulation(session)
-    set_camera(session, (0.0, 8.0, 14.0), (0.0, 2.0, 0.0))
+    set_narration(session, "Shape Gallery — all 8 shape types dropping in")
+    smooth_camera(session, (0.0, 8.0, 14.0), (0.0, 2.0, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 19: Shape Gallery", "All shape types displayed side by side.")
 
     spacing = 2.5
@@ -92,17 +97,22 @@ def run(session):
     run_for(session, 3.0)
 
     # Ground-level pan
-    set_camera(session, (0.0, 2.0, 10.0), (0.0, 0.5, 0.0))
+    set_narration(session, "Ground-level view of all shapes")
+    smooth_camera(session, (0.0, 2.0, 10.0), (0.0, 0.5, 0.0), 1.5)
+    sleep(1700)
     print("  Ground-level view of all shapes")
     run_for(session, 2.0)
 
     # Close-up sweep
+    set_narration(session, "Close-up sweep across each shape")
     for i in range(8):
         x = (i - 3) * spacing
-        set_camera(session, (x, 2.0, 3.0), (x, 0.5, 0.0))
+        smooth_camera(session, (x, 2.0, 3.0), (x, 0.5, 0.0), 1.0)
+        sleep(1200)
         run_for(session, 0.5)
 
     print("  Shape gallery complete!")
+    clear_narration(session)
 
 
 if __name__ == "__main__":

@@ -16,8 +16,10 @@ module Demo08 =
     let run (s: Session) =
         resetSimulation s
 
-        setCamera s (6.0, 5.0, 6.0) (0.0, 2.0, 0.0) |> ignore
         setDemoInfo s "Demo 08: Gravity Flip" "Gravity direction reversal — objects fly up then fall back down."
+        setNarration s "Overview — 25 objects settling under normal gravity"
+        smoothCamera s (6.0, 5.0, 6.0) (0.0, 2.0, 0.0) 1.5
+        sleep 1700
 
         // Mix of light objects: beach balls, dice, and small marbles
         let rng = System.Random(77)
@@ -81,34 +83,41 @@ module Demo08 =
 
         // Normal gravity — let things settle
         runFor s 2.5
+        setNarration s "Settled — now the gravity fun begins"
         printfn "  Settled. Now the fun begins..."
 
         // Short gravity pulses — camera tracks the action
+        setNarration s "GRAVITY UP — objects launched skyward!"
         printfn "  GRAVITY UP!"
         setGravity s (0.0, 9.81, 0.0) |> ignore
         runTracking 0.8
         setGravity s (0.0, -9.81, 0.0) |> ignore
         runTracking 1.5
 
+        setNarration s "GRAVITY EAST — sideways pull!"
         printfn "  GRAVITY EAST!"
         setGravity s (9.81, -2.0, 0.0) |> ignore
         runTracking 0.8
         setGravity s (0.0, -9.81, 0.0) |> ignore
         runTracking 1.5
 
+        setNarration s "GRAVITY DIAGONAL — chaotic multi-axis pull!"
         printfn "  GRAVITY DIAGONAL!"
         setGravity s (-6.0, 6.0, 6.0) |> ignore
         runTracking 0.8
         setGravity s (0.0, -9.81, 0.0) |> ignore
         runTracking 1.5
 
+        setNarration s "GRAVITY SOUTH — final direction change!"
         printfn "  GRAVITY SOUTH!"
         setGravity s (0.0, -2.0, -9.81) |> ignore
         runTracking 0.8
+        setNarration s "Gravity restored — everything falls back down"
         printfn "  Gravity restored — everything falls!"
         setGravity s (0.0, -9.81, 0.0) |> ignore
         runTracking 2.0
 
+        clearNarration s
         listBodies s
 
 runStandalone Demo08.name Demo08.run

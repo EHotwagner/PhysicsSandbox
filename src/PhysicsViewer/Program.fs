@@ -37,7 +37,7 @@ let mutable overlayState = SettingsOverlay.create (ViewerSettings.defaultSetting
 
 // Shared state: written by background stream, read by game update loop
 let mutable latestSimState: SimulationState = null
-let mutable latestViewCmd: ViewCommand = null
+let viewCmdQueue = System.Collections.Concurrent.ConcurrentQueue<ViewCommand>()
 let mutable stateVersion = 0
 let mutable lastAppliedVersion = 0
 
@@ -242,7 +242,9 @@ let startViewCommandStream (serverAddress: string) =
                     while not cts.Token.IsCancellationRequested do
                         let! hasNext = stream.MoveNext(cts.Token)
                         if hasNext then
-                            Volatile.Write(&latestViewCmd, stream.Current)
+                            let cmd = stream.Current
+                            logger.LogInformation("ViewCmd RECV: {Case}", cmd.CommandCase)
+                            viewCmdQueue.Enqueue(cmd)
                             Interlocked.Increment(&viewerMsgRecv) |> ignore
                             Interlocked.Add(&viewerBytesRecv, int64 (stream.Current.CalculateSize())) |> ignore
                 with
@@ -320,11 +322,24 @@ let update (scene: Scene) (time: GameTime) =
             debugState <- DebugRenderer.updateConstraints game scene debugState simState
             lastAppliedVersion <- currentVersion
 
-    // Check for view commands
-    let viewCmd = Interlocked.Exchange(&latestViewCmd, null)
-    if not (isNull viewCmd) then
+    // Build body position map for camera modes
+    let bodyPositions =
+        let sim = Volatile.Read(&latestSimState)
+        if isNull sim || isNull sim.Bodies then Map.empty
+        else
+            sim.Bodies
+            |> Seq.map (fun b ->
+                b.Id,
+                if isNull b.Position then Vector3.Zero
+                else Vector3(float32 b.Position.X, float32 b.Position.Y, float32 b.Position.Z))
+            |> Map.ofSeq
+
+    // Process all queued view commands
+    let mutable viewCmd = Unchecked.defaultof<ViewCommand>
+    while viewCmdQueue.TryDequeue(&viewCmd) do
         match viewCmd.CommandCase with
         | ViewCommand.CommandOneofCase.SetCamera ->
+            cameraState <- CameraController.cancelMode cameraState
             cameraState <- CameraController.applySetCamera viewCmd.SetCamera cameraState
         | ViewCommand.CommandOneofCase.SetZoom ->
             cameraState <- CameraController.applySetZoom viewCmd.SetZoom cameraState
@@ -332,7 +347,70 @@ let update (scene: Scene) (time: GameTime) =
             sceneState <- SceneManager.applyWireframe game viewCmd.ToggleWireframe sceneState
         | ViewCommand.CommandOneofCase.SetDemoMetadata ->
             sceneState <- SceneManager.applyDemoMetadata viewCmd.SetDemoMetadata sceneState
+        | ViewCommand.CommandOneofCase.SmoothCamera ->
+            logger.LogInformation("ViewCommand: SmoothCamera dur={Dur:F2}s", viewCmd.SmoothCamera.DurationSeconds)
+            let cmd = viewCmd.SmoothCamera
+            let endPos = if isNull cmd.Position then CameraController.position cameraState else Vector3(float32 cmd.Position.X, float32 cmd.Position.Y, float32 cmd.Position.Z)
+            let endTarget = if isNull cmd.Target then CameraController.target cameraState else Vector3(float32 cmd.Target.X, float32 cmd.Target.Y, float32 cmd.Target.Z)
+            let endZoom = if cmd.ZoomLevel = 0.0 then CameraController.zoomLevel cameraState else cmd.ZoomLevel
+            let mode = CameraController.Transitioning (
+                CameraController.position cameraState,
+                CameraController.target cameraState,
+                CameraController.zoomLevel cameraState,
+                endPos, endTarget, endZoom, 0f, float32 cmd.DurationSeconds)
+            cameraState <- CameraController.setMode mode cameraState
+        | ViewCommand.CommandOneofCase.CameraLookAt ->
+            logger.LogInformation("ViewCommand: CameraLookAt body={BodyId} dur={Dur:F2}s", viewCmd.CameraLookAt.BodyId, viewCmd.CameraLookAt.DurationSeconds)
+            let cmd = viewCmd.CameraLookAt
+            let mode = CameraController.LookingAt (cmd.BodyId, CameraController.target cameraState, 0f, float32 cmd.DurationSeconds)
+            cameraState <- CameraController.setMode mode cameraState
+        | ViewCommand.CommandOneofCase.CameraFollow ->
+            logger.LogInformation("ViewCommand: CameraFollow body={BodyId}", viewCmd.CameraFollow.BodyId)
+            let cmd = viewCmd.CameraFollow
+            cameraState <- CameraController.setMode (CameraController.Following cmd.BodyId) cameraState
+        | ViewCommand.CommandOneofCase.CameraOrbit ->
+            let cmd = viewCmd.CameraOrbit
+            let deg = if cmd.Degrees = 0.0 then 360.0 else cmd.Degrees
+            // Compute current angle relative to body
+            let bodyPos = Map.tryFind cmd.BodyId bodyPositions |> Option.defaultValue Vector3.Zero
+            let pos = CameraController.position cameraState
+            let dx = pos.X - bodyPos.X
+            let dz = pos.Z - bodyPos.Z
+            let startAngle = atan2 dz dx
+            let radius = sqrt (dx * dx + dz * dz)
+            let height = pos.Y - bodyPos.Y
+            logger.LogInformation("CameraOrbit: bodyId={BodyId} bodyPos={BodyPos} camPos={CamPos} radius={Radius:F2} height={Height:F2} angle={Angle:F2} deg={Deg:F0}",
+                cmd.BodyId, bodyPos, pos, radius, height, startAngle, deg)
+            let mode = CameraController.Orbiting (cmd.BodyId, startAngle, float32 deg, max radius 2f, height, 0f, float32 cmd.DurationSeconds)
+            cameraState <- CameraController.setMode mode cameraState
+        | ViewCommand.CommandOneofCase.CameraChase ->
+            logger.LogInformation("ViewCommand: CameraChase body={BodyId}", viewCmd.CameraChase.BodyId)
+            let cmd = viewCmd.CameraChase
+            let offset =
+                if isNull cmd.Offset then Vector3(0f, 5f, 10f)
+                else Vector3(float32 cmd.Offset.X, float32 cmd.Offset.Y, float32 cmd.Offset.Z)
+            cameraState <- CameraController.setMode (CameraController.Chasing (cmd.BodyId, offset)) cameraState
+        | ViewCommand.CommandOneofCase.CameraFrameBodies ->
+            let cmd = viewCmd.CameraFrameBodies
+            let ids = cmd.BodyIds |> Seq.toList
+            if not ids.IsEmpty then
+                cameraState <- CameraController.setMode (CameraController.Framing ids) cameraState
+        | ViewCommand.CommandOneofCase.CameraShake ->
+            let cmd = viewCmd.CameraShake
+            let mode = CameraController.Shaking (
+                CameraController.position cameraState,
+                CameraController.target cameraState,
+                float32 cmd.Intensity, 0f, float32 cmd.DurationSeconds)
+            cameraState <- CameraController.setMode mode cameraState
+        | ViewCommand.CommandOneofCase.CameraStop ->
+            logger.LogInformation("ViewCommand: CameraStop (was active={Active})", CameraController.isActive cameraState)
+            cameraState <- CameraController.cancelMode cameraState
+        | ViewCommand.CommandOneofCase.SetNarration ->
+            sceneState <- SceneManager.applyNarration viewCmd.SetNarration.Text sceneState
         | _ -> ()
+
+    // Update camera mode each frame
+    cameraState <- CameraController.updateCameraMode dt bodyPositions cameraState
 
     // Toggle debug visualization with F3
     if game.Input.IsKeyPressed(Stride.Input.Keys.F3) then
@@ -386,6 +464,12 @@ let update (scene: Scene) (time: GameTime) =
 
     // Camera (skip when overlay is visible to avoid camera movement)
     if not (SettingsOverlay.isVisible overlayState) then
+        // Cancel active camera mode on mouse input
+        if CameraController.isActive cameraState then
+            if game.Input.IsMouseButtonDown(Stride.Input.MouseButton.Left) ||
+               game.Input.IsMouseButtonDown(Stride.Input.MouseButton.Middle) ||
+               abs game.Input.MouseWheelDelta > 0.001f then
+                cameraState <- CameraController.cancelMode cameraState
         cameraState <- CameraController.applyInput game.Input dt cameraState
     match cameraEntity with
     | Some entity -> CameraController.applyToCamera cameraState entity
@@ -407,6 +491,11 @@ let update (scene: Scene) (time: GameTime) =
             if desc.Length > 0 then $"{name} — {desc}" else name
         | None -> "Free Mode"
     game.DebugTextSystem.Print(demoLabel, Int2(10, 10))
+
+    // Narration label overlay
+    match SceneManager.narrationText sceneState with
+    | Some text -> game.DebugTextSystem.Print(text, Int2(10, 50), Color.Yellow)
+    | None -> ()
 
     // Status overlay
     let simTime = SceneManager.simulationTime sceneState

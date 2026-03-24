@@ -35,3 +35,9 @@ val demoName: SceneState -> string option
 
 /// Get the current demo description.
 val demoDescription: SceneState -> string option
+
+/// Apply a narration text update. Empty string clears narration.
+val applyNarration: string -> SceneState -> SceneState
+
+/// Get the current narration text.
+val narrationText: SceneState -> string option

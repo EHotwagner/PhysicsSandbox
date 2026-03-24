@@ -4,6 +4,7 @@ import math
 
 from Scripting.demos_py.prelude import (
     batch_add,
+    clear_narration,
     list_bodies,
     make_box_cmd,
     make_impulse_cmd,
@@ -13,8 +14,10 @@ from Scripting.demos_py.prelude import (
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
+    set_narration,
+    sleep,
+    smooth_camera,
     wireframe,
 )
 
@@ -26,7 +29,9 @@ def run(session):
     reset_simulation(session)
 
     # Camera: top-down angled view
-    set_camera(session, (0.0, 10.0, 8.0), (0.0, 0.5, 0.0))
+    set_narration(session, "Top-down view — six objects placed in a ring")
+    smooth_camera(session, (0.0, 10.0, 8.0), (0.0, 0.5, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 07: Spinning Tops", "Spinning top physics.")
 
     # Place 6 objects in a ring (radius 2m), alternating spheres and boxes
@@ -78,15 +83,20 @@ def run(session):
     print("  Pushed inward — COLLISION!")
 
     # Camera drops to side view for dramatic impact
-    set_camera(session, (5.0, 3.0, 5.0), (0.0, 0.5, 0.0))
+    set_narration(session, "Collision! Spinning objects smash together")
+    smooth_camera(session, (5.0, 3.0, 5.0), (0.0, 0.5, 0.0), 1.0)
+    sleep(1200)
     run_for(session, 3.0)
 
     # Let chaos settle
     wireframe(session, False)
-    set_camera(session, (4.0, 2.0, 4.0), (0.0, 0.3, 0.0))
+    set_narration(session, "Chaos subsiding — objects settling")
+    smooth_camera(session, (4.0, 2.0, 4.0), (0.0, 0.3, 0.0), 1.5)
+    sleep(1700)
     print("  Settling...")
     run_for(session, 2.0)
 
+    clear_narration(session)
     list_bodies(session)
 
 

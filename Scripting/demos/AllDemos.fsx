@@ -1,4 +1,4 @@
-// AllDemos.fsx — All 21 demos (15 original + 3 constraint/query/kinematic + 3 shape demos)
+// AllDemos.fsx — All 22 demos (15 original + 3 constraint/query/kinematic + 3 shape demos + camera showcase)
 // Loaded by RunAll.fsx and AutoRun.fsx
 
 #load "Prelude.fsx"
@@ -160,8 +160,14 @@ let demos = [|
       // Add compound bodies (2 welded boxes each) on top of the stack
       for i in 0 .. 1 do
         let y = 12.5 + float i * 1.2
-        let bx1 = Shape(); let box1 = Box(); box1.HalfExtents <- toVec3 (0.4, 0.15, 0.15); bx1.Box <- box1
-        let bx2 = Shape(); let box2 = Box(); box2.HalfExtents <- toVec3 (0.15, 0.4, 0.15); bx2.Box <- box2
+        let bx1 = Shape()
+        let box1 = Box()
+        box1.HalfExtents <- toVec3 (0.4, 0.15, 0.15)
+        bx1.Box <- box1
+        let bx2 = Shape()
+        let box2 = Box()
+        box2.HalfExtents <- toVec3 (0.15, 0.4, 0.15)
+        bx2.Box <- box2
         batchAdd s [ makeCompoundCmd (nextId "compound") (0.0, y, 0.0) [(bx1, (0.0, 0.0, 0.0)); (bx2, (0.25, 0.25, 0.0))] 3.0
                      |> withColorAndMaterial (Some accentPurple) None ]
       printfn "  Built tower of 12 crates + 2 compound caps"
@@ -294,8 +300,14 @@ let demos = [|
       // Add 3 compound L-shaped domino pieces interspersed
       for i in 0 .. 2 do
         let x = float (5 + i * 6) * 0.5
-        let bx1 = Shape(); let b1 = Box(); b1.HalfExtents <- toVec3 (0.05, 0.3, 0.15); bx1.Box <- b1
-        let bx2 = Shape(); let b2 = Box(); b2.HalfExtents <- toVec3 (0.15, 0.05, 0.15); bx2.Box <- b2
+        let bx1 = Shape()
+        let b1 = Box()
+        b1.HalfExtents <- toVec3 (0.05, 0.3, 0.15)
+        bx1.Box <- b1
+        let bx2 = Shape()
+        let b2 = Box()
+        b2.HalfExtents <- toVec3 (0.15, 0.05, 0.15)
+        bx2.Box <- b2
         batchAdd s [ makeCompoundCmd (nextId "compound") (x, 0.3, 0.4) [(bx1, (0.0, 0.0, 0.0)); (bx2, (0.1, -0.25, 0.0))] 1.5
                      |> withColorAndMaterial (Some accentPurple) None ]
       let firstId = ids.[0]
@@ -760,8 +772,14 @@ let demos = [|
         let angle = float (20 + i * 40) / float count * System.Math.PI
         let x = radius * cos angle + 0.3
         let z = radius * sin angle
-        let bx1 = Shape(); let b1 = Box(); b1.HalfExtents <- toVec3 (0.05, 0.3, 0.15); bx1.Box <- b1
-        let bx2 = Shape(); let b2 = Box(); b2.HalfExtents <- toVec3 (0.15, 0.05, 0.15); bx2.Box <- b2
+        let bx1 = Shape()
+        let b1 = Box()
+        b1.HalfExtents <- toVec3 (0.05, 0.3, 0.15)
+        bx1.Box <- b1
+        let bx2 = Shape()
+        let b2 = Box()
+        b2.HalfExtents <- toVec3 (0.15, 0.05, 0.15)
+        bx2.Box <- b2
         batchAdd s [ makeCompoundCmd (nextId "compound") (x, 0.3, z) [(bx1, (0.0, 0.0, 0.0)); (bx2, (0.1, -0.25, 0.0))] 1.5
                      |> withColorAndMaterial (Some accentPurple) None ]
       printfn "  %d dominoes + 3 compound L-shapes in semicircle (radius %.0fm)" count radius
@@ -1058,8 +1076,14 @@ let demos = [|
       batchAdd s [ makeMeshCmd (nextId "mesh") (6.0, h, 0.0) meshTris 2.0
                    |> withColorAndMaterial (Some accentYellow) None ]
       // Compound (dumbbell: two spheres offset)
-      let s1 = Shape(); let sp1 = Sphere(); sp1.Radius <- 0.15; s1.Sphere <- sp1
-      let s2 = Shape(); let sp2 = Sphere(); sp2.Radius <- 0.15; s2.Sphere <- sp2
+      let s1 = Shape()
+      let sp1 = Sphere()
+      sp1.Radius <- 0.15
+      s1.Sphere <- sp1
+      let s2 = Shape()
+      let sp2 = Sphere()
+      sp2.Radius <- 0.15
+      s2.Sphere <- sp2
       batchAdd s [ makeCompoundCmd (nextId "compound") (8.0, h, 0.0) [(s1, (-0.3, 0.0, 0.0)); (s2, (0.3, 0.0, 0.0))] 3.0
                    |> withColorAndMaterial (Some (makeColor 1.0 0.3 0.7 1.0)) None ]
       printfn "  All shape types dropping from %.0fm — watch the variety!" h
@@ -1080,22 +1104,40 @@ let demos = [|
       // L-shapes (box + box at right angle)
       for i in 0 .. 4 do
         let x = float i * 2.0 - 4.0
-        let bx1 = Shape(); let box1 = Box(); box1.HalfExtents <- toVec3 (0.4, 0.1, 0.1); bx1.Box <- box1
-        let bx2 = Shape(); let box2 = Box(); box2.HalfExtents <- toVec3 (0.1, 0.4, 0.1); bx2.Box <- box2
+        let bx1 = Shape()
+        let box1 = Box()
+        box1.HalfExtents <- toVec3 (0.4, 0.1, 0.1)
+        bx1.Box <- box1
+        let bx2 = Shape()
+        let box2 = Box()
+        box2.HalfExtents <- toVec3 (0.1, 0.4, 0.1)
+        bx2.Box <- box2
         batchAdd s [ makeCompoundCmd (nextId "L-shape") (x, h + float i * 0.5, 0.0) [(bx1, (0.0, 0.0, 0.0)); (bx2, (0.3, 0.3, 0.0))] 2.0
                      |> withColorAndMaterial (Some (makeColor 0.2 (0.4 + float i * 0.12) 0.9 1.0)) None ]
       // T-shapes (horizontal bar + vertical stem)
       for i in 0 .. 3 do
         let x = float i * 2.5 - 3.5
-        let bar = Shape(); let b1 = Box(); b1.HalfExtents <- toVec3 (0.5, 0.08, 0.08); bar.Box <- b1
-        let stem = Shape(); let b2 = Box(); b2.HalfExtents <- toVec3 (0.08, 0.35, 0.08); stem.Box <- b2
+        let bar = Shape()
+        let b1 = Box()
+        b1.HalfExtents <- toVec3 (0.5, 0.08, 0.08)
+        bar.Box <- b1
+        let stem = Shape()
+        let b2 = Box()
+        b2.HalfExtents <- toVec3 (0.08, 0.35, 0.08)
+        stem.Box <- b2
         batchAdd s [ makeCompoundCmd (nextId "T-shape") (x, h + 3.0 + float i * 0.5, 0.0) [(bar, (0.0, 0.35, 0.0)); (stem, (0.0, 0.0, 0.0))] 2.5
                      |> withColorAndMaterial (Some (makeColor 0.9 (0.3 + float i * 0.15) 0.2 1.0)) None ]
       // Dumbbells (two spheres connected)
       for i in 0 .. 3 do
         let x = float i * 2.0 - 3.0
-        let ds1 = Shape(); let dsp1 = Sphere(); dsp1.Radius <- 0.2; ds1.Sphere <- dsp1
-        let ds2 = Shape(); let dsp2 = Sphere(); dsp2.Radius <- 0.2; ds2.Sphere <- dsp2
+        let ds1 = Shape()
+        let dsp1 = Sphere()
+        dsp1.Radius <- 0.2
+        ds1.Sphere <- dsp1
+        let ds2 = Shape()
+        let dsp2 = Sphere()
+        dsp2.Radius <- 0.2
+        ds2.Sphere <- dsp2
         batchAdd s [ makeCompoundCmd (nextId "dumbbell") (x, h + 6.0, float i * 0.3 - 0.5) [(ds1, (-0.35, 0.0, 0.0)); (ds2, (0.35, 0.0, 0.0))] 3.0
                      |> withColorAndMaterial (Some (makeColor (float i * 0.25) 0.8 0.3 1.0)) None ]
       printfn "  Dropping L-shapes, T-shapes, and dumbbells..."
@@ -1154,5 +1196,76 @@ let demos = [|
       printfn "  Closeup of custom geometry shapes at rest"
       runFor s 2.0
       listBodies s }
+
+  // Demo 22: Camera Showcase
+  { Name = "Camera Showcase"
+    Description = "Smooth camera transitions, body tracking, orbit, chase, framing, and shake."
+    Run = fun s ->
+      resetSimulation s
+      setDemoInfo s "Demo 22: Camera Showcase" "Smooth camera transitions, body tracking, orbit, chase, framing, and shake."
+
+      let ballId = nextId "sphere"
+      batchAdd s [ makeSphereCmd ballId (0.0, 5.0, 0.0) 0.5 5.0
+                   |> withColorAndMaterial (Some projectileColor) None ]
+      let crateId = nextId "box"
+      batchAdd s [ makeBoxCmd crateId (4.0, 3.0, 0.0) (0.4, 0.4, 0.4) 10.0
+                   |> withColorAndMaterial (Some targetColor) None ]
+      let capsuleId = nextId "capsule"
+      batchAdd s [ makeCapsuleCmd capsuleId (-3.0, 4.0, 2.0) 0.3 0.8 4.0
+                   |> withColorAndMaterial (Some accentGreen) None ]
+
+      setNarration s "Smooth Camera — gliding to establishing shot"
+      smoothCamera s (15.0, 10.0, 15.0) (0.0, 2.0, 0.0) 2.0
+      sleep 2200
+
+      setNarration s "Starting simulation"
+      play s |> ignore
+      sleep 2000
+
+      setNarration s "Smooth Camera — zooming in"
+      smoothCamera s (3.0, 2.0, 5.0) (0.0, 0.5, 0.0) 1.5
+      sleep 1700
+
+      setNarration s "LookAt — orienting toward the red ball"
+      lookAtBody s ballId 1.5
+      sleep 1700
+
+      setNarration s "Follow — tracking the blue crate"
+      followBody s crateId
+      sleep 3000
+
+      stopCamera s
+      setNarration s "Pulling back for orbit"
+      smoothCamera s (8.0, 6.0, 8.0) (0.0, 1.0, 0.0) 1.5
+      sleep 1700
+
+      setNarration s "Orbit — 360 degrees"
+      let anchorId = nextId "box"
+      batchAdd s [ makeBoxCmd anchorId (0.0, 0.5, 0.0) (0.1, 0.1, 0.1) 0.0 ]
+      orbitBody s anchorId 5.0 360.0
+      sleep 5200
+
+      setNarration s "Chase — following green capsule"
+      chaseBody s capsuleId (3.0, 3.0, 5.0)
+      sleep 3000
+
+      stopCamera s
+      setNarration s "Frame Bodies — showing all objects"
+      frameBodies s [ballId; crateId; capsuleId]
+      sleep 3000
+
+      setNarration s "Camera Shake — impact!"
+      batchAdd s [ makeImpulseCmd ballId (0.0, 15.0, 0.0) ]
+      shakeCamera s 0.3 1.0
+      sleep 1200
+
+      stopCamera s
+      setNarration s "Final establishing shot"
+      smoothCamera s (12.0, 8.0, 12.0) (0.0, 1.0, 0.0) 2.0
+      sleep 2200
+
+      pause s |> ignore
+      clearNarration s
+      printfn "  Camera showcase complete" }
 
 |]

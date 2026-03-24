@@ -19,7 +19,9 @@ module Demo14 =
     let run (s: Session) =
         resetSimulation s
         // Elevated angle showing the full semicircle
-        setCamera s (0.0, 10.0, -12.0) (0.0, 0.0, 3.0) |> ignore
+        setNarration s "Setting up 120 dominoes in a semicircle"
+        smoothCamera s (0.0, 10.0, -12.0) (0.0, 0.0, 3.0) 1.5
+        sleep 1700
         setDemoInfo s "Demo 14: Domino Cascade" "Extended domino cascade — longer chain with more complex patterns."
         let count = 120
         let radius = 8.0
@@ -58,16 +60,25 @@ module Demo14 =
         runFor s 1.0
 
         // Overhead view to show the full semicircle layout
-        setCamera s (0.0, 16.0, 0.1) (0.0, 0.0, 4.0) |> ignore
+        setNarration s "Overhead view — 120 dominoes in perfect semicircle"
+        smoothCamera s (0.0, 16.0, 0.1) (0.0, 0.0, 4.0) 1.5
+        sleep 1700
         printfn "  Overhead view — full semicircle"
         sleep 1500
 
         // Pull back to a wide view of the full arc
-        setCamera s (0.0, 12.0, -14.0) (0.0, 0.0, 3.0) |> ignore
+        setNarration s "Pushing the first domino — cascade begins!"
+        smoothCamera s (0.0, 12.0, -14.0) (0.0, 0.0, 3.0) 2.0
+        sleep 2200
         printfn "  Pushing first domino..."
         pushVec s ids.[0] (0.0, 0.0, 4.0) |> ignore
         timed "Cascade propagation" (fun () ->
-            runFor s 20.0)
+            runFor s 10.0
+            setNarration s "Cascade in progress — following the wave"
+            smoothCamera s (8.0, 6.0, 0.0) (0.0, 0.0, 4.0) 2.0
+            sleep 2200
+            runFor s 8.0)
+        clearNarration s
         printfn "  Cascade complete"
         status s
 

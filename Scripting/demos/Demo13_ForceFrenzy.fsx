@@ -16,7 +16,9 @@ module Demo13 =
 
     let run (s: Session) =
         resetSimulation s
-        setCamera s (0.0, 12.0, 20.0) (0.0, 3.0, 0.0) |> ignore
+        setNarration s "Setting up 80-body force frenzy"
+        smoothCamera s (0.0, 12.0, 20.0) (0.0, 3.0, 0.0) 1.5
+        sleep 1700
         setDemoInfo s "Demo 13: Force Frenzy" "Force application stress — constant forces pushing bodies around."
 
         // Tight 8x10 grid (0.7m spacing) — bodies will collide when forces hit
@@ -83,6 +85,7 @@ module Demo13 =
             pause s |> ignore
 
         // Round 1: upward impulses — tightly packed so they collide on the way up
+        setNarration s "Round 1: Upward impulses — bodies colliding on the way up"
         timed "Round 1 — upward impulses (3s)" (fun () ->
             let impCmds = [ for id in ids do makeImpulseCmd id (0.0, 12.0, 0.0) ]
             batchAdd s impCmds
@@ -90,6 +93,7 @@ module Demo13 =
             runTracking 3.0 200)
 
         // Round 2: torques + mild sideways gravity — spinning pile drifts
+        setNarration s "Round 2: Torques + sideways gravity — spinning pile drifts"
         timed "Round 2 — torques + sideways gravity (3s)" (fun () ->
             let torCmds = [ for id in ids do makeTorqueCmd id (0.0, 30.0, 15.0) ]
             batchAdd s torCmds
@@ -98,6 +102,7 @@ module Demo13 =
             runTracking 3.0 200)
 
         // Round 3: strong inward impulses + reduced gravity — bodies swarm toward center
+        setNarration s "Round 3: Inward impulses under low gravity — swarming!"
         setGravity s (0.0, -2.0, 0.0) |> ignore
         timed "Round 3 — inward impulses + low gravity (5s)" (fun () ->
             let inwardCmds =
@@ -107,9 +112,11 @@ module Demo13 =
             printfn "  Swarming inward under low gravity!"
             runTracking 5.0 200)
 
+        setNarration s "Gravity restored — settling down"
         setGravity s (0.0, -9.81, 0.0) |> ignore
         printfn "  Gravity restored — settling..."
         runTracking 3.0 200
+        clearNarration s
         status s
 
 runStandalone Demo13.name Demo13.run

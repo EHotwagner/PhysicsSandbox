@@ -4,6 +4,7 @@ from random import Random
 
 from Scripting.demos_py.prelude import (
     batch_add,
+    clear_narration,
     list_bodies,
     make_box_cmd,
     next_id,
@@ -11,9 +12,10 @@ from Scripting.demos_py.prelude import (
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
+    set_narration,
     sleep,
+    smooth_camera,
 )
 
 name = "Marble Rain"
@@ -24,7 +26,9 @@ def run(session):
     reset_simulation(session)
 
     # Camera: overhead angle
-    set_camera(session, (6.0, 10.0, 6.0), (0.0, 0.0, 0.0))
+    set_narration(session, "Overhead angle — objects about to rain down")
+    smooth_camera(session, (6.0, 10.0, 6.0), (0.0, 0.0, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 05: Marble Rain", "Continuous marble rain from the sky.")
 
     # Generate random spheres as the base
@@ -53,14 +57,19 @@ def run(session):
 
     batch_add(session, wave2)
     print("  Wave 2: 10 crates + 10 dice joining the pile!")
-    set_camera(session, (4.0, 6.0, 4.0), (0.0, 1.0, 0.0))
+    set_narration(session, "Wave 2 — crates and dice join the chaos")
+    smooth_camera(session, (4.0, 6.0, 4.0), (0.0, 1.0, 0.0), 1.5)
+    sleep(1700)
     run_for(session, 4.0)
 
     # Ground-level closeup
-    set_camera(session, (2.5, 0.8, 2.5), (0.0, 0.5, 0.0))
+    set_narration(session, "Ground-level closeup of the mixed-shape pile")
+    smooth_camera(session, (2.5, 0.8, 2.5), (0.0, 0.5, 0.0), 1.5)
+    sleep(1700)
     print("  Close-up of the mixed-shape pile")
     sleep(1500)
 
+    clear_narration(session)
     list_bodies(session)
 
 

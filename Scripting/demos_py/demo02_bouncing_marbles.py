@@ -4,15 +4,17 @@ from random import Random
 
 from Scripting.demos_py.prelude import (
     batch_add,
+    clear_narration,
     list_bodies,
     make_sphere_cmd,
     next_id,
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
+    set_narration,
     sleep,
+    smooth_camera,
 )
 
 name = "Bouncing Marbles"
@@ -23,7 +25,9 @@ def run(session):
     reset_simulation(session)
 
     # Camera: elevated overview of the drop zone
-    set_camera(session, (5.0, 8.0, 5.0), (0.0, 1.0, 0.0))
+    set_narration(session, "Elevated overview — marble drop zone")
+    smooth_camera(session, (5.0, 8.0, 5.0), (0.0, 1.0, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 02: Bouncing Marbles", "Two waves of 75 marbles rain down.")
 
     # Wave 1: 15 marbles with varied sizes across a 2D spread
@@ -42,7 +46,9 @@ def run(session):
     run_for(session, 3.0)
 
     # Wave 2: 10 more marbles dropped into the pile
-    set_camera(session, (3.0, 4.0, 3.0), (0.0, 0.5, 0.0))
+    set_narration(session, "Wave 2 incoming — closer view of the pile")
+    smooth_camera(session, (3.0, 4.0, 3.0), (0.0, 0.5, 0.0), 1.5)
+    sleep(1700)
     wave2 = []
     for i in range(10):
         x = rng.random() * 1.6 - 0.8
@@ -56,9 +62,11 @@ def run(session):
     print("  Wave 2: 10 more marbles into the pile!")
     run_for(session, 3.0)
 
+    set_narration(session, "Marbles settled — final pile")
     print("  Settled.")
     sleep(1000)
 
+    clear_narration(session)
     list_bodies(session)
 
 

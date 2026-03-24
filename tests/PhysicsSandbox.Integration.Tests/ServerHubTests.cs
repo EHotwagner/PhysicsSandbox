@@ -98,4 +98,78 @@ public class ServerHubTests
         // Stream should open without throwing
         Assert.NotNull(stream);
     }
+
+    [Fact]
+    public async Task SendViewCommand_SmoothCamera_ReturnsSuccessAck()
+    {
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnect();
+        await using var _ = app;
+
+        var client = new PhysicsHub.PhysicsHubClient(channel);
+
+        var viewCommand = new ViewCommand
+        {
+            SmoothCamera = new SmoothCamera
+            {
+                Position = new Vec3 { X = 5, Y = 5, Z = 5 },
+                Target = new Vec3 { X = 0, Y = 0, Z = 0 },
+                Up = new Vec3 { X = 0, Y = 1, Z = 0 },
+                DurationSeconds = 2.0
+            }
+        };
+
+        var ack = await client.SendViewCommandAsync(viewCommand);
+        Assert.True(ack.Success);
+    }
+
+    [Fact]
+    public async Task SendViewCommand_CameraLookAt_ReturnsSuccessAck()
+    {
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnect();
+        await using var _ = app;
+
+        var client = new PhysicsHub.PhysicsHubClient(channel);
+
+        var viewCommand = new ViewCommand
+        {
+            CameraLookAt = new CameraLookAt { BodyId = "test-body", DurationSeconds = 1.0 }
+        };
+
+        var ack = await client.SendViewCommandAsync(viewCommand);
+        Assert.True(ack.Success);
+    }
+
+    [Fact]
+    public async Task SendViewCommand_SetNarration_ReturnsSuccessAck()
+    {
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnect();
+        await using var _ = app;
+
+        var client = new PhysicsHub.PhysicsHubClient(channel);
+
+        var viewCommand = new ViewCommand
+        {
+            SetNarration = new SetNarration { Text = "Test narration" }
+        };
+
+        var ack = await client.SendViewCommandAsync(viewCommand);
+        Assert.True(ack.Success);
+    }
+
+    [Fact]
+    public async Task SendViewCommand_CameraStop_ReturnsSuccessAck()
+    {
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnect();
+        await using var _ = app;
+
+        var client = new PhysicsHub.PhysicsHubClient(channel);
+
+        var viewCommand = new ViewCommand
+        {
+            CameraStop = new CameraStop()
+        };
+
+        var ack = await client.SendViewCommandAsync(viewCommand);
+        Assert.True(ack.Success);
+    }
 }

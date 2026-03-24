@@ -3,6 +3,7 @@
 from Scripting.demos_py.prelude import (
     Direction,
     batch_add,
+    clear_narration,
     list_bodies,
     make_box_cmd,
     next_id,
@@ -10,9 +11,10 @@ from Scripting.demos_py.prelude import (
     reset_simulation,
     run_for,
     run_standalone,
-    set_camera,
     set_demo_info,
+    set_narration,
     sleep,
+    smooth_camera,
 )
 
 name = "Domino Row"
@@ -23,7 +25,9 @@ def run(session):
     reset_simulation(session)
 
     # Camera: side view along the row
-    set_camera(session, (-2.0, 3.0, 6.0), (5.0, 0.5, 0.0))
+    set_narration(session, "Side view — 20 dominoes standing in a row")
+    smooth_camera(session, (-2.0, 3.0, 6.0), (5.0, 0.5, 0.0), 1.5)
+    sleep(1700)
     set_demo_info(session, "Demo 06: Domino Row", "Classic domino chain reaction.")
 
     # Batch-create 20 dominoes — pre-generate IDs for push reference
@@ -45,16 +49,24 @@ def run(session):
     push(session, first_id, Direction.East, 3.0)
 
     # Track the cascade with camera
-    set_camera(session, (0.0, 2.5, 4.0), (2.0, 0.3, 0.0))
+    set_narration(session, "Chain reaction begins — dominoes 1-7")
+    smooth_camera(session, (0.0, 2.5, 4.0), (2.0, 0.3, 0.0), 1.0)
+    sleep(1200)
     run_for(session, 2.0)
-    set_camera(session, (3.0, 2.5, 4.0), (5.0, 0.3, 0.0))
+    set_narration(session, "Cascade continues — dominoes 8-14")
+    smooth_camera(session, (3.0, 2.5, 4.0), (5.0, 0.3, 0.0), 1.0)
+    sleep(1200)
     run_for(session, 2.0)
-    set_camera(session, (6.0, 2.5, 4.0), (8.0, 0.3, 0.0))
+    set_narration(session, "Final stretch — dominoes 15-20")
+    smooth_camera(session, (6.0, 2.5, 4.0), (8.0, 0.3, 0.0), 1.0)
+    sleep(1200)
     run_for(session, 2.0)
 
     # Pan camera to the end
-    set_camera(session, (12.0, 2.0, 4.0), (9.0, 0.0, 0.0))
-    sleep(500)
+    set_narration(session, "All dominoes down — surveying the aftermath")
+    smooth_camera(session, (12.0, 2.0, 4.0), (9.0, 0.0, 0.0), 1.5)
+    sleep(1700)
+    clear_narration(session)
     list_bodies(session)
 
 

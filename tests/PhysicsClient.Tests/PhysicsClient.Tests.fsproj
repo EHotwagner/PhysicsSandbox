@@ -17,6 +17,7 @@
     <Compile Include="StateDisplayTests.fs" />
     <Compile Include="MeshResolverTests.fs" />
     <Compile Include="RegistryErrorTests.fs" />
+    <Compile Include="ViewCommandsTests.fs" />
     <Compile Include="SurfaceAreaTests.fs" />
   </ItemGroup>
 

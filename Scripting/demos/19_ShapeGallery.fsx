@@ -8,7 +8,9 @@ open PhysicsSandbox.Shared.Contracts
 
 let run (s: Session) =
     resetSimulation s
-    setCamera s (8.0, 8.0, 15.0) (0.0, 2.0, 0.0) |> ignore
+    setNarration s "Shape Gallery — every physics shape type"
+    smoothCamera s (8.0, 8.0, 15.0) (0.0, 2.0, 0.0) 1.5
+    sleep 1700
     setDemoInfo s "Demo 19: Shape Gallery" "All shape types displayed side-by-side — the complete physics shape catalog."
     let h = 6.0
     batchAdd s [ makeSphereCmd (nextId "sphere") (-6.0, h, 0.0) 0.3 2.0
@@ -41,10 +43,17 @@ let run (s: Session) =
     cs2.Sphere <- csp2
     batchAdd s [ makeCompoundCmd (nextId "compound") (8.0, h, 0.0) [(cs1, (-0.3, 0.0, 0.0)); (cs2, (0.3, 0.0, 0.0))] 3.0
                  |> withColorAndMaterial (Some (makeColor 1.0 0.3 0.7 1.0)) None ]
+    setNarration s "All shapes dropping — watch the variety"
     printfn "  All shape types dropping from %.0fm" h
     runFor s 4.0
-    setCamera s (4.0, 1.5, 8.0) (1.0, 0.3, 0.0) |> ignore
+    setNarration s "Close-up — shapes at rest on the ground"
+    smoothCamera s (4.0, 1.5, 8.0) (1.0, 0.3, 0.0) 2.0
+    sleep 2200
     runFor s 2.0
+    setNarration s "Panning across the gallery"
+    smoothCamera s (-4.0, 2.0, 8.0) (-2.0, 0.3, 0.0) 2.0
+    sleep 2200
+    clearNarration s
     listBodies s
 
 runStandalone "Demo 19: Shape Gallery" run
