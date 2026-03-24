@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-camera-smooth-demos`
 **Created**: 2026-03-24
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "improve the camera capabilities. smooth moving, look at. research native stride3ds capabilities and add/wrap them. add a longer 40sec demo showing them off. also add a ui text label on the left describing what is currently going on. add that as general demo feature."
 
 ## Clarifications

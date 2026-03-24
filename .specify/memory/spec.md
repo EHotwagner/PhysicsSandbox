@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-24
-**Revision**: Updated with 004-enhance-demos-shapes archival
+**Revision**: Updated with 004-camera-smooth-demos archival
 
 ## Overview
 
@@ -331,6 +331,24 @@ Three new demos (19: Shape Gallery, 20: Compound Constructions, 21: Mesh & Hull 
 ### US-107: Demo Metadata Transport (P3)
 Each demo sends its name and description via SetDemoMetadata ViewCommand to the viewer. The metadata is transported through the existing ViewCommand stream with no server changes needed. [Source: specs/004-enhance-demos-shapes]
 
+### US-108: Smooth Camera Transitions (P1)
+A demo author or MCP user commands the camera to smoothly move to a new position/target over a specified duration using smoothstep easing (3t²-2t³). Camera transitions feel cinematic. Zero or no duration preserves instant snap behavior. In-progress transitions are cancelled by new commands, mouse input, or explicit stop. [Source: specs/004-camera-smooth-demos]
+
+### US-109: Body-Relative Camera Modes (P1)
+A demo author commands the camera to look at, follow, orbit, chase, or frame specific bodies by ID. Six body-relative modes: lookAt (smooth orient), follow (continuous tracking), orbit (revolve around body over duration), chase (follow with offset), frameBodies (auto-position for multiple bodies), shake (additive random offset). All modes cancel on new command, mouse input, or stop. [Source: specs/004-camera-smooth-demos]
+
+### US-110: Demo Narration Labels (P2)
+A text narration label appears on the left side of the viewer screen at position (10, 50) describing the current demo phase. Set/cleared via SetNarration ViewCommand. Independent of demo metadata overlay at (10, 10) and status bar at (10, 30). [Source: specs/004-camera-smooth-demos]
+
+### US-111: Smooth Camera in Scripting Library (P2)
+F# Prelude.fsx and Python prelude.py provide helper functions for all camera modes and narration: smoothCamera, lookAtBody, followBody, orbitBody, chaseBody, frameBodies, shakeCamera, stopCamera, setNarration, clearNarration (and Python snake_case equivalents). Single function call per operation. [Source: specs/004-camera-smooth-demos]
+
+### US-112: Camera Showcase Demo (P3)
+Demo22_CameraShowcase (~40 seconds) demonstrates smooth moves, body-relative modes, and narration labels with 8+ distinct camera movements. Both F# and Python versions. Creates its own scene with multiple bodies. [Source: specs/004-camera-smooth-demos]
+
+### US-113: Enhance All Existing Demos with Camera and Narration (P3)
+All 42 demo scripts (21 F# + 21 Python) enhanced with cinematic camera sequences (3-6 moves per demo) and narration labels. All legacy instant camera calls migrated to smooth/body-relative system. [Source: specs/004-camera-smooth-demos]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -606,6 +624,25 @@ Each demo sends its name and description via SetDemoMetadata ViewCommand to the 
 - **FR-271**: Prelude.fsx MUST include makeMeshCmd helper; prelude.py MUST include make_mesh_cmd. [Source: specs/004-enhance-demos-shapes]
 - **FR-272**: PhysicsClient ViewCommands module MUST expose setDemoMetadata function with .fsi signature. [Source: specs/004-enhance-demos-shapes]
 - **FR-273**: SceneState MUST include DemoName and DemoDescription (string option) fields with .fsi signature. [Source: specs/004-enhance-demos-shapes]
+- **FR-274**: System MUST support smooth camera position and target interpolation over a caller-specified duration using smoothstep easing (3t²-2t³). [Source: specs/004-camera-smooth-demos]
+- **FR-275**: System MUST cancel any in-progress smooth transition or continuous mode when a new camera command is received, when the user manually interacts with the camera, or when an explicit stop command is sent. [Source: specs/004-camera-smooth-demos]
+- **FR-276**: System MUST preserve existing instant camera behavior when no duration is specified (backward compatible). [Source: specs/004-camera-smooth-demos]
+- **FR-277**: System MUST support a lookAt(bodyId) command that smoothly orients the camera to face a specified body. [Source: specs/004-camera-smooth-demos]
+- **FR-278**: System MUST support a follow(bodyId) command that continuously tracks a body each frame, keeping it centered in view. [Source: specs/004-camera-smooth-demos]
+- **FR-279**: System MUST support an orbit(bodyId, duration, degrees) command that revolves the camera around a body, completing the specified arc over the given duration. Defaults to 360° if degrees omitted. [Source: specs/004-camera-smooth-demos]
+- **FR-280**: System MUST support a chase(bodyId, offset) command that continuously follows a body while maintaining a fixed relative offset. [Source: specs/004-camera-smooth-demos]
+- **FR-281**: System MUST support a frameBodies(bodyIds) command that auto-positions the camera to keep a variable list of 1+ bodies in view. [Source: specs/004-camera-smooth-demos]
+- **FR-282**: System MUST support a shake(intensity, duration) command that applies a camera shake effect for the specified duration. [Source: specs/004-camera-smooth-demos]
+- **FR-283**: System MUST gracefully handle body-relative commands referencing non-existent or destroyed bodies by holding the camera's current position (mode remains active until body appears). [Source: specs/004-camera-smooth-demos]
+- **FR-284**: System MUST support a narration label displayed at (10, 50) on the viewer screen, separate from demo metadata and status bar. [Source: specs/004-camera-smooth-demos]
+- **FR-285**: System MUST allow narration labels to be set and cleared via SetNarration ViewCommand. [Source: specs/004-camera-smooth-demos]
+- **FR-286**: ViewCommand proto MUST include 9 new message types: SmoothCamera (field 5), CameraLookAt (field 6), CameraFollow (field 7), CameraOrbit (field 8), CameraChase (field 9), CameraFrameBodies (field 10), CameraShake (field 11), CameraStop (field 12), SetNarration (field 13). [Source: specs/004-camera-smooth-demos]
+- **FR-287**: System MUST provide scripting helper functions for all camera modes and narration in both F# Prelude.fsx and Python prelude.py. [Source: specs/004-camera-smooth-demos]
+- **FR-288**: System MUST include a camera showcase demo (Demo22) of ~40 seconds with 8+ distinct camera movements and narration. [Source: specs/004-camera-smooth-demos]
+- **FR-289**: All 21 existing F# demos MUST be enhanced with cinematic camera sequences (3-6 moves per demo) and narration labels. [Source: specs/004-camera-smooth-demos]
+- **FR-290**: All 21 existing Python demos MUST be enhanced to match F# counterparts with equivalent camera sequences and narration. [Source: specs/004-camera-smooth-demos]
+- **FR-291**: All existing instant camera calls in demos MUST be migrated to the new smooth/body-relative camera system. [Source: specs/004-camera-smooth-demos]
+- **FR-292**: The ViewCommand viewer queue MUST use ConcurrentQueue with a drain-all-per-frame loop to handle rapid commands arriving faster than the frame rate. [Source: specs/004-camera-smooth-demos]
 
 ## Key Entities
 
@@ -675,6 +712,10 @@ Each demo sends its name and description via SetDemoMetadata ViewCommand to the 
 - **Hull Face**: A triangular face of a convex hull, computed from the input point cloud via MIConvexHull, used for both solid rendering and wireframe display. [Source: specs/004-proper-shape-rendering]
 - **Compound Child Instance**: A positioned and oriented child shape within a compound, rendered as an independent Stride entity attached to the parent body's scene node. [Source: specs/004-proper-shape-rendering]
 - **DemoMetadata (SetDemoMetadata)**: Proto message (name: string, description: string) carried as ViewCommand oneof field 4. Sent once per demo load, received by viewer via StreamViewCommands. [Source: specs/004-enhance-demos-shapes]
+- **CameraMode (DU)**: Viewer-side discriminated union tracking active camera behavior — Transitioning (start→end interpolation), LookingAt (bodyId, orient over duration), Following (bodyId, continuous), Orbiting (bodyId, angle progress), Chasing (bodyId, offset), Framing (bodyIds list), Shaking (base + random offset). Stored as `ActiveMode: CameraMode option` on CameraState. [Source: specs/004-camera-smooth-demos]
+- **Camera Transition**: In-progress smooth interpolation — startPos, startTarget, startZoom, endPos, endTarget, endZoom, elapsed, duration. Smoothstep easing applied each frame. [Source: specs/004-camera-smooth-demos]
+- **Narration Label**: Single string displayed at screen position (10, 50) via DebugTextSystem.Print. Set via SetNarration ViewCommand, cleared by sending empty text. Independent of demo metadata overlay. [Source: specs/004-camera-smooth-demos]
+- **Body Position Map**: Transient Map<string, Vector3> built each frame from latestSimState.Bodies. Used by body-relative camera modes to resolve bodyId → world position. Not persisted. [Source: specs/004-camera-smooth-demos]
 
 ## Edge Cases
 
@@ -759,6 +800,15 @@ Each demo sends its name and description via SetDemoMetadata ViewCommand to the 
 - Very long demo name/description: DebugTextSystem truncates/wraps naturally without obscuring the 3D view. [Source: specs/004-enhance-demos-shapes]
 - Rapid demo switching (AutoRun mode): demo label updates promptly for each new demo. [Source: specs/004-enhance-demos-shapes]
 - Simulation reset without new demo: label remains showing last demo info until next SetDemoMetadata. [Source: specs/004-enhance-demos-shapes]
+- Multiple smooth camera commands arrive within a single frame: latest command wins, earlier ones discarded. [Source: specs/004-camera-smooth-demos]
+- Very short duration (e.g., 0.01s): treated as near-instant, completes on next frame. [Source: specs/004-camera-smooth-demos]
+- lookAt/follow/orbit/chase references non-existent body ID: camera holds current position, mode remains active until body appears. [Source: specs/004-camera-smooth-demos]
+- Followed body is destroyed mid-follow: mode cancelled, camera holds last position. [Source: specs/004-camera-smooth-demos]
+- frameBodies called with single body ID: behaves like lookAt. [Source: specs/004-camera-smooth-demos]
+- Orbit with 0 degrees: no movement, completes immediately. [Source: specs/004-camera-smooth-demos]
+- Shake issued during smooth transition: shake applies additively on top. [Source: specs/004-camera-smooth-demos]
+- ViewCommand single-slot Volatile.Write drops rapid commands: replaced with ConcurrentQueue drain loop. [Source: specs/004-camera-smooth-demos]
+- Duplicate viewer processes compete for ViewCommands (single-consumer channel): stale viewer steals half the commands. Fixed by kill.sh .dll suffix patterns. [Source: specs/004-camera-smooth-demos]
 
 ## Success Criteria
 
@@ -873,3 +923,12 @@ Each demo sends its name and description via SetDemoMetadata ViewCommand to the 
 - **SC-109**: A scene with 200 mixed-shape bodies (meshes up to 10K triangles) renders at comparable frame rate to primitive-only bodies (within 10%). [Source: specs/004-proper-shape-rendering]
 - **SC-110**: Existing demo scripts display correctly in the viewer without modification. [Source: specs/004-proper-shape-rendering]
 - **SC-111**: All existing viewer tests pass, and new tests cover geometry generation for each newly rendered shape type (71 total). [Source: specs/004-proper-shape-rendering]
+- **SC-112**: Smooth camera transitions complete within ±0.1 seconds of the specified duration at 60 FPS. [Source: specs/004-camera-smooth-demos]
+- **SC-113**: Camera transitions produce no visible stuttering or frame drops during movement. [Source: specs/004-camera-smooth-demos]
+- **SC-114**: Narration labels appear within one frame of the command being received by the viewer. [Source: specs/004-camera-smooth-demos]
+- **SC-115**: Camera showcase demo runs 35-45 seconds with 8+ distinct camera movements and narration. [Source: specs/004-camera-smooth-demos]
+- **SC-116**: All 42 enhanced demo scripts (21 F# + 21 Python) run successfully with camera moves and narration labels. [Source: specs/004-camera-smooth-demos]
+- **SC-117**: Demo authors can add a smooth camera move or body-relative mode with a single function call. [Source: specs/004-camera-smooth-demos]
+- **SC-118**: Continuous camera modes (follow, chase) track moving bodies with no perceptible lag. [Source: specs/004-camera-smooth-demos]
+- **SC-119**: Each enhanced demo contains 3-6 camera moves and narration labels for every distinct phase. [Source: specs/004-camera-smooth-demos]
+- **SC-120**: No legacy instant camera calls remain in any demo script after enhancement. [Source: specs/004-camera-smooth-demos]

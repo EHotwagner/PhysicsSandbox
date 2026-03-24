@@ -1,5 +1,40 @@
 # Merged Features Log
 
+## Smooth Camera Controls and Demo Narration — 2026-03-24
+**Branch:** 004-camera-smooth-demos
+**Spec:** specs/004-camera-smooth-demos
+
+**What was added:**
+- 9 new ViewCommand proto messages (SmoothCamera, CameraLookAt, CameraFollow, CameraOrbit, CameraChase, CameraFrameBodies, CameraShake, CameraStop, SetNarration) — fields 5-13
+- CameraMode discriminated union state machine with 7 modes (Transitioning, LookingAt, Following, Orbiting, Chasing, Framing, Shaking) and smoothstep interpolation
+- 6 body-relative camera modes tracking physics bodies by ID with per-frame updates
+- Narration overlay at screen position (10, 50) via DebugTextSystem.Print
+- 10 new PhysicsClient ViewCommand functions (smoothCamera, cameraLookAt, cameraFollow, cameraOrbit, cameraChase, cameraFrameBodies, cameraShake, cameraStop, setNarration + zoom variant)
+- 10 F# scripting helpers in Prelude.fsx and 10 Python helpers in prelude.py
+- Demo22_CameraShowcase (~40 seconds, 8+ camera movements) in both F# and Python
+- All 42 demos (21 F# + 21 Python) enhanced with cinematic camera sequences and narration labels
+- ConcurrentQueue<ViewCommand> drain loop replacing single-slot Volatile.Write (fixed rapid command drops)
+- kill.sh fixed with .dll suffix patterns to prevent self-kill
+- Body-not-found camera mode hold behavior (no longer cancels immediately)
+
+**New/Modified Components:**
+- `src/PhysicsSandbox.Shared.Contracts/Protos/physics_hub.proto` — 9 new ViewCommand oneof fields (5-13)
+- `src/PhysicsViewer/Rendering/CameraController.fs(i)` — CameraMode DU, smoothstep, updateCameraMode, body-relative modes
+- `src/PhysicsViewer/Rendering/SceneManager.fs(i)` — NarrationText field, applyNarration
+- `src/PhysicsViewer/Program.fs` — 9 ViewCommand handlers, body position map, narration rendering, ConcurrentQueue
+- `src/PhysicsClient/Commands/ViewCommands.fs(i)` — 10 new client functions
+- `Scripting/demos/Prelude.fsx` — 10 camera/narration helpers, PhysicsClient 0.4.0
+- `Scripting/demos/Demo22_CameraShowcase.fsx` — new
+- `Scripting/demos_py/demo22_camera_showcase.py` — new
+- `Scripting/demos_py/prelude.py` — 10 camera/narration helpers
+- `kill.sh` — .dll suffix patterns
+- `reports/NetworkProblems.md` — 3 new entries
+- `reports/2026-03-24-camera-commands-debugging.md` — new debugging report
+
+**Tasks Completed:** 99/99 tasks
+
+---
+
 ## Enhance Demos with New Shapes and Viewer Labels — 2026-03-24
 **Branch:** 004-enhance-demos-shapes
 **Spec:** specs/004-enhance-demos-shapes

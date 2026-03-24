@@ -1,12 +1,12 @@
 # PhysicsSandbox — Main Implementation Plan
 
 **Last Updated**: 2026-03-24
-**Revision**: Updated with 004-enhance-demos-shapes archival
+**Revision**: Updated with 004-camera-smooth-demos archival
 
 ## Technical Context
 
 **Language/Version**: F# on .NET 10.0 (services), C# on .NET 10.0 (AppHost, ServiceDefaults)
-**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1 (local NuGet, 10 shape types, 10 constraint types, sweep/overlap queries, collision filtering, material properties), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, includes Stride.BepuPhysics 4.3.0.2507 + Stride.BepuPhysics.Debug 4.3.0.2507 transitively), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 + ModelContextProtocol.AspNetCore 1.1.* (MCP server — HTTP/SSE transport), MIConvexHull 1.1.19 (convex hull face computation for viewer custom mesh rendering)
+**Primary Dependencies**: .NET Aspire 13.1.3, Grpc.AspNetCore 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1 (local NuGet, 10 shape types, 10 constraint types, sweep/overlap queries, collision filtering, material properties), Grpc.Net.Client 2.x, Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, includes Stride.BepuPhysics 4.3.0.2507 + Stride.BepuPhysics.Debug 4.3.0.2507 transitively), Spectre.Console 0.49.x (client TUI display), ModelContextProtocol 1.1.0 + ModelContextProtocol.AspNetCore 1.1.* (MCP server — HTTP/SSE transport), MIConvexHull 1.1.19 (convex hull face computation for viewer custom mesh rendering), PhysicsClient 0.4.0 + PhysicsSandbox.Shared.Contracts 0.4.0 (NuGet, smooth camera + narration commands)
 **Storage**: Append-only protobuf binary files at `~/.config/PhysicsSandbox/recordings/` (recording sessions), JSON metadata per session. In-memory physics world and stateless routing otherwise.
 **Testing**: xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x
 **Target Platform**: Linux (rootless Podman for containers)
@@ -53,10 +53,10 @@ src/
 │
 ├── PhysicsViewer/                       # F# — 3D viewer (Stride3D + gRPC client)
 │   ├── Rendering/
-│   │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, per-body color, wireframe, custom mesh/compound/ShapeRef rendering
+│   │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, per-body color, wireframe, custom mesh/compound/ShapeRef rendering, NarrationText
 │   │   ├── ShapeGeometry.fsi/.fs        # Shape→geometry dispatch: primitives (type/size), custom mesh (Triangle/Mesh/ConvexHull → CustomMeshData), color palette
 │   │   ├── DebugRenderer.fsi/.fs        # Wireframe overlay, constraint line visualization, F3 toggle
-│   │   ├── CameraController.fsi/.fs     # Camera state, input, REPL commands
+│   │   ├── CameraController.fsi/.fs     # Camera state, input, REPL commands, CameraMode DU (7 modes), smoothstep interpolation, body-relative tracking
 │   │   └── FpsCounter.fsi/.fs           # Smoothed FPS calculation, logging, threshold warnings
 │   ├── Settings/
 │   │   ├── ViewerSettings.fsi/.fs       # Settings model, JSON persistence (~/.config/PhysicsSandbox/)
@@ -77,7 +77,7 @@ src/
     │   └── Session.fsi/.fs              # gRPC connection, state caching, body registry, MeshResolver
     ├── Commands/
     │   ├── SimulationCommands.fsi/.fs   # All simulation command wrappers
-    │   └── ViewCommands.fsi/.fs         # Camera, zoom, wireframe wrappers
+    │   └── ViewCommands.fsi/.fs         # Camera, zoom, wireframe, smooth camera, body-relative modes, narration wrappers
     ├── Steering/
     │   └── Steering.fsi/.fs             # Push, launch, spin, stop + Direction DU
     ├── Display/
@@ -158,7 +158,7 @@ tests/
 │   ├── StaticBodyTrackingTests.fs       # Static body state tracking tests
 │   ├── SurfaceAreaTests.fs              # Public API baseline verification
 │   └── StateDecompositionTests.fs       # buildTickState, detectPropertyEvents, state decomposition tests
-├── PhysicsViewer.Tests/                 # F# — unit tests (71 tests)
+├── PhysicsViewer.Tests/                 # F# — unit tests (99 tests)
 │   ├── SceneManagerTests.fs             # Shape classification, state accessors
 │   ├── CameraControllerTests.fs         # Camera math, command application
 │   ├── FpsCounterTests.fs               # FPS calculation, logging interval, threshold tests
@@ -173,7 +173,7 @@ tests/
 │   ├── ConstraintBuilderTests.fs        # 6 new constraint builder tests
 │   ├── SurfaceAreaTests.fs
 │   └── SurfaceAreaBaseline.txt
-├── PhysicsClient.Tests/                 # F# — unit tests (63 tests)
+├── PhysicsClient.Tests/                 # F# — unit tests (77 tests)
 │   ├── IdGeneratorTests.fs              # Sequential IDs, reset, thread safety
 │   ├── SessionTests.fs                  # Connection lifecycle
 │   ├── SimulationCommandsTests.fs       # Proto message construction, Vec3 conversion
@@ -196,7 +196,7 @@ Scripting/                                   # All scripting folders consolidate
 ├── scripts/                                 # Curated F# scripts using PhysicsSandbox.Scripting library
 │   ├── Prelude.fsx                          # Single #r to Scripting DLL + opens
 │   └── HelloDrop.fsx                        # Minimal validation script
-├── demos/                                   # F# scripts — demo suite (18 demos + runners)
+├── demos/                                   # F# scripts — demo suite (22 demos + runners)
 ├── Prelude.fsx                            # Shared helpers: command builders (sphere, box, capsule, cylinder, triangle, convex hull, compound, mesh, kinematic), color palette (8 constants), material presets, constraint helpers (ball-socket, hinge), query helpers (raycast, overlap, sweep), setPose, setDemoInfo, batchAdd, resetSimulation, runFor, nextId, toVec3, timed, runStandalone + all PhysicsClient 0.3.0 opens
 ├── 01_HelloDrop.fsx                       # 6 shapes (sphere, box, capsule, cylinder) — comparative fall + bouncy/sticky materials
 ├── 02_BouncingMarbles.fsx                 # 25 marbles in 2 color-coded waves (yellow/green)
@@ -219,13 +219,14 @@ Scripting/                                   # All scripting folders consolidate
 ├── 19_ShapeGallery.fsx                    # NEW: all shape types side-by-side showcase
 ├── 20_CompoundConstructions.fsx           # NEW: L-shapes, T-shapes, dumbbells
 ├── 21_MeshHullPlayground.fsx              # NEW: convex hulls + meshes on obstacles
-├── AllDemos.fsx                           # All 21 demos as inline functions (loaded by RunAll + AutoRun)
+├── Demo22_CameraShowcase.fsx              # NEW: ~40-second camera showcase — smooth moves, body-relative modes, narration
+├── AllDemos.fsx                           # All 22 demos as inline functions (loaded by RunAll + AutoRun)
 ├── AutoRun.fsx                            # Non-interactive runner (loads AllDemos.fsx — no code duplication)
 └── RunAll.fsx                             # Interactive runner (space/enter to advance)
 
-└── demos_py/                                # Python scripts — demo suite (18 demos + runners)
+└── demos_py/                                # Python scripts — demo suite (22 demos + runners)
 ├── prelude.py                               # Shared helpers: session, commands, presets, generators, steering, display, batch, ID gen, color palette, advanced shape builders (triangle, convex hull, compound, mesh, kinematic), constraint helpers, query helpers, set_body_pose, set_demo_info
-├── demo01_hello_drop.py – demo21_mesh_hull_playground.py # 21 demos mirroring F# suite (18 original + 3 shape demos)
+├── demo01_hello_drop.py – demo22_camera_showcase.py # 22 demos mirroring F# suite (18 original + 3 shape + 1 camera showcase)
 ├── all_demos.py                             # Demo registry (name, description, run) tuples
 ├── auto_run.py                              # Automated runner with pass/fail summary
 ├── run_all.py                               # Interactive runner with keypress advancement
@@ -318,3 +319,11 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - Viewer demo label uses DebugTextSystem.Print at (10, 10); status bar moved to (10, 30). Settings overlay (F2) renders at (20, 60) — no overlap. [Source: specs/004-enhance-demos-shapes]
 - ViewCommand SetDemoMetadata (field 4) is auto-forwarded by server — no PhysicsServer code changes needed for demo metadata transport. [Source: specs/004-enhance-demos-shapes]
 - Proto MeshShape message (field `mesh` in Shape oneof) uses `MeshTriangle` (not `Triangle`) to avoid name conflict with the Triangle shape type. In F# use `MeshShape()` and `MeshTriangle()`, not `Mesh()` and `Triangle()`. [Source: specs/004-enhance-demos-shapes]
+- ViewCommand single-slot Volatile.Write drops rapid commands: replaced with ConcurrentQueue<ViewCommand> + while TryDequeue drain loop. Never use single-slot volatile write for command streams where multiple commands may arrive between consumer reads. [Source: specs/004-camera-smooth-demos]
+- Duplicate StreamViewCommands subscribers steal commands: ViewCommandChannel is single-consumer Channel<ViewCommand>. Two viewer processes compete for the channel — each ReadAsync dequeues one command round-robin. Fixed by kill.sh using .dll suffix patterns. Architecture limitation: only one viewer can subscribe at a time. [Source: specs/004-camera-smooth-demos]
+- kill.sh pkill -f self-kill: `pkill -f "PhysicsViewer"` matches the full command line of all processes including the bash shell running chained commands. Changed kill patterns from bare names to `.dll` suffixes (`PhysicsViewer.dll`, `PhysicsServer.dll`, etc.). [Source: specs/004-camera-smooth-demos]
+- Body-not-found cancels camera mode immediately: body-relative modes (Follow, Orbit, Chase, etc.) must hold position when body ID not yet in simulation state, not cancel. Newly-created bodies may not appear for 1-2 frames. [Source: specs/004-camera-smooth-demos]
+- Viewer FPS drops to 15 during demos: expected Stride3D behavior — when viewer window loses focus, Stride throttles to 15 FPS. Not a bug. [Source: specs/004-camera-smooth-demos]
+- PhysicsClient NuGet repacked to 0.4.0 (from 0.3.0) to expose smooth camera + narration commands. Contracts also 0.4.0. Prelude.fsx pins `#r "nuget: PhysicsClient, 0.4.0"`. [Source: specs/004-camera-smooth-demos]
+- Narration label at (10, 50) — below demo label (10, 10) and status bar (10, 30). Uses Color.Yellow via DebugTextSystem.Print for readability. [Source: specs/004-camera-smooth-demos]
+- Do not use Stride's Add3DCameraController() alongside custom CameraController — they fight for input. Use Add3DCamera() only and apply transforms manually. [Source: specs/004-camera-smooth-demos]
