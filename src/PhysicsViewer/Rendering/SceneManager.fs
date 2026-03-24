@@ -19,7 +19,9 @@ type SceneState =
       Placeholders: Set<string>
       SimTime: float
       SimRunning: bool
-      Wireframe: bool }
+      Wireframe: bool
+      DemoName: string option
+      DemoDescription: string option }
 
 /// Creates an empty scene state.
 let create () =
@@ -27,7 +29,9 @@ let create () =
       Placeholders = Set.empty
       SimTime = 0.0
       SimRunning = false
-      Wireframe = false }
+      Wireframe = false
+      DemoName = None
+      DemoDescription = None }
 
 let private protoVec3ToStride (v: Vec3) =
     if isNull v then Vector3.Zero
@@ -276,3 +280,15 @@ let simulationTime (state: SceneState) = state.SimTime
 
 /// Gets whether the simulation was running in the last applied state snapshot.
 let isRunning (state: SceneState) = state.SimRunning
+
+/// Apply demo metadata from a SetDemoMetadata view command.
+let applyDemoMetadata (cmd: SetDemoMetadata) (state: SceneState) =
+    { state with
+        DemoName = if System.String.IsNullOrEmpty(cmd.Name) then None else Some cmd.Name
+        DemoDescription = if System.String.IsNullOrEmpty(cmd.Description) then None else Some cmd.Description }
+
+/// Gets the current demo name.
+let demoName (state: SceneState) = state.DemoName
+
+/// Gets the current demo description.
+let demoDescription (state: SceneState) = state.DemoDescription

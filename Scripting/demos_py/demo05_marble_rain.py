@@ -12,6 +12,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     sleep,
 )
 
@@ -24,6 +25,7 @@ def run(session):
 
     # Camera: overhead angle
     set_camera(session, (6.0, 10.0, 6.0), (0.0, 0.0, 0.0))
+    set_demo_info(session, "Demo 05: Marble Rain", "Continuous marble rain from the sky.")
 
     # Generate random spheres as the base
     ids = random_spheres(session, 20, seed=42)

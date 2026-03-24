@@ -287,6 +287,8 @@ let start (scene: Scene) =
     logger.LogInformation("Viewer settings loaded: {Width}x{Height}, fullscreen={Fs}",
         viewerSettings.ResolutionWidth, viewerSettings.ResolutionHeight, viewerSettings.IsFullscreen)
 
+    game.Window.Title <- "PhysicsSandbox Viewer"
+
     let addr = resolveServerAddress ()
     logger.LogInformation("Viewer starting, server address: {Address}", addr)
     startPropertyStream addr
@@ -328,6 +330,8 @@ let update (scene: Scene) (time: GameTime) =
             cameraState <- CameraController.applySetZoom viewCmd.SetZoom cameraState
         | ViewCommand.CommandOneofCase.ToggleWireframe ->
             sceneState <- SceneManager.applyWireframe game viewCmd.ToggleWireframe sceneState
+        | ViewCommand.CommandOneofCase.SetDemoMetadata ->
+            sceneState <- SceneManager.applyDemoMetadata viewCmd.SetDemoMetadata sceneState
         | _ -> ()
 
     // Toggle debug visualization with F3
@@ -395,13 +399,22 @@ let update (scene: Scene) (time: GameTime) =
         else
             logger.LogInformation("FPS: {Fps:F1}", fps)
 
+    // Demo label overlay
+    let demoLabel =
+        match SceneManager.demoName sceneState with
+        | Some name ->
+            let desc = SceneManager.demoDescription sceneState |> Option.defaultValue ""
+            if desc.Length > 0 then $"{name} — {desc}" else name
+        | None -> "Free Mode"
+    game.DebugTextSystem.Print(demoLabel, Int2(10, 10))
+
     // Status overlay
     let simTime = SceneManager.simulationTime sceneState
     let running = SceneManager.isRunning sceneState
     let statusText =
         let runLabel = if running then "RUNNING" else "PAUSED"
         $"FPS: {fps:F0} | Time: {simTime:F2}s | {runLabel}"
-    game.DebugTextSystem.Print(statusText, Int2(10, 10))
+    game.DebugTextSystem.Print(statusText, Int2(10, 30))
 
     // Render settings overlay (if visible)
     SettingsOverlay.render game.DebugTextSystem overlayState

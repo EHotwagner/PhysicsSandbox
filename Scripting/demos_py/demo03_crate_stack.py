@@ -8,6 +8,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     sleep,
     stack,
 )
@@ -21,6 +22,7 @@ def run(session):
 
     # Camera: side view, framing the full tower
     set_camera(session, (8.0, 7.0, 4.0), (0.0, 5.0, 0.0))
+    set_demo_info(session, "Demo 03: Crate Stack", "Stacking dynamics with crates.")
 
     # Build a tall stack of 12 crates
     ids = stack(session, 12, (0.0, 0.0, 0.0))

@@ -11,6 +11,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     sleep,
     status,
     timed,
@@ -23,6 +24,7 @@ description = "Three waves of varied spheres dropped into a walled pit — maxim
 def run(session):
     reset_simulation(session)
     set_camera(session, (8.0, 10.0, 8.0), (0.0, 2.0, 0.0))
+    set_demo_info(session, "Demo 12: Collision Pit", "Collision detection pit.")
 
     # Build the pit
     with timed("Pit walls setup"):

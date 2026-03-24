@@ -12,6 +12,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     sleep,
     status,
     timed,
@@ -24,6 +25,7 @@ description = "120 dominoes in a semicircular path — chain reaction at scale."
 def run(session):
     reset_simulation(session)
     set_camera(session, (0.0, 12.0, 0.1), (0.0, 0.0, 0.0))
+    set_demo_info(session, "Demo 14: Domino Cascade", "Extended domino cascade.")
     count = 120
     radius = 8.0
     with timed(f"Place {count} dominoes"):

@@ -1,4 +1,4 @@
-// AllDemos.fsx — All 15 demos defined as inline functions
+// AllDemos.fsx — All 21 demos (15 original + 3 constraint/query/kinematic + 3 shape demos)
 // Loaded by RunAll.fsx and AutoRun.fsx
 
 #load "Prelude.fsx"
@@ -66,6 +66,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (6.0, 5.0, 8.0) (0.0, 3.0, 0.0) |> ignore
+      setDemoInfo s "Demo 01: Hello Drop" "Six different shapes fall side by side — spheres, boxes, capsule, cylinder with bouncy/sticky materials."
       let dropHeight = 10.0
       let ballId = nextId "sphere"
       batchAdd s [ makeSphereCmd ballId (-3.0, dropHeight, 0.0) 0.11 6.35
@@ -85,7 +86,14 @@ let demos = [|
       let cylId = nextId "cylinder"
       batchAdd s [ makeCylinderCmd cylId (5.5, dropHeight, 0.0) 0.15 0.5 4.0
                    |> withColorAndMaterial (Some accentOrange) None ]
-      printfn "  Dropping: ball, beach ball, crate, die, capsule, cylinder — all from %.0fm" dropHeight
+      let triId = nextId "triangle"
+      batchAdd s [ makeTriangleCmd triId (7.0, dropHeight, 0.0) (-0.3, -0.3, -0.3) (0.3, -0.3, -0.3) (0.0, 0.3, 0.3) 1.0
+                   |> withColorAndMaterial (Some kinematicColor) None ]
+      let hullId = nextId "hull"
+      let octaPts = [(0.3,0.0,0.0);(-0.3,0.0,0.0);(0.0,0.3,0.0);(0.0,-0.3,0.0);(0.0,0.0,0.3);(0.0,0.0,-0.3)]
+      batchAdd s [ makeConvexHullCmd hullId (8.5, dropHeight, 0.0) octaPts 2.0
+                   |> withColorAndMaterial (Some accentPurple) None ]
+      printfn "  Dropping: ball, beach ball, crate, die, capsule, cylinder, triangle, octahedron — all from %.0fm" dropHeight
       printfn "  Bouncy beach ball vs sticky bowling ball..."
       runFor s 2.5
       setCamera s (4.0, 1.0, 5.0) (1.0, 0.2, 0.0) |> ignore
@@ -104,6 +112,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (5.0, 8.0, 5.0) (0.0, 1.0, 0.0) |> ignore
+      setDemoInfo s "Demo 02: Bouncing Marbles" "Two color-coded waves of marbles — bouncing, colliding, settling."
       let rng = System.Random(42)
       let wave1 =
           [ for i in 0 .. 14 do
@@ -140,6 +149,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (8.0, 7.0, 4.0) (0.0, 5.0, 0.0) |> ignore
+      setDemoInfo s "Demo 03: Crate Stack" "A 12-crate tower hit by a boulder — dramatic toppling with colors."
       // Build tower of colored crates
       let towerCmds =
           [ for i in 0..11 do
@@ -147,7 +157,14 @@ let demos = [|
               makeBoxCmd (nextId "box") (0.0, y, 0.0) (0.5, 0.5, 0.5) 2.0
               |> withColorAndMaterial (Some targetColor) None ]
       batchAdd s towerCmds
-      printfn "  Built tower of 12 crates"
+      // Add compound bodies (2 welded boxes each) on top of the stack
+      for i in 0 .. 1 do
+        let y = 12.5 + float i * 1.2
+        let bx1 = Shape(); let box1 = Box(); box1.HalfExtents <- toVec3 (0.4, 0.15, 0.15); bx1.Box <- box1
+        let bx2 = Shape(); let box2 = Box(); box2.HalfExtents <- toVec3 (0.15, 0.4, 0.15); bx2.Box <- box2
+        batchAdd s [ makeCompoundCmd (nextId "compound") (0.0, y, 0.0) [(bx1, (0.0, 0.0, 0.0)); (bx2, (0.25, 0.25, 0.0))] 3.0
+                     |> withColorAndMaterial (Some accentPurple) None ]
+      printfn "  Built tower of 12 crates + 2 compound caps"
       runFor s 2.0
       // Boulder spawned close, aimed at tower center of mass
       let ballId = nextId "sphere"
@@ -172,6 +189,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (0.0, 4.0, -6.0) (0.0, 1.0, 5.0) |> ignore
+      setDemoInfo s "Demo 04: Bowling Alley" "Launch a bowling ball head-on at a pyramid of bricks — frontal impact."
       // Pyramid placed along Z-axis so ball approaches frontally
       let brickCmds =
           [ for layer in 0..3 do
@@ -183,7 +201,11 @@ let demos = [|
                   makeBoxCmd (nextId "box") (x, y, 5.0) (0.5, 0.5, 0.5) 2.0
                   |> withColorAndMaterial (Some targetColor) None ]
       batchAdd s brickCmds
-      printfn "  Built pyramid (4 layers) at Z=5"
+      // Replace one pin position with a convex hull diamond/octahedron
+      let diamondPts = [(0.0,0.5,0.0);(0.0,-0.5,0.0);(0.3,0.0,0.0);(-0.3,0.0,0.0);(0.0,0.0,0.3);(0.0,0.0,-0.3)]
+      batchAdd s [ makeConvexHullCmd (nextId "hull") (2.0, 0.5, 5.0) diamondPts 2.0
+                   |> withColorAndMaterial (Some accentPurple) None ]
+      printfn "  Built pyramid (4 layers) + 1 convex hull pin at Z=5"
       let ballId = nextId "sphere"
       batchAdd s [ makeSphereCmd ballId (0.0, 0.5, -2.0) 0.4 10.0
                    |> withColorAndMaterial (Some projectileColor) None ]
@@ -205,6 +227,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (6.0, 10.0, 6.0) (0.0, 0.0, 0.0) |> ignore
+      setDemoInfo s "Demo 05: Marble Rain" "50 mixed shapes rain from the sky — spheres, crates, capsules, cylinders."
       let rng = System.Random(42)
       let wave1 =
           [ for i in 0 .. 19 do
@@ -258,6 +281,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (-2.0, 3.0, 6.0) (5.0, 0.5, 0.0) |> ignore
+      setDemoInfo s "Demo 06: Domino Row" "A row of 20 brick dominoes toppled by a push."
       let ids = [ for _ in 0..19 -> nextId "box" ]
       let cmds =
           [ for i in 0..19 do
@@ -267,8 +291,15 @@ let demos = [|
               makeBoxCmd ids.[i] (x, 0.3, 0.0) (0.05, 0.3, 0.15) 1.0
               |> withColorAndMaterial (Some c) None ]
       batchAdd s cmds
+      // Add 3 compound L-shaped domino pieces interspersed
+      for i in 0 .. 2 do
+        let x = float (5 + i * 6) * 0.5
+        let bx1 = Shape(); let b1 = Box(); b1.HalfExtents <- toVec3 (0.05, 0.3, 0.15); bx1.Box <- b1
+        let bx2 = Shape(); let b2 = Box(); b2.HalfExtents <- toVec3 (0.15, 0.05, 0.15); bx2.Box <- b2
+        batchAdd s [ makeCompoundCmd (nextId "compound") (x, 0.3, 0.4) [(bx1, (0.0, 0.0, 0.0)); (bx2, (0.1, -0.25, 0.0))] 1.5
+                     |> withColorAndMaterial (Some accentPurple) None ]
       let firstId = ids.[0]
-      printfn "  Placed 20 dominoes"
+      printfn "  Placed 20 dominoes + 3 compound L-shapes"
       runFor s 1.0
       printfn "  Toppling first domino..."
       push s firstId East 3.0 |> ignore
@@ -288,6 +319,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (0.0, 10.0, 8.0) (0.0, 0.5, 0.0) |> ignore
+      setDemoInfo s "Demo 07: Spinning Tops" "Six spinning objects collide in the center — angular momentum chaos."
       let radius = 2.0
       let ids =
           [ for i in 0 .. 5 do
@@ -337,6 +369,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (6.0, 5.0, 6.0) (0.0, 2.0, 0.0) |> ignore
+      setDemoInfo s "Demo 08: Gravity Flip" "Light objects under four gravity directions — up, sideways, diagonal, restored."
       let rng = System.Random(77)
       // Octahedron vertices for convex hull
       let octaPoints = [(1.0,0.0,0.0);(-1.0,0.0,0.0);(0.0,1.0,0.0);(0.0,-1.0,0.0);(0.0,0.0,1.0);(0.0,0.0,-1.0)]
@@ -401,6 +434,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (0.0, 10.0, 0.1) (0.0, 0.0, 0.0) |> ignore
+      setDemoInfo s "Demo 09: Billiards" "Cue ball breaks a triangle formation."
       let r = 0.1
       let spacing = 0.22
       let cueId = "cue"
@@ -418,7 +452,11 @@ let demos = [|
           makeSphereCmd cueId (-2.0, r, 0.0) (r * 1.1) 0.17
           |> withColorAndMaterial (Some projectileColor) (Some slipperyMaterial) ]
       batchAdd s cmds
-      printfn "  15 balls + cue placed"
+      // Add a convex hull "diamond ball" alongside the regular spheres
+      let diamondPts = [(0.0,r*1.2,0.0);(0.0,-r*1.2,0.0);(r,0.0,0.0);(-r,0.0,0.0);(0.0,0.0,r);(0.0,0.0,-r)]
+      batchAdd s [ makeConvexHullCmd (nextId "hull") (0.5, r, -1.0) diamondPts 0.17
+                   |> withColorAndMaterial (Some accentPurple) (Some slipperyMaterial) ]
+      printfn "  15 balls + cue + diamond hull placed"
       printfn "  Admiring the formation..."
       sleep 1500
       setCamera s (-3.0, 1.5, 2.0) (1.0, 0.0, 0.0) |> ignore
@@ -439,6 +477,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (12.0, 8.0, 12.0) (0.0, 2.0, 0.0) |> ignore
+      setDemoInfo s "Demo 10: Chaos Scene" "Everything: presets, generators, steering, gravity, camera sweeps — with colors and cylinders."
       printfn "  Act 1: Building the stage..."
       pyramid s 5 (Some (-4.0, 0.0, 0.0)) |> ok |> ignore
       stack s 6 (Some (4.0, 0.0, 0.0)) |> ok |> ignore
@@ -449,6 +488,18 @@ let demos = [|
               let x = float i * 3.0 - 3.0
               makeCylinderCmd (nextId "cylinder") (x, 1.0, -3.0) 0.2 2.0 10.0
               |> withColorAndMaterial (Some accentOrange) None ]
+      // Add triangle bodies and convex hulls to the mix
+      batchAdd s [
+          for i in 0..2 do
+              let x = float i * 2.5 - 2.5
+              makeTriangleCmd (nextId "triangle") (x, 3.0, 4.0) (-0.3, -0.2, -0.2) (0.3, -0.2, -0.2) (0.0, 0.3, 0.2) 1.0
+              |> withColorAndMaterial (Some kinematicColor) None ]
+      let chaosOctaPts = [(0.25,0.0,0.0);(-0.25,0.0,0.0);(0.0,0.25,0.0);(0.0,-0.25,0.0);(0.0,0.0,0.25);(0.0,0.0,-0.25)]
+      batchAdd s [
+          for i in 0..1 do
+              let x = float i * 3.0 - 1.5
+              makeConvexHullCmd (nextId "hull") (x, 4.0, -4.0) chaosOctaPts 2.0
+              |> withColorAndMaterial (Some accentPurple) None ]
       runFor s 1.5
       sleep 800
       printfn "  Act 2: Bombardment!"
@@ -495,6 +546,7 @@ let demos = [|
     Description = "Progressive body count with tight packing — collision-dense stress test."
     Run = fun s ->
       resetSimulation s
+      setDemoInfo s "Demo 11: Body Scaling" "Progressive body count with tight packing — collision-dense stress test."
       let tiers = [50; 100; 200; 500]
       for tier in tiers do
         printfn "  === Tier: %d bodies ===" tier
@@ -543,6 +595,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (8.0, 10.0, 8.0) (0.0, 2.0, 0.0) |> ignore
+      setDemoInfo s "Demo 12: Collision Pit" "Three waves of varied spheres dropped into a walled pit — maximum collision density."
       timed "Pit walls setup" (fun () ->
           let wallCmds = [
               makeBoxCmd (nextId "box") (0.0, 2.0, -2.1) (2.0, 2.0, 0.1) 0.0
@@ -619,6 +672,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (10.0, 8.0, 10.0) (0.0, 1.0, 0.0) |> ignore
+      setDemoInfo s "Demo 13: Force Frenzy" "80 tightly-packed bodies hit with 3 rounds of escalating forces — collisions everywhere."
       let ids =
           timed "Create 80 bodies" (fun () ->
               let bodyIds = [ for _ in 0 .. 79 -> nextId "sphere" ]
@@ -636,7 +690,19 @@ let demos = [|
                           |> withColorAndMaterial (Some accentPurple) (Some stickyMaterial) ]
               batchAdd s cmds
               bodyIds)
-      printfn "  80 spheres in tight 8x10 grid"
+      // Add triangle and convex hull projectiles as force targets
+      batchAdd s [
+          for i in 0..2 do
+              let x = float i * 1.5 - 1.5
+              makeTriangleCmd (nextId "triangle") (x, 0.5, 4.0) (-0.2, -0.2, -0.2) (0.2, -0.2, -0.2) (0.0, 0.2, 0.2) 0.8
+              |> withColorAndMaterial (Some kinematicColor) (Some bouncyMaterial) ]
+      let frenzyOctaPts = [(0.2,0.0,0.0);(-0.2,0.0,0.0);(0.0,0.2,0.0);(0.0,-0.2,0.0);(0.0,0.0,0.2);(0.0,0.0,-0.2)]
+      batchAdd s [
+          for i in 0..1 do
+              let x = float i * 2.0 - 1.0
+              makeConvexHullCmd (nextId "hull") (x, 0.5, -4.0) frenzyOctaPts 1.5
+              |> withColorAndMaterial (Some accentPurple) (Some stickyMaterial) ]
+      printfn "  80 spheres + 3 triangles + 2 convex hulls in tight grid"
       timed "Settle (1.5s)" (fun () -> runFor s 1.5)
       timed "Round 1 — upward impulses (3s)" (fun () ->
           batchAdd s [ for id in ids do makeImpulseCmd id (0.0, 12.0, 0.0) ]
@@ -672,6 +738,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (0.0, 12.0, 0.1) (0.0, 0.0, 0.0) |> ignore
+      setDemoInfo s "Demo 14: Domino Cascade" "120 dominoes in a semicircular path — chain reaction at scale."
       let count = 120
       let radius = 8.0
       let ids =
@@ -688,7 +755,16 @@ let demos = [|
                       |> withColorAndMaterial (Some c) None ]
               batchAdd s cmds
               dominoIds)
-      printfn "  %d dominoes in semicircle (radius %.0fm)" count radius
+      // Add compound L-shaped domino pieces at intervals along the arc
+      for i in 0 .. 2 do
+        let angle = float (20 + i * 40) / float count * System.Math.PI
+        let x = radius * cos angle + 0.3
+        let z = radius * sin angle
+        let bx1 = Shape(); let b1 = Box(); b1.HalfExtents <- toVec3 (0.05, 0.3, 0.15); bx1.Box <- b1
+        let bx2 = Shape(); let b2 = Box(); b2.HalfExtents <- toVec3 (0.15, 0.05, 0.15); bx2.Box <- b2
+        batchAdd s [ makeCompoundCmd (nextId "compound") (x, 0.3, z) [(bx1, (0.0, 0.0, 0.0)); (bx2, (0.1, -0.25, 0.0))] 1.5
+                     |> withColorAndMaterial (Some accentPurple) None ]
+      printfn "  %d dominoes + 3 compound L-shapes in semicircle (radius %.0fm)" count radius
       runFor s 1.0
       // Brief overhead view to show the full semicircle layout
       setCamera s (0.0, 14.0, 0.1) (0.0, 0.0, 0.0) |> ignore
@@ -717,6 +793,7 @@ let demos = [|
       resetSimulation s
       let totalSw = System.Diagnostics.Stopwatch.StartNew()
       setCamera s (20.0, 12.0, 20.0) (0.0, 2.0, 0.0) |> ignore
+      setDemoInfo s "Demo 15: Overload" "Everything at once: 200+ bodies, forces, gravity shifts, camera sweep — stress ceiling test."
       // Act 1: Build formations
       let pyramidIds =
           timed "Act 1 — pyramid + stack + row" (fun () ->
@@ -790,6 +867,7 @@ let demos = [|
       // Act 1: Pendulum Chain
       resetSimulation s
       setCamera s (0.0, 8.0, 10.0) (0.0, 5.0, 0.0) |> ignore
+      setDemoInfo s "Demo 16: Constraints" "Pendulum chain, hinged bridge, and weld cluster — four constraint types in action."
       printfn "  Act 1: Pendulum Chain (ball-socket + distance-limit)"
       let anchorId = nextId "box"
       batchAdd s [ makeBoxCmd anchorId (0.0, 8.0, 0.0) (0.3, 0.1, 0.1) 0.0
@@ -866,6 +944,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (8.0, 10.0, 8.0) (0.0, 2.0, 0.0) |> ignore
+      setDemoInfo s "Demo 17: Query Range" "Raycasts, overlap tests, and sweep casts — physics queries in action."
       batchAdd s [
           makeBoxCmd (nextId "box") (0.0, 2.0, -2.1) (2.0, 2.0, 0.1) 0.0 |> withColorAndMaterial (Some structureColor) None
           makeBoxCmd (nextId "box") (0.0, 2.0, 2.1)  (2.0, 2.0, 0.1) 0.0 |> withColorAndMaterial (Some structureColor) None
@@ -908,6 +987,7 @@ let demos = [|
     Run = fun s ->
       resetSimulation s
       setCamera s (10.0, 6.0, 10.0) (0.0, 1.0, 0.0) |> ignore
+      setDemoInfo s "Demo 18: Kinematic Sweep" "A kinematic bulldozer plows through dynamic bodies — scripted path meets physics."
       batchAdd s
           [ for i in 0..29 do
               let x = float (i % 6) * 0.8 - 2.0
@@ -941,5 +1021,138 @@ let demos = [|
       setCamera s (5.0, 4.0, 8.0) (0.0, 0.5, 0.0) |> ignore
       runFor s 2.0
       status s }
+
+  // Demo 19: Shape Gallery
+  { Name = "Shape Gallery"
+    Description = "All shape types displayed side-by-side — the complete physics shape catalog."
+    Run = fun s ->
+      resetSimulation s
+      setCamera s (8.0, 8.0, 15.0) (0.0, 2.0, 0.0) |> ignore
+      setDemoInfo s "Demo 19: Shape Gallery" "All shape types displayed side-by-side — the complete physics shape catalog."
+      let h = 6.0
+      // Sphere
+      batchAdd s [ makeSphereCmd (nextId "sphere") (-6.0, h, 0.0) 0.3 2.0
+                   |> withColorAndMaterial (Some projectileColor) None ]
+      // Box
+      batchAdd s [ makeBoxCmd (nextId "box") (-4.0, h, 0.0) (0.25, 0.25, 0.25) 3.0
+                   |> withColorAndMaterial (Some targetColor) None ]
+      // Capsule
+      batchAdd s [ makeCapsuleCmd (nextId "capsule") (-2.0, h, 0.0) 0.15 0.4 2.0
+                   |> withColorAndMaterial (Some accentGreen) None ]
+      // Cylinder
+      batchAdd s [ makeCylinderCmd (nextId "cylinder") (0.0, h, 0.0) 0.2 0.5 3.0
+                   |> withColorAndMaterial (Some accentOrange) None ]
+      // Triangle
+      batchAdd s [ makeTriangleCmd (nextId "triangle") (2.0, h, 0.0) (-0.3, -0.3, -0.3) (0.3, -0.3, -0.3) (0.0, 0.3, 0.3) 1.0
+                   |> withColorAndMaterial (Some kinematicColor) None ]
+      // ConvexHull (octahedron)
+      let octaPts = [(0.4,0.0,0.0);(-0.4,0.0,0.0);(0.0,0.4,0.0);(0.0,-0.4,0.0);(0.0,0.0,0.4);(0.0,0.0,-0.4)]
+      batchAdd s [ makeConvexHullCmd (nextId "hull") (4.0, h, 0.0) octaPts 2.5
+                   |> withColorAndMaterial (Some accentPurple) None ]
+      // Mesh (simple tetrahedron mesh)
+      let meshTris = [
+        ((-0.3, -0.2, -0.3), (0.3, -0.2, -0.3), (0.0, -0.2, 0.3))
+        ((-0.3, -0.2, -0.3), (0.3, -0.2, -0.3), (0.0, 0.3, 0.0))
+        ((0.3, -0.2, -0.3), (0.0, -0.2, 0.3), (0.0, 0.3, 0.0))
+        ((-0.3, -0.2, -0.3), (0.0, -0.2, 0.3), (0.0, 0.3, 0.0)) ]
+      batchAdd s [ makeMeshCmd (nextId "mesh") (6.0, h, 0.0) meshTris 2.0
+                   |> withColorAndMaterial (Some accentYellow) None ]
+      // Compound (dumbbell: two spheres offset)
+      let s1 = Shape(); let sp1 = Sphere(); sp1.Radius <- 0.15; s1.Sphere <- sp1
+      let s2 = Shape(); let sp2 = Sphere(); sp2.Radius <- 0.15; s2.Sphere <- sp2
+      batchAdd s [ makeCompoundCmd (nextId "compound") (8.0, h, 0.0) [(s1, (-0.3, 0.0, 0.0)); (s2, (0.3, 0.0, 0.0))] 3.0
+                   |> withColorAndMaterial (Some (makeColor 1.0 0.3 0.7 1.0)) None ]
+      printfn "  All shape types dropping from %.0fm — watch the variety!" h
+      runFor s 4.0
+      setCamera s (4.0, 1.5, 8.0) (1.0, 0.3, 0.0) |> ignore
+      printfn "  Ground-level view of the shape catalog"
+      runFor s 2.0
+      listBodies s }
+
+  // Demo 20: Compound Constructions
+  { Name = "Compound Constructions"
+    Description = "Complex compound shapes — L-shapes, T-shapes, dumbbells — colliding and stacking."
+    Run = fun s ->
+      resetSimulation s
+      setCamera s (6.0, 8.0, 10.0) (0.0, 2.0, 0.0) |> ignore
+      setDemoInfo s "Demo 20: Compound Constructions" "Complex compound shapes — L-shapes, T-shapes, dumbbells — colliding and stacking."
+      let h = 8.0
+      // L-shapes (box + box at right angle)
+      for i in 0 .. 4 do
+        let x = float i * 2.0 - 4.0
+        let bx1 = Shape(); let box1 = Box(); box1.HalfExtents <- toVec3 (0.4, 0.1, 0.1); bx1.Box <- box1
+        let bx2 = Shape(); let box2 = Box(); box2.HalfExtents <- toVec3 (0.1, 0.4, 0.1); bx2.Box <- box2
+        batchAdd s [ makeCompoundCmd (nextId "L-shape") (x, h + float i * 0.5, 0.0) [(bx1, (0.0, 0.0, 0.0)); (bx2, (0.3, 0.3, 0.0))] 2.0
+                     |> withColorAndMaterial (Some (makeColor 0.2 (0.4 + float i * 0.12) 0.9 1.0)) None ]
+      // T-shapes (horizontal bar + vertical stem)
+      for i in 0 .. 3 do
+        let x = float i * 2.5 - 3.5
+        let bar = Shape(); let b1 = Box(); b1.HalfExtents <- toVec3 (0.5, 0.08, 0.08); bar.Box <- b1
+        let stem = Shape(); let b2 = Box(); b2.HalfExtents <- toVec3 (0.08, 0.35, 0.08); stem.Box <- b2
+        batchAdd s [ makeCompoundCmd (nextId "T-shape") (x, h + 3.0 + float i * 0.5, 0.0) [(bar, (0.0, 0.35, 0.0)); (stem, (0.0, 0.0, 0.0))] 2.5
+                     |> withColorAndMaterial (Some (makeColor 0.9 (0.3 + float i * 0.15) 0.2 1.0)) None ]
+      // Dumbbells (two spheres connected)
+      for i in 0 .. 3 do
+        let x = float i * 2.0 - 3.0
+        let ds1 = Shape(); let dsp1 = Sphere(); dsp1.Radius <- 0.2; ds1.Sphere <- dsp1
+        let ds2 = Shape(); let dsp2 = Sphere(); dsp2.Radius <- 0.2; ds2.Sphere <- dsp2
+        batchAdd s [ makeCompoundCmd (nextId "dumbbell") (x, h + 6.0, float i * 0.3 - 0.5) [(ds1, (-0.35, 0.0, 0.0)); (ds2, (0.35, 0.0, 0.0))] 3.0
+                     |> withColorAndMaterial (Some (makeColor (float i * 0.25) 0.8 0.3 1.0)) None ]
+      printfn "  Dropping L-shapes, T-shapes, and dumbbells..."
+      runFor s 5.0
+      setCamera s (3.0, 2.0, 6.0) (0.0, 1.0, 0.0) |> ignore
+      printfn "  Closeup view of compound shape pile"
+      runFor s 2.0
+      listBodies s }
+
+  // Demo 21: Mesh & Hull Playground
+  { Name = "Mesh & Hull Playground"
+    Description = "Convex hulls and triangle meshes of varied complexity tumbling through obstacles."
+    Run = fun s ->
+      resetSimulation s
+      setCamera s (8.0, 8.0, 12.0) (0.0, 2.0, 0.0) |> ignore
+      setDemoInfo s "Demo 21: Mesh & Hull Playground" "Convex hulls and triangle meshes of varied complexity tumbling through obstacles."
+      // Static box obstacles
+      for i in 0 .. 2 do
+        let x = float i * 3.0 - 3.0
+        batchAdd s [ makeBoxCmd (nextId "obstacle") (x, 0.5, 0.0) (0.3, 0.5, 2.0) 0.0
+                     |> withColorAndMaterial (Some structureColor) None ]
+      let h = 8.0
+      // Tetrahedra (convex hulls with 4 points)
+      for i in 0 .. 4 do
+        let x = float i * 2.0 - 4.0
+        let s_val = 0.2 + float i * 0.08
+        let tetraPts = [(s_val, 0.0, 0.0); (-s_val, 0.0, 0.0); (0.0, s_val * 1.5, 0.0); (0.0, s_val * 0.5, s_val)]
+        batchAdd s [ makeConvexHullCmd (nextId "tetra") (x, h, float i * 0.2 - 0.4) tetraPts (1.0 + float i * 0.5)
+                     |> withColorAndMaterial (Some (makeColor 0.3 (0.5 + float i * 0.1) 1.0 1.0)) None ]
+      // Octahedra (6 points)
+      for i in 0 .. 3 do
+        let x = float i * 2.5 - 3.5
+        let r = 0.25 + float i * 0.05
+        let octaPts = [(r,0.0,0.0);(-r,0.0,0.0);(0.0,r,0.0);(0.0,-r,0.0);(0.0,0.0,r);(0.0,0.0,-r)]
+        batchAdd s [ makeConvexHullCmd (nextId "octa") (x, h + 2.0, 0.0) octaPts (2.0 + float i * 0.8)
+                     |> withColorAndMaterial (Some accentPurple) None ]
+      // Triangle meshes (simple pyramids)
+      for i in 0 .. 3 do
+        let x = float i * 2.5 - 3.0
+        let s_val = 0.25 + float i * 0.05
+        let meshTris = [
+          ((-s_val, 0.0, -s_val), (s_val, 0.0, -s_val), (0.0, 0.0, s_val))
+          ((-s_val, 0.0, -s_val), (s_val, 0.0, -s_val), (0.0, s_val * 1.5, 0.0))
+          ((s_val, 0.0, -s_val), (0.0, 0.0, s_val), (0.0, s_val * 1.5, 0.0))
+          ((-s_val, 0.0, -s_val), (0.0, 0.0, s_val), (0.0, s_val * 1.5, 0.0)) ]
+        batchAdd s [ makeMeshCmd (nextId "mesh") (x, h + 4.0, float i * 0.3) meshTris (1.5 + float i * 0.4)
+                     |> withColorAndMaterial (Some kinematicColor) None ]
+      // Mixed triangle bodies
+      for i in 0 .. 5 do
+        let x = float i * 1.5 - 3.5
+        batchAdd s [ makeTriangleCmd (nextId "tri") (x, h + 6.0, float i * 0.2 - 0.5) (-0.25, -0.2, -0.2) (0.25, -0.2, -0.2) (0.0, 0.25, 0.2) 0.8
+                     |> withColorAndMaterial (Some (makeColor 1.0 (float i * 0.15) 0.3 1.0)) None ]
+      printfn "  Dropping tetrahedra, octahedra, mesh pyramids, and triangles onto obstacles..."
+      runFor s 5.0
+      setCamera s (4.0, 2.0, 7.0) (0.0, 1.0, 0.0) |> ignore
+      printfn "  Closeup of custom geometry shapes at rest"
+      runFor s 2.0
+      listBodies s }
 
 |]

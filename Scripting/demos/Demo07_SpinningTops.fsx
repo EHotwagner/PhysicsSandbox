@@ -19,6 +19,7 @@ module Demo07 =
 
         // Camera: top-down angled view
         setCamera s (0.0, 10.0, 8.0) (0.0, 0.5, 0.0) |> ignore
+        setDemoInfo s "Demo 07: Spinning Tops" "Spinning top physics — angular momentum and precession."
 
         // Place 6 objects in a ring (radius 2m), alternating spheres and boxes
         let radius = 2.0

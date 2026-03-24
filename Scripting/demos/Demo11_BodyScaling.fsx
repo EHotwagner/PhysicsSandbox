@@ -17,6 +17,7 @@ module Demo11 =
 
     let run (s: Session) =
         resetSimulation s
+        setDemoInfo s "Demo 11: Body Scaling" "Bodies with variable mass and scale — watch the heavy ones dominate."
         let tiers = [50; 100; 200; 500]
         for tier in tiers do
             printfn "  === Tier: %d bodies ===" tier

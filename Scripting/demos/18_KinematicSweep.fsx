@@ -13,6 +13,7 @@ let run (s: Session) =
     // 1. Reset and set camera
     resetSimulation s
     setCamera s (10.0, 6.0, 10.0) (0.0, 1.0, 0.0) |> ignore
+    setDemoInfo s "Demo 18: Kinematic Sweep" "Kinematic bulldozer plows through dynamic spheres."
     printfn "  Setting up kinematic sweep demo..."
 
     // 2. Place 30 small dynamic spheres in a 6x5 grid

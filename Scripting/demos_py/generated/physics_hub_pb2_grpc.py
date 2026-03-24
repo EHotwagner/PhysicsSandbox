@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from . import physics_hub_pb2 as physics__hub__pb2
+import physics_hub_pb2 as physics__hub__pb2
 
 GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
@@ -49,7 +49,12 @@ class PhysicsHubStub(object):
         self.StreamState = channel.unary_stream(
                 '/physics_sandbox.PhysicsHub/StreamState',
                 request_serializer=physics__hub__pb2.StateRequest.SerializeToString,
-                response_deserializer=physics__hub__pb2.SimulationState.FromString,
+                response_deserializer=physics__hub__pb2.TickState.FromString,
+                _registered_method=True)
+        self.StreamProperties = channel.unary_stream(
+                '/physics_sandbox.PhysicsHub/StreamProperties',
+                request_serializer=physics__hub__pb2.StateRequest.SerializeToString,
+                response_deserializer=physics__hub__pb2.PropertyEvent.FromString,
                 _registered_method=True)
         self.StreamViewCommands = channel.unary_stream(
                 '/physics_sandbox.PhysicsHub/StreamViewCommands',
@@ -76,6 +81,41 @@ class PhysicsHubStub(object):
                 request_serializer=physics__hub__pb2.MetricsRequest.SerializeToString,
                 response_deserializer=physics__hub__pb2.MetricsResponse.FromString,
                 _registered_method=True)
+        self.FetchMeshes = channel.unary_unary(
+                '/physics_sandbox.PhysicsHub/FetchMeshes',
+                request_serializer=physics__hub__pb2.MeshRequest.SerializeToString,
+                response_deserializer=physics__hub__pb2.MeshResponse.FromString,
+                _registered_method=True)
+        self.Raycast = channel.unary_unary(
+                '/physics_sandbox.PhysicsHub/Raycast',
+                request_serializer=physics__hub__pb2.RaycastRequest.SerializeToString,
+                response_deserializer=physics__hub__pb2.RaycastResponse.FromString,
+                _registered_method=True)
+        self.RaycastBatch = channel.unary_unary(
+                '/physics_sandbox.PhysicsHub/RaycastBatch',
+                request_serializer=physics__hub__pb2.RaycastBatchRequest.SerializeToString,
+                response_deserializer=physics__hub__pb2.RaycastBatchResponse.FromString,
+                _registered_method=True)
+        self.SweepCast = channel.unary_unary(
+                '/physics_sandbox.PhysicsHub/SweepCast',
+                request_serializer=physics__hub__pb2.SweepCastRequest.SerializeToString,
+                response_deserializer=physics__hub__pb2.SweepCastResponse.FromString,
+                _registered_method=True)
+        self.SweepCastBatch = channel.unary_unary(
+                '/physics_sandbox.PhysicsHub/SweepCastBatch',
+                request_serializer=physics__hub__pb2.SweepCastBatchRequest.SerializeToString,
+                response_deserializer=physics__hub__pb2.SweepCastBatchResponse.FromString,
+                _registered_method=True)
+        self.Overlap = channel.unary_unary(
+                '/physics_sandbox.PhysicsHub/Overlap',
+                request_serializer=physics__hub__pb2.OverlapRequest.SerializeToString,
+                response_deserializer=physics__hub__pb2.OverlapResponse.FromString,
+                _registered_method=True)
+        self.OverlapBatch = channel.unary_unary(
+                '/physics_sandbox.PhysicsHub/OverlapBatch',
+                request_serializer=physics__hub__pb2.OverlapBatchRequest.SerializeToString,
+                response_deserializer=physics__hub__pb2.OverlapBatchResponse.FromString,
+                _registered_method=True)
 
 
 class PhysicsHubServicer(object):
@@ -98,8 +138,18 @@ class PhysicsHubServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def StreamState(self, request, context):
-        """Client/Viewer subscribes to simulation state updates.
-        Late joiners receive the most recent cached state as the first message.
+        """Client/Viewer subscribes to lean tick-rate pose updates (60 Hz).
+        Contains only dynamic body poses + simulation metadata.
+        Late joiners receive the most recent cached tick as the first message.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def StreamProperties(self, request, context):
+        """Client/Viewer subscribes to semi-static property events (on-change).
+        Late joiners receive a PropertySnapshot backfill as the first message.
+        Delivers body lifecycle (created/removed/updated), constraint/shape snapshots, mesh definitions.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -142,6 +192,50 @@ class PhysicsHubServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def FetchMeshes(self, request, context):
+        """Mesh cache: on-demand geometry fetch (separate from state stream)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Raycast(self, request, context):
+        """Physics queries
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RaycastBatch(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SweepCast(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SweepCastBatch(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Overlap(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def OverlapBatch(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_PhysicsHubServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -158,7 +252,12 @@ def add_PhysicsHubServicer_to_server(servicer, server):
             'StreamState': grpc.unary_stream_rpc_method_handler(
                     servicer.StreamState,
                     request_deserializer=physics__hub__pb2.StateRequest.FromString,
-                    response_serializer=physics__hub__pb2.SimulationState.SerializeToString,
+                    response_serializer=physics__hub__pb2.TickState.SerializeToString,
+            ),
+            'StreamProperties': grpc.unary_stream_rpc_method_handler(
+                    servicer.StreamProperties,
+                    request_deserializer=physics__hub__pb2.StateRequest.FromString,
+                    response_serializer=physics__hub__pb2.PropertyEvent.SerializeToString,
             ),
             'StreamViewCommands': grpc.unary_stream_rpc_method_handler(
                     servicer.StreamViewCommands,
@@ -184,6 +283,41 @@ def add_PhysicsHubServicer_to_server(servicer, server):
                     servicer.GetMetrics,
                     request_deserializer=physics__hub__pb2.MetricsRequest.FromString,
                     response_serializer=physics__hub__pb2.MetricsResponse.SerializeToString,
+            ),
+            'FetchMeshes': grpc.unary_unary_rpc_method_handler(
+                    servicer.FetchMeshes,
+                    request_deserializer=physics__hub__pb2.MeshRequest.FromString,
+                    response_serializer=physics__hub__pb2.MeshResponse.SerializeToString,
+            ),
+            'Raycast': grpc.unary_unary_rpc_method_handler(
+                    servicer.Raycast,
+                    request_deserializer=physics__hub__pb2.RaycastRequest.FromString,
+                    response_serializer=physics__hub__pb2.RaycastResponse.SerializeToString,
+            ),
+            'RaycastBatch': grpc.unary_unary_rpc_method_handler(
+                    servicer.RaycastBatch,
+                    request_deserializer=physics__hub__pb2.RaycastBatchRequest.FromString,
+                    response_serializer=physics__hub__pb2.RaycastBatchResponse.SerializeToString,
+            ),
+            'SweepCast': grpc.unary_unary_rpc_method_handler(
+                    servicer.SweepCast,
+                    request_deserializer=physics__hub__pb2.SweepCastRequest.FromString,
+                    response_serializer=physics__hub__pb2.SweepCastResponse.SerializeToString,
+            ),
+            'SweepCastBatch': grpc.unary_unary_rpc_method_handler(
+                    servicer.SweepCastBatch,
+                    request_deserializer=physics__hub__pb2.SweepCastBatchRequest.FromString,
+                    response_serializer=physics__hub__pb2.SweepCastBatchResponse.SerializeToString,
+            ),
+            'Overlap': grpc.unary_unary_rpc_method_handler(
+                    servicer.Overlap,
+                    request_deserializer=physics__hub__pb2.OverlapRequest.FromString,
+                    response_serializer=physics__hub__pb2.OverlapResponse.SerializeToString,
+            ),
+            'OverlapBatch': grpc.unary_unary_rpc_method_handler(
+                    servicer.OverlapBatch,
+                    request_deserializer=physics__hub__pb2.OverlapBatchRequest.FromString,
+                    response_serializer=physics__hub__pb2.OverlapBatchResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -268,7 +402,34 @@ class PhysicsHub(object):
             target,
             '/physics_sandbox.PhysicsHub/StreamState',
             physics__hub__pb2.StateRequest.SerializeToString,
-            physics__hub__pb2.SimulationState.FromString,
+            physics__hub__pb2.TickState.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def StreamProperties(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/physics_sandbox.PhysicsHub/StreamProperties',
+            physics__hub__pb2.StateRequest.SerializeToString,
+            physics__hub__pb2.PropertyEvent.FromString,
             options,
             channel_credentials,
             insecure,
@@ -404,6 +565,195 @@ class PhysicsHub(object):
             '/physics_sandbox.PhysicsHub/GetMetrics',
             physics__hub__pb2.MetricsRequest.SerializeToString,
             physics__hub__pb2.MetricsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def FetchMeshes(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/physics_sandbox.PhysicsHub/FetchMeshes',
+            physics__hub__pb2.MeshRequest.SerializeToString,
+            physics__hub__pb2.MeshResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Raycast(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/physics_sandbox.PhysicsHub/Raycast',
+            physics__hub__pb2.RaycastRequest.SerializeToString,
+            physics__hub__pb2.RaycastResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RaycastBatch(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/physics_sandbox.PhysicsHub/RaycastBatch',
+            physics__hub__pb2.RaycastBatchRequest.SerializeToString,
+            physics__hub__pb2.RaycastBatchResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SweepCast(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/physics_sandbox.PhysicsHub/SweepCast',
+            physics__hub__pb2.SweepCastRequest.SerializeToString,
+            physics__hub__pb2.SweepCastResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SweepCastBatch(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/physics_sandbox.PhysicsHub/SweepCastBatch',
+            physics__hub__pb2.SweepCastBatchRequest.SerializeToString,
+            physics__hub__pb2.SweepCastBatchResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Overlap(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/physics_sandbox.PhysicsHub/Overlap',
+            physics__hub__pb2.OverlapRequest.SerializeToString,
+            physics__hub__pb2.OverlapResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def OverlapBatch(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/physics_sandbox.PhysicsHub/OverlapBatch',
+            physics__hub__pb2.OverlapBatchRequest.SerializeToString,
+            physics__hub__pb2.OverlapBatchResponse.FromString,
             options,
             channel_credentials,
             insecure,

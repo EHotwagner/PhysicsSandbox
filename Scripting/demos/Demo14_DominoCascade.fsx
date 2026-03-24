@@ -20,6 +20,7 @@ module Demo14 =
         resetSimulation s
         // Elevated angle showing the full semicircle
         setCamera s (0.0, 10.0, -12.0) (0.0, 0.0, 3.0) |> ignore
+        setDemoInfo s "Demo 14: Domino Cascade" "Extended domino cascade — longer chain with more complex patterns."
         let count = 120
         let radius = 8.0
         let ids =

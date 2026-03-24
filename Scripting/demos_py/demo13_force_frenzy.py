@@ -10,6 +10,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     set_gravity,
     status,
     timed,
@@ -22,6 +23,7 @@ description = "80 tightly-packed bodies hit with 3 rounds of escalating forces â
 def run(session):
     reset_simulation(session)
     set_camera(session, (10.0, 8.0, 10.0), (0.0, 1.0, 0.0))
+    set_demo_info(session, "Demo 13: Force Frenzy", "Force application stress.")
 
     # Tight 8x10 grid (0.7m spacing)
     with timed("Create 80 bodies"):

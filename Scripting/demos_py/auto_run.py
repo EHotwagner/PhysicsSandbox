@@ -1,4 +1,4 @@
-"""Automated demo runner — runs all 15 demos with pass/fail summary.
+"""Automated demo runner — runs all 18 demos with pass/fail summary.
 
 Usage: python -m Scripting.demos_py.auto_run [server-address]
 """

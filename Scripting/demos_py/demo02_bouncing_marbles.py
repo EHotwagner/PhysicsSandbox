@@ -11,6 +11,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     sleep,
 )
 
@@ -23,6 +24,7 @@ def run(session):
 
     # Camera: elevated overview of the drop zone
     set_camera(session, (5.0, 8.0, 5.0), (0.0, 1.0, 0.0))
+    set_demo_info(session, "Demo 02: Bouncing Marbles", "Two waves of 75 marbles rain down.")
 
     # Wave 1: 15 marbles with varied sizes across a 2D spread
     rng = Random(42)

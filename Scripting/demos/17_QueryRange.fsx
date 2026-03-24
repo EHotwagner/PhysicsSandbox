@@ -10,6 +10,7 @@ open PhysicsClient.ViewCommands
 let run (s: Session) =
     resetSimulation s
     setCamera s (10.0, 8.0, 10.0) (0.0, 2.0, 0.0) |> ignore
+    setDemoInfo s "Demo 17: Query Range" "Raycasts, overlap tests, and sweep casts with varied geometry."
 
     // Build walled pit (4 static walls)
     let wallThickness = 0.25

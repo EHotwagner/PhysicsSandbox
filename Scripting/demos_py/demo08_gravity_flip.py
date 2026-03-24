@@ -12,6 +12,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     set_gravity,
 )
 
@@ -23,6 +24,7 @@ def run(session):
     reset_simulation(session)
 
     set_camera(session, (6.0, 5.0, 6.0), (0.0, 2.0, 0.0))
+    set_demo_info(session, "Demo 08: Gravity Flip", "Gravity reversal — objects fly up.")
 
     # Mix of light objects: beach balls, dice, and small marbles
     rng = Random(77)

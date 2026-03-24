@@ -22,6 +22,7 @@ module Demo10 =
 
         // Act 1: Build the stage
         setCamera s (12.0, 8.0, 12.0) (0.0, 2.0, 0.0) |> ignore
+        setDemoInfo s "Demo 10: Chaos" "Large-scale chaotic system — many bodies with random forces."
         printfn "  Act 1: Building the stage..."
 
         // Pyramid on the left

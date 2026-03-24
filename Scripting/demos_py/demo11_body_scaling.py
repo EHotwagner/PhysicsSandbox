@@ -12,6 +12,7 @@ from Scripting.demos_py.prelude import (
     run_for,
     run_standalone,
     set_camera,
+    set_demo_info,
     status,
     timed,
 )
@@ -22,6 +23,8 @@ description = "Progressive body count with tight packing — collision-dense str
 
 def run(session):
     reset_simulation(session)
+    set_camera(session, (10.0, 6.0, 10.0), (0.0, 2.0, 0.0))
+    set_demo_info(session, "Demo 11: Body Scaling", "Variable mass and scale bodies.")
     tiers = [50, 100, 200, 500]
     for tier in tiers:
         print(f"  === Tier: {tier} bodies ===")

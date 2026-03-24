@@ -37,3 +37,15 @@ let wireframe (session: Session) (enabled: bool) : Result<unit, string> =
     let cmd = ViewCommand()
     cmd.ToggleWireframe <- tw
     sendViewCommand session cmd
+
+/// <summary>Sets demo metadata (name and description) displayed as an overlay in the 3D viewer.</summary>
+/// <param name="session">The active server session.</param>
+/// <param name="name">Short demo name (e.g., "Hello Drop").</param>
+/// <param name="description">One-line demo description.</param>
+let setDemoMetadata (session: Session) (name: string) (description: string) : Result<unit, string> =
+    let dm = SetDemoMetadata()
+    dm.Name <- name
+    dm.Description <- description
+    let cmd = ViewCommand()
+    cmd.SetDemoMetadata <- dm
+    sendViewCommand session cmd

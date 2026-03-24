@@ -57,6 +57,7 @@ let run (s: Session) =
     // 5 spheres linked by ball-socket + distance-limit constraints
     printfn "  Act 1: Pendulum Chain"
     setCamera s (0.0, 8.0, 10.0) (0.0, 5.0, 0.0) |> ignore
+    setDemoInfo s "Demo 16: Constraints" "Pendulum chains, hinged bridges, and welded structures."
 
     // Static anchor at the top
     let anchorId = nextId "box"

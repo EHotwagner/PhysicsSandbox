@@ -142,7 +142,13 @@ message ViewCommand {
     SetCamera set_camera = 1;
     ToggleWireframe toggle_wireframe = 2;
     SetZoom set_zoom = 3;
+    SetDemoMetadata set_demo_metadata = 4;
   }
+}
+
+message SetDemoMetadata {
+  string name = 1;
+  string description = 2;
 }
 
 message SetCamera {

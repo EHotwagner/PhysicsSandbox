@@ -40,6 +40,8 @@ Last updated: 2026-03-24
 - N/A (in-memory ConcurrentDictionary for pending queries) (004-backlog-fix-test-progress)
 - F# on .NET 10.0 (PhysicsViewer) + Stride.CommunityToolkit 1.0.0-preview.62 (existing), MIConvexHull (new, convex hull face computation) (004-proper-shape-rendering)
 - N/A (in-memory rendering only) (004-proper-shape-rendering)
+- F# on .NET 10.0 (services, viewer, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts), Python 3.10+ (demo scripts) + Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, Stride.CommunityToolkit 1.0.0-preview.62, Spectre.Console, grpcio (Python) (004-enhance-demos-shapes)
+- N/A (in-memory only, no persistence changes) (004-enhance-demos-shapes)
 
 ## Project Structure
 
@@ -102,9 +104,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 004-enhance-demos-shapes: Added F# on .NET 10.0 (services, viewer, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts), Python 3.10+ (demo scripts) + Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, Stride.CommunityToolkit 1.0.0-preview.62, Spectre.Console, grpcio (Python)
 - 004-proper-shape-rendering: Added F# on .NET 10.0 (PhysicsViewer) + Stride.CommunityToolkit 1.0.0-preview.62 (existing), MIConvexHull (new, convex hull face computation)
 - 004-backlog-fix-test-progress: Test progress script (test-progress.sh) with per-project progress, ETA, failure reporting. Fixed 10 silent TryAdd/TryRemove failures (6 → Result.Error, 1 clearAll → Trace.TraceWarning, 3 cache → Trace.TraceWarning). Pending query expiration (30s timeout, 10s sweep). 6 new constraint builders completing all 10 types. Shared test helpers (F# SharedTestHelpers.fs, C# IntegrationTestHelpers.cs). 77 tasks, 17 new tests.
-- 004-state-stream-optimization: Split SimulationState into lean TickState (pose-only, dynamic bodies) + PropertyEvent stream (semi-static on change/backfill). StreamProperties RPC, ExcludeVelocity opt-out, constraints/shapes via property channel. ~69% bandwidth reduction at 200 bodies. 108/109 tasks, 306+ unit tests, 12 integration tests.
 
 ## Environment
 
