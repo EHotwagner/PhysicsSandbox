@@ -1,4 +1,4 @@
-// AllDemos.fsx — All 22 demos (15 original + 3 constraint/query/kinematic + 3 shape demos + camera showcase)
+// AllDemos.fsx — All 24 demos (15 original + 3 constraint/query/kinematic + 3 shape demos + camera showcase + 2 mesh terrain)
 // Loaded by RunAll.fsx and AutoRun.fsx
 
 #load "Prelude.fsx"
@@ -1279,5 +1279,166 @@ let demos = [|
       pause s |> ignore
       clearNarration s
       printfn "  Camera showcase complete" }
+
+  // ─── Demo 23: Ball Rollercoaster ──────────────────────────────────────
+  { Name = "Ball Rollercoaster"
+    Description = "Balls roll down a mesh terrain with drops, hills, and banked curves."
+    Run = fun s ->
+      let pi = System.Math.PI
+      let terrainHeight (x: float) (z: float) =
+          let t = (z + 15.0) / 30.0 |> max 0.0 |> min 1.0
+          let baseY =
+              if t < 0.1 then 8.0
+              elif t < 0.25 then 8.0 - (t - 0.1) / 0.15 * 6.0
+              elif t < 0.45 then 2.0 + 3.0 * sin((t - 0.25) / 0.20 * pi)
+              elif t < 0.65 then 2.0 - (t - 0.45) * 3.0
+              elif t < 0.85 then 0.8 + 2.0 * sin((t - 0.65) / 0.20 * pi)
+              else 0.8 - (t - 0.85) / 0.15 * 0.3
+          let edgeLift = 0.3 * (x * x) / 4.0
+          let bank =
+              if t > 0.35 && t < 0.55 then 0.3 * sin((t - 0.35) / 0.20 * pi) * x / 3.0
+              else 0.0
+          baseY + edgeLift + bank
+      let xMin, xMax = -3.0, 3.0
+      let zMin, zMax = -15.0, 15.0
+      let xSteps = 4
+      let zSteps = 15
+      let dx = (xMax - xMin) / float xSteps
+      let dz = (zMax - zMin) / float zSteps
+      let mutable tris = []
+      for zi in 0 .. zSteps - 1 do
+          for xi in 0 .. xSteps - 1 do
+              let x0 = xMin + float xi * dx
+              let x1 = x0 + dx
+              let z0 = zMin + float zi * dz
+              let z1 = z0 + dz
+              let p00 = (x0, terrainHeight x0 z0, z0)
+              let p10 = (x1, terrainHeight x1 z0, z0)
+              let p01 = (x0, terrainHeight x0 z1, z1)
+              let p11 = (x1, terrainHeight x1 z1, z1)
+              tris <- (p00, p10, p01) :: (p10, p11, p01) :: tris
+      let trackTris = tris |> List.rev
+
+      resetSimulation s
+      setDemoInfo s "Demo 23: Ball Rollercoaster" "Balls roll down a mesh terrain with drops, hills, and banked curves."
+      setNarration s "Building rollercoaster terrain..."
+      smoothCamera s (8.0, 14.0, -10.0) (0.0, 4.0, 0.0) 1.5
+      sleep 1700
+      batchAdd s [ makeMeshCmd (nextId "track") (0.0, 0.0, 0.0) trackTris 0.0
+                   |> withMotionType BodyMotionType.Static
+                   |> withColorAndMaterial (Some accentYellow) (Some slipperyMaterial) ]
+      sleep 500
+      setNarration s "Releasing balls at the top!"
+      smoothCamera s (4.0, 10.0, -16.0) (0.0, 8.0, -13.0) 1.5
+      sleep 1700
+      let ballColors = [| projectileColor; accentGreen; targetColor; accentOrange; accentPurple; kinematicColor |]
+      let ballCmds =
+          [ for i in 0 .. 5 ->
+              makeSphereCmd (nextId "ball") (0.0, 9.0, -14.5 + float i * 0.6) 0.3 2.0
+              |> withColorAndMaterial (Some ballColors.[i]) None ]
+      batchAdd s ballCmds
+      setNarration s "Steep drop — balls accelerating!"
+      play s |> ignore
+      smoothCamera s (5.0, 7.0, -8.0) (0.0, 3.0, -3.0) 2.0
+      sleep 3500
+      setNarration s "Over the hill!"
+      smoothCamera s (-5.0, 7.0, 0.0) (0.0, 3.0, 3.0) 2.0
+      sleep 3000
+      setNarration s "Banked descent"
+      smoothCamera s (-6.0, 5.0, 6.0) (0.0, 1.5, 9.0) 2.0
+      sleep 3000
+      setNarration s "Second hill and run-out"
+      smoothCamera s (5.0, 5.0, 10.0) (0.0, 1.5, 14.0) 2.0
+      sleep 3000
+      setNarration s "Full terrain overview"
+      smoothCamera s (12.0, 14.0, 0.0) (0.0, 3.0, 0.0) 2.0
+      sleep 2500
+      pause s |> ignore
+      clearNarration s
+      printfn "  Rollercoaster demo complete!" }
+
+  // ─── Demo 24: Halfpipe Arena ──────────────────────────────────────────
+  { Name = "Halfpipe Arena"
+    Description = "Objects oscillate in a halfpipe bowl built from mesh triangles."
+    Run = fun s ->
+      let pipeHeight (x: float) (z: float) =
+          let radius = 3.5
+          let ax = abs x |> min radius
+          let baseY = radius - sqrt(radius * radius - ax * ax)
+          let zEdge = (abs z - 5.0) |> max 0.0
+          let capLift = zEdge * zEdge * 0.15
+          baseY + capLift
+      let xMin, xMax = -4.0, 4.0
+      let zMin, zMax = -8.0, 8.0
+      let xSteps = 6
+      let zSteps = 8
+      let dx = (xMax - xMin) / float xSteps
+      let dz = (zMax - zMin) / float zSteps
+      let mutable tris = []
+      for zi in 0 .. zSteps - 1 do
+          for xi in 0 .. xSteps - 1 do
+              let x0 = xMin + float xi * dx
+              let x1 = x0 + dx
+              let z0 = zMin + float zi * dz
+              let z1 = z0 + dz
+              let p00 = (x0, pipeHeight x0 z0, z0)
+              let p10 = (x1, pipeHeight x1 z0, z0)
+              let p01 = (x0, pipeHeight x0 z1, z1)
+              let p11 = (x1, pipeHeight x1 z1, z1)
+              tris <- (p00, p10, p01) :: (p10, p11, p01) :: tris
+      let pipeTris = tris |> List.rev
+      let halfpipeMat = makeMaterialProperties 0.3 4.0 30.0 0.8
+
+      resetSimulation s
+      setDemoInfo s "Demo 24: Halfpipe Arena" "Objects oscillate in a halfpipe bowl built from mesh triangles."
+      setNarration s "Building halfpipe arena..."
+      smoothCamera s (0.0, 12.0, 14.0) (0.0, 1.0, 0.0) 1.5
+      sleep 1700
+      batchAdd s [ makeMeshCmd (nextId "halfpipe") (0.0, 0.0, 0.0) pipeTris 0.0
+                   |> withMotionType BodyMotionType.Static
+                   |> withColorAndMaterial (Some accentYellow) (Some halfpipeMat) ]
+      sleep 500
+      setNarration s "Dropping balls into the halfpipe!"
+      smoothCamera s (0.0, 6.0, -14.0) (0.0, 1.0, 0.0) 1.5
+      sleep 1700
+      let ballColors = [| projectileColor; accentGreen; targetColor; accentOrange; accentPurple; kinematicColor |]
+      let ballCmds =
+          [ for i in 0 .. 5 ->
+              let x = (float i - 2.5) * 0.5
+              let z = (float i - 2.5) * 1.5
+              makeSphereCmd (nextId "ball") (x, 5.0, z) 0.35 2.5
+              |> withColorAndMaterial (Some ballColors.[i]) None ]
+      batchAdd s ballCmds
+      let capCmds =
+          [ for i in 0 .. 1 ->
+              makeCapsuleCmd (nextId "capsule") (0.0, 6.0, float i * 3.0 - 1.5) 0.25 0.7 3.0
+              |> withColorAndMaterial (Some accentPurple) None ]
+      batchAdd s capCmds
+      setNarration s "Objects falling into the bowl!"
+      play s |> ignore
+      smoothCamera s (0.0, 10.0, 12.0) (0.0, 1.0, 0.0) 2.0
+      sleep 4000
+      setNarration s "Oscillation — rolling back and forth"
+      smoothCamera s (10.0, 5.0, 0.0) (0.0, 1.5, 0.0) 2.0
+      sleep 4000
+      setNarration s "Looking down the halfpipe"
+      smoothCamera s (0.0, 5.0, -14.0) (0.0, 1.0, 0.0) 2.0
+      sleep 3500
+      setNarration s "Objects settling at the bottom"
+      smoothCamera s (0.0, 8.0, 5.0) (0.0, 0.5, 0.0) 2.0
+      sleep 3500
+      setNarration s "Second wave incoming!"
+      let wave2 =
+          [ for i in 0 .. 2 ->
+              makeSphereCmd (nextId "ball") (float i - 1.0, 6.0, float i * 2.0 - 2.0) 0.4 3.0
+              |> withColorAndMaterial (Some accentGreen) None ]
+      batchAdd s wave2
+      sleep 3000
+      setNarration s "Wide view — halfpipe arena"
+      smoothCamera s (10.0, 10.0, 10.0) (0.0, 2.0, 0.0) 2.0
+      sleep 2500
+      pause s |> ignore
+      clearNarration s
+      printfn "  Halfpipe arena demo complete!" }
 
 |]

@@ -1,6 +1,6 @@
 # PhysicsSandbox Development Guidelines
 
-Last updated: 2026-03-24
+Last updated: 2026-03-25
 
 ## Active Technologies
 - F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts)
@@ -48,6 +48,7 @@ Last updated: 2026-03-24
 - N/A (in-memory channel/subscriber state only) (005-robust-network-connectivity)
 - F# on .NET 10.0 (PhysicsSimulation), C# on .NET 10.0 (integration tests) + BepuFSharp 0.2.0-beta.1 → 0.3.0 (local NuGet at `~/.local/share/nuget-local/`). Transitive: BepuPhysics 2.5.0-beta.28 (unchanged), BepuUtilities 2.5.0-beta.28 (unchanged), FSharp.Core 10.0.104 (unchanged) (004-upgrade-bepufsharp)
 - N/A (no storage changes) (004-upgrade-bepufsharp)
+- F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient 0.4.0 (NuGet, F#), PhysicsSandbox.Shared.Contracts 0.4.0 (proto types), grpcio + protobuf (Python) (004-mesh-terrain-demos)
 
 ## Project Structure
 
@@ -110,9 +111,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 004-mesh-terrain-demos: Added F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient 0.4.0 (NuGet, F#), PhysicsSandbox.Shared.Contracts 0.4.0 (proto types), grpcio + protobuf (Python)
 - 004-upgrade-bepufsharp: Added F# on .NET 10.0 (PhysicsSimulation), C# on .NET 10.0 (integration tests) + BepuFSharp 0.2.0-beta.1 → 0.3.0 (local NuGet at `~/.local/share/nuget-local/`). Transitive: BepuPhysics 2.5.0-beta.28 (unchanged), BepuUtilities 2.5.0-beta.28 (unchanged), FSharp.Core 10.0.104 (unchanged)
 - 005-robust-network-connectivity: ViewCommand broadcast (ConcurrentDictionary subscriber pattern), MCP SSE endpoint fix (isProxied=false), NetworkProblems.md consolidation, container environment docs
-- 004-camera-smooth-demos: 9 new ViewCommand proto messages (SmoothCamera, CameraLookAt, CameraFollow, CameraOrbit, CameraChase, CameraFrameBodies, CameraShake, CameraStop, SetNarration), CameraMode DU state machine with smoothstep interpolation, 6 body-relative camera modes, narration overlay at (10,50), 10 new client functions, 10 F#/Python scripting helpers, Demo22 Camera Showcase, all 42 demos enhanced with cinematic camera + narration
 
 ## Environment
 

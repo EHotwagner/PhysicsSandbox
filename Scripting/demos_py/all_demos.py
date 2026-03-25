@@ -1,4 +1,4 @@
-"""All 18 demos (15 original + 3 new shape demos) registered as (name, description, run) tuples."""
+"""All 20 demos (15 original + 3 new shape demos + 2 mesh terrain) registered as (name, description, run) tuples."""
 
 from Scripting.demos_py.demo01_hello_drop import name as n01, description as d01, run as r01
 from Scripting.demos_py.demo02_bouncing_marbles import name as n02, description as d02, run as r02
@@ -19,6 +19,8 @@ from Scripting.demos_py.demo19_shape_gallery import name as n19, description as 
 from Scripting.demos_py.demo20_compound_constructions import name as n20, description as d20, run as r20
 from Scripting.demos_py.demo21_mesh_hull_playground import name as n21, description as d21, run as r21
 from Scripting.demos_py.demo22_camera_showcase import name as n22, description as d22, run as r22
+from Scripting.demos_py.demo23_ball_rollercoaster import name as n23, description as d23, run as r23
+from Scripting.demos_py.demo24_halfpipe_arena import name as n24, description as d24, run as r24
 
 demos = [
     (n01, d01, r01),
@@ -40,4 +42,6 @@ demos = [
     (n20, d20, r20),
     (n21, d21, r21),
     (n22, d22, r22),
+    (n23, d23, r23),
+    (n24, d24, r24),
 ]
