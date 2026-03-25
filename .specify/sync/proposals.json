@@ -1,32 +1,12 @@
 {
-  "generated": "2026-03-23T00:00:00Z",
-  "based_on": "drift-report from 2026-03-23",
-  "feature": "004-backlog-fix-test-progress",
+  "generated": "2026-03-25T12:35:00Z",
+  "based_on": "drift-report from 2026-03-25",
   "summary": {
-    "backfill": 1,
+    "backfill": 0,
     "align": 0,
     "human_decision": 0,
     "new_specs": 0,
     "remove_from_spec": 0
   },
-  "proposals": [
-    {
-      "id": 1,
-      "spec_id": "004-backlog-fix-test-progress",
-      "requirement": "FR-004a",
-      "title": "clearAll registry warning",
-      "direction": "BACKFILL",
-      "confidence": "HIGH",
-      "spec_text": "All 7 body registry TryAdd/TryRemove in SimulationCommands return Result.Error",
-      "actual_behavior": "6/7 return Result.Error. clearAll silently counts TryRemove failures and returns Ok count.",
-      "proposed_spec_change": "FR-004a: 6 single-body operations return Result.Error. clearAll bulk operation emits Trace.TraceWarning for registry cleanup failures but returns Ok.",
-      "proposed_code_change": "Add Trace.TraceWarning to clearAll TryRemove failure path (SimulationCommands.fs:307-308)",
-      "rationale": "Server-side removal succeeds; local registry TryRemove failure is a cache inconsistency, not a command failure. Consistent with FR-004b cache warning pattern.",
-      "affected_files": [
-        "specs/004-backlog-fix-test-progress/spec.md",
-        "src/PhysicsClient/Commands/SimulationCommands.fs"
-      ],
-      "status": "applied"
-    }
-  ]
+  "proposals": []
 }

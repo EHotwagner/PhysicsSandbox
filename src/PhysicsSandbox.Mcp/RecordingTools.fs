@@ -1,5 +1,6 @@
 module PhysicsSandbox.Mcp.RecordingTools
 
+open System
 open System.ComponentModel
 open System.Text
 open ModelContextProtocol.Server
@@ -50,12 +51,15 @@ type RecordingTools() =
     [<Description("Start a new recording session. If one is already active, it will be stopped first.")>]
     static member start_recording
         ( engine: RecordingEngine,
-          [<Description("Descriptive label for the session")>] ?label: string,
-          [<Description("Rolling time window in minutes (default 10)")>] ?time_limit_minutes: int,
-          [<Description("Maximum storage in MB (default 500)")>] ?size_limit_mb: int ) : string =
+          [<Description("Descriptive label for the session. Default: auto-generated timestamp label.")>] label: string,
+          [<Description("Rolling time window in minutes. Default: 10.")>] time_limit_minutes: Nullable<int>,
+          [<Description("Maximum storage in MB. Default: 500.")>] size_limit_mb: Nullable<int> ) : string =
         let wasRecording = engine.IsRecording
-        let sizeLimitBytes = (defaultArg size_limit_mb 500) |> int64 |> (*) 1_000_000L
-        engine.Start(?label = label, ?timeLimitMinutes = time_limit_minutes, ?sizeLimitBytes = Some sizeLimitBytes)
+        let sizeVal = if size_limit_mb.HasValue then size_limit_mb.Value else 500
+        let sizeLimitBytes = sizeVal |> int64 |> (*) 1_000_000L
+        let labelOpt = if String.IsNullOrEmpty(label) then None else Some label
+        let timeLimitOpt = if time_limit_minutes.HasValue then Some time_limit_minutes.Value else None
+        engine.Start(?label = labelOpt, ?timeLimitMinutes = timeLimitOpt, ?sizeLimitBytes = Some sizeLimitBytes)
         let sb = StringBuilder()
         if wasRecording then
             sb.AppendLine("Warning: Previous recording session was stopped.") |> ignore

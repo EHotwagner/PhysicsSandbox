@@ -23,10 +23,11 @@ type GeneratorTools() =
     [<Description("Generate random bodies (mix of spheres and boxes)")>]
     static member generate_random_bodies(connection: GrpcConnection,
                                           [<Description("Number of bodies to create")>] count: int,
-                                          [<Description("Random seed (0 for random)")>] seed: int) =
+                                          [<Description("Random seed. Default: 0 (uses random seed). Provide a fixed positive integer for reproducible results.")>] seed: Nullable<int>) =
         if count <= 0 then "Error: count must be greater than 0"
         else
-            let rng = if seed = 0 then Random() else Random(seed)
+            let seedVal = if seed.HasValue then seed.Value else 0
+            let rng = if seedVal = 0 then Random() else Random(seedVal)
             let sb = StringBuilder()
             sb.AppendLine($"Generated {count} random bodies:") |> ignore
             for _ in 1..count do
@@ -51,12 +52,12 @@ type GeneratorTools() =
 
     /// <summary>Generates a vertical stack of unit-sized crates at the specified base position, each spaced 1 unit apart vertically.</summary>
     [<McpServerTool>]
-    [<Description("Generate a vertical stack of crates")>]
+    [<Description("Generate a vertical stack of unit-sized crates (0.5 half-extents, 20 kg mass) spaced 1 unit apart vertically")>]
     static member generate_stack(connection: GrpcConnection,
                                   [<Description("Number of crates in the stack")>] count: int,
-                                  [<Description("Base X position (default 0)")>] x: float,
-                                  [<Description("Base Y position (default 0)")>] y: float,
-                                  [<Description("Base Z position (default 0)")>] z: float) =
+                                  [<Description("Base X position. Default: 0.")>] x: float,
+                                  [<Description("Base Y position. Default: 0.")>] y: float,
+                                  [<Description("Base Z position. Default: 0.")>] z: float) =
         if count <= 0 then "Error: count must be greater than 0"
         else
             let sb = StringBuilder()
@@ -70,16 +71,17 @@ type GeneratorTools() =
 
     /// <summary>Generates a horizontal row of spheres along the X axis with configurable spacing.</summary>
     [<McpServerTool>]
-    [<Description("Generate a horizontal row of spheres")>]
+    [<Description("Generate a horizontal row of spheres along the X axis (0.2 radius, 1.0 kg mass)")>]
     static member generate_row(connection: GrpcConnection,
                                 [<Description("Number of spheres in the row")>] count: int,
-                                [<Description("Start X position (default 0)")>] x: float,
-                                [<Description("Y position (default 0)")>] y: float,
-                                [<Description("Z position (default 0)")>] z: float,
-                                [<Description("Spacing between spheres (default 0.5)")>] spacing: float) =
+                                [<Description("Start X position. Default: 0.")>] x: float,
+                                [<Description("Y position. Default: 0.")>] y: float,
+                                [<Description("Z position. Default: 0.")>] z: float,
+                                [<Description("Spacing between sphere centers. Default: 0.5. Values <= 0 are treated as 0.5.")>] spacing: Nullable<float>) =
         if count <= 0 then "Error: count must be greater than 0"
         else
-            let sp = if spacing <= 0.0 then 0.5 else spacing
+            let spacingVal = if spacing.HasValue then spacing.Value else 0.5
+            let sp = if spacingVal <= 0.0 then 0.5 else spacingVal
             let sb = StringBuilder()
             sb.AppendLine($"Generated row of {count} spheres:") |> ignore
             for i in 0..(count - 1) do
@@ -91,13 +93,13 @@ type GeneratorTools() =
 
     /// <summary>Generates a 2D grid of crates on the XZ plane with 1-unit spacing between centers.</summary>
     [<McpServerTool>]
-    [<Description("Generate a grid of crates on a plane")>]
+    [<Description("Generate a 2D grid of crates on the XZ plane with 1-unit spacing (0.5 half-extents, 20 kg mass)")>]
     static member generate_grid(connection: GrpcConnection,
                                  [<Description("Number of rows")>] rows: int,
                                  [<Description("Number of columns")>] cols: int,
-                                 [<Description("Start X position (default 0)")>] x: float,
-                                 [<Description("Y position (default 0.5)")>] y: float,
-                                 [<Description("Start Z position (default 0)")>] z: float) =
+                                 [<Description("Start X position. Default: 0.")>] x: float,
+                                 [<Description("Y position. Default: 0.5. Values <= 0 are treated as 0.5.")>] y: float,
+                                 [<Description("Start Z position. Default: 0.")>] z: float) =
         if rows <= 0 || cols <= 0 then "Error: rows and cols must be greater than 0"
         else
             let sb = StringBuilder()
@@ -114,12 +116,12 @@ type GeneratorTools() =
 
     /// <summary>Generates a pyramid of crates with the widest layer at the base, narrowing by one crate per layer.</summary>
     [<McpServerTool>]
-    [<Description("Generate a pyramid of crates")>]
+    [<Description("Generate a pyramid of crates with the widest layer at the base, narrowing by one crate per layer (0.5 half-extents, 20 kg mass)")>]
     static member generate_pyramid(connection: GrpcConnection,
                                     [<Description("Number of layers")>] layers: int,
-                                    [<Description("Base X position (default 0)")>] x: float,
-                                    [<Description("Base Y position (default 0)")>] y: float,
-                                    [<Description("Base Z position (default 0)")>] z: float) =
+                                    [<Description("Base X position. Default: 0.")>] x: float,
+                                    [<Description("Base Y position. Default: 0.")>] y: float,
+                                    [<Description("Base Z position. Default: 0.")>] z: float) =
         if layers <= 0 then "Error: layers must be greater than 0"
         else
             let sb = StringBuilder()

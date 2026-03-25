@@ -1,5 +1,6 @@
 namespace PhysicsSandbox.Mcp
 
+open System
 open System.ComponentModel
 open System.Threading.Tasks
 open ModelContextProtocol.Server
@@ -14,13 +15,13 @@ type StressTestTools() =
     static member start_stress_test(
         conn: GrpcConnection,
         [<Description("Scenario name: 'body-scaling' or 'command-throughput'")>] scenario: string,
-        [<Description("Maximum bodies for body-scaling scenario (default 500)")>] ?max_bodies: int,
-        [<Description("Duration in seconds for command-throughput scenario (default 30)")>] ?duration_seconds: int
+        [<Description("Applies to 'body-scaling' scenario. Maximum number of bodies to add before stopping. Default: 500. Ignored for other scenarios.")>] max_bodies: Nullable<int>,
+        [<Description("Applies to 'command-throughput' scenario. Test duration in seconds. Default: 30. Ignored for other scenarios.")>] duration_seconds: Nullable<int>
     ) : Task<string> =
         task {
             try
-                let maxBodies = defaultArg max_bodies 500
-                let duration = defaultArg duration_seconds 30
+                let maxBodies = if max_bodies.HasValue then max_bodies.Value else 500
+                let duration = if duration_seconds.HasValue then duration_seconds.Value else 30
                 let testId = StressTestRunner.startTest conn scenario maxBodies duration
                 return $"Stress test started: {testId} (scenario: {scenario}). Poll with get_stress_test_status."
             with ex ->
