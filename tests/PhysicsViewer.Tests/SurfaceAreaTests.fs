@@ -3,92 +3,52 @@ module PhysicsViewer.Tests.SurfaceAreaTests
 open Xunit
 open TestHelpers
 
-let private viewerAssembly =
-    typeof<PhysicsViewer.SceneManager.SceneState>.Assembly
+let private anchorType = typeof<PhysicsViewer.SceneManager.SceneState>
 
 [<Fact>]
 let ``SceneManager public API matches baseline`` () =
-    let t = viewerAssembly.GetType("PhysicsViewer.SceneManager")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    let expected = [|
-        "applyNarration"; "applyState"; "applyWireframe"; "create"
-        "isRunning"; "isWireframe"; "narrationText"; "simulationTime"
-    |]
-    for name in expected do
-        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+    assertModuleSurface anchorType "PhysicsViewer.SceneManager"
+        [ "applyNarration"; "applyState"; "applyWireframe"; "create"
+          "isRunning"; "isWireframe"; "narrationText"; "simulationTime" ]
 
 [<Fact>]
 let ``ShapeGeometry public API matches baseline`` () =
-    let t = viewerAssembly.GetType("PhysicsViewer.ShapeGeometry")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    let expected = [| "defaultColor"; "primitiveType"; "shapeSize" |]
-    for name in expected do
-        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+    assertModuleSurface anchorType "PhysicsViewer.ShapeGeometry"
+        [ "defaultColor"; "primitiveType"; "shapeSize" ]
 
 [<Fact>]
 let ``CameraController public API matches baseline`` () =
-    let t = viewerAssembly.GetType("PhysicsViewer.CameraController")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    let expected = [|
-        "applyInput"; "applySetCamera"; "applySetZoom"; "applyToCamera"
-        "cancelMode"; "defaultCamera"; "isActive"; "position"
-        "setMode"; "smoothstep"; "target"; "updateCameraMode"; "zoomLevel"
-    |]
-    for name in expected do
-        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+    assertModuleSurface anchorType "PhysicsViewer.CameraController"
+        [ "applyInput"; "applySetCamera"; "applySetZoom"; "applyToCamera"
+          "cancelMode"; "defaultCamera"; "isActive"; "position"
+          "setMode"; "smoothstep"; "target"; "updateCameraMode"; "zoomLevel" ]
 
 [<Fact>]
 let ``ViewerClient public API matches baseline`` () =
-    let t = viewerAssembly.GetType("PhysicsViewer.ViewerClient")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    let expected = [| "streamState"; "streamViewCommands" |]
-    for name in expected do
-        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+    assertModuleSurface anchorType "PhysicsViewer.ViewerClient"
+        [ "streamState"; "streamViewCommands" ]
 
 [<Fact>]
 let ``DebugRenderer public API matches baseline`` () =
-    let t = viewerAssembly.GetType("PhysicsViewer.DebugRenderer")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    let expected = [| "create"; "isEnabled"; "setEnabled"; "updateConstraints"; "updateShapes" |]
-    for name in expected do
-        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+    assertModuleSurface anchorType "PhysicsViewer.DebugRenderer"
+        [ "create"; "isEnabled"; "setEnabled"; "updateConstraints"; "updateShapes" ]
 
 [<Fact>]
 let ``ViewerSettings public API matches baseline`` () =
-    let t = viewerAssembly.GetType("PhysicsViewer.Settings.ViewerSettings")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    let expected = [| "defaultSettings"; "load"; "save" |]
-    for name in expected do
-        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+    assertModuleSurface anchorType "PhysicsViewer.Settings.ViewerSettings"
+        [ "defaultSettings"; "load"; "save" ]
 
 [<Fact>]
 let ``DisplayManager public API matches baseline`` () =
-    let t = viewerAssembly.GetType("PhysicsViewer.Settings.DisplayManager")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    let expected = [| "applySettings"; "create"; "currentSettings"; "toggleFullscreen" |]
-    for name in expected do
-        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+    assertModuleSurface anchorType "PhysicsViewer.Settings.DisplayManager"
+        [ "applySettings"; "create"; "currentSettings"; "toggleFullscreen" ]
 
 [<Fact>]
 let ``SettingsOverlay public API matches baseline`` () =
-    let t = viewerAssembly.GetType("PhysicsViewer.Settings.SettingsOverlay")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    let expected = [| "create"; "handleInput"; "isVisible"; "render"; "toggle" |]
-    for name in expected do
-        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+    assertModuleSurface anchorType "PhysicsViewer.Settings.SettingsOverlay"
+        [ "create"; "handleInput"; "isVisible"; "render"; "toggle" ]
 
 [<Fact>]
 let ``MeshResolver public API matches baseline`` () =
-    let t = viewerAssembly.GetType("PhysicsViewer.Streaming.MeshResolver")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    for name in [| "create"; "fetchMissing"; "processNewMeshes"; "resolve" |] do
-        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+    assertModuleSurface anchorType "PhysicsViewer.Streaming.MeshResolver"
+        [ "create"; "fetchMissing"; "processNewMeshes"; "resolve" ]

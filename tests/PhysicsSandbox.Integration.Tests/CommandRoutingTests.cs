@@ -431,4 +431,23 @@ public class CommandRoutingTests
         Assert.True(Math.Abs(velAfterClear - velBeforeClear) < Math.Abs(velBeforeClear) * 0.5 + 1.0,
             $"Expected velocity to stabilize after ClearForces. Before clear: {velBeforeClear}, After clear: {velAfterClear}");
     }
+
+    // Merged from CommandAuditStreamTests
+    [Fact]
+    public async Task StreamCommands_ReceivesCommandEvents_WhenCommandsSent()
+    {
+        var appHost = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.PhysicsSandbox_AppHost>();
+
+        await using var app = await appHost.BuildAsync();
+        await app.StartAsync();
+
+        await app.ResourceNotifications
+            .WaitForResourceHealthyAsync("server")
+            .WaitAsync(TimeSpan.FromSeconds(30));
+
+        await app.ResourceNotifications
+            .WaitForResourceAsync("mcp", "Running")
+            .WaitAsync(TimeSpan.FromSeconds(60));
+    }
 }

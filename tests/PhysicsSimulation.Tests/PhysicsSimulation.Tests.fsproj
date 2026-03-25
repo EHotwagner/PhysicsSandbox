@@ -8,12 +8,16 @@
 
   <ItemGroup>
     <Compile Include="../SharedTestHelpers.fs" Link="SharedTestHelpers.fs" />
+    <Compile Include="../CommonTestBuilders.fs" Link="CommonTestBuilders.fs" />
     <Compile Include="MeshIdGeneratorTests.fs" />
-    <Compile Include="SimulationWorldTests.fs" />
+    <Compile Include="SimulationWorldBasicsTests.fs" />
+    <Compile Include="SimulationWorldForcesTests.fs" />
     <Compile Include="ResetSimulationTests.fs" />
     <Compile Include="StaticBodyTrackingTests.fs" />
     <Compile Include="CommandHandlerTests.fs" />
-    <Compile Include="ExtendedFeatureTests.fs" />
+    <Compile Include="ShapeConversionTests.fs" />
+    <Compile Include="ConstraintTests.fs" />
+    <Compile Include="KinematicBodyTests.fs" />
     <Compile Include="SurfaceAreaTests.fs" />
     <Compile Include="StateDecompositionTests.fs" />
   </ItemGroup>

@@ -1,12 +1,52 @@
 {
-  "generated": "2026-03-25T12:35:00Z",
-  "based_on": "drift-report from 2026-03-25",
+  "generated": "2026-03-25T14:05:00Z",
+  "based_on": "drift-report from 2026-03-25T14:00:00Z",
   "summary": {
-    "backfill": 0,
+    "backfill": 3,
     "align": 0,
     "human_decision": 0,
     "new_specs": 0,
     "remove_from_spec": 0
   },
-  "proposals": []
+  "proposals": [
+    {
+      "id": 1,
+      "spec_id": "004-test-suite-cleanup",
+      "requirement": "SC-002",
+      "direction": "BACKFILL",
+      "spec_text": "Number of test files containing duplicated helper functions decreases by at least 50%",
+      "actual": "2 of 3 duplicated helpers centralized (67%). makeResolver kept local due to different APIs.",
+      "proposed_text": "All extractable duplicated test helper functions (those with identical signatures and semantics across projects) are centralized in shared utility modules",
+      "rationale": "Original metric based on overestimate of duplication. Code correctly centralizes the 2 extractable helpers.",
+      "confidence": "HIGH",
+      "status": "applied",
+      "applied_at": "2026-03-25T14:10:00Z"
+    },
+    {
+      "id": 2,
+      "spec_id": "004-test-suite-cleanup",
+      "requirement": "US2",
+      "direction": "BACKFILL",
+      "spec_text": "5 integration test files contain only 1 test each",
+      "actual": "6 files merged (5 planned + CommandAuditStreamTests.cs discovered during validation)",
+      "proposed_text": "6 integration test files contain only 1 test each (DiagnosticsIntegrationTests, ComparisonIntegrationTests, StaticBodyTests, StressTestIntegrationTests, RestartIntegrationTests, CommandAuditStreamTests)",
+      "rationale": "Additional file discovered during SC-004 validation. Merging was correct to satisfy zero single-test files criterion.",
+      "confidence": "HIGH",
+      "status": "applied",
+      "applied_at": "2026-03-25T14:10:00Z"
+    },
+    {
+      "id": 3,
+      "spec_id": "004-test-suite-cleanup",
+      "requirement": "status",
+      "direction": "BACKFILL",
+      "spec_text": "Status: Draft",
+      "actual": "Implementation complete, all success criteria met",
+      "proposed_text": "Status: Implemented",
+      "rationale": "All requirements implemented and validated.",
+      "confidence": "HIGH",
+      "status": "applied",
+      "applied_at": "2026-03-25T14:10:00Z"
+    }
+  ]
 }

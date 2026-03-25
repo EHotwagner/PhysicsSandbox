@@ -250,4 +250,131 @@ public class SimulationConnectionTests
         Assert.True(responseCount >= 14,
             $"Expected at least 14 responses over 30 seconds, but got {responseCount}");
     }
+
+    // Merged from StaticBodyTests
+    [Fact]
+    public async Task StaticPlane_AppearsInState_WithIsStaticTrue()
+    {
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnect();
+        await using var _ = app;
+
+        var client = new PhysicsHub.PhysicsHubClient(channel);
+
+        // Wait for simulation to connect
+        await app.ResourceNotifications
+            .WaitForResourceAsync("simulation", "Running")
+            .WaitAsync(TimeSpan.FromSeconds(30));
+
+        // Add a static plane
+        await client.SendCommandAsync(new SimulationCommand
+        {
+            AddBody = new AddBody
+            {
+                Id = "ground-plane",
+                Position = new Vec3 { X = 0, Y = 0, Z = 0 },
+                Mass = 0,
+                Shape = new Shape { Plane = new Plane { Normal = new Vec3 { X = 0, Y = 1, Z = 0 } } }
+            }
+        });
+
+        // Add a dynamic sphere above it
+        await client.SendCommandAsync(new SimulationCommand
+        {
+            AddBody = new AddBody
+            {
+                Id = "falling-sphere",
+                Position = new Vec3 { X = 0, Y = 5, Z = 0 },
+                Mass = 1.0,
+                Shape = new Shape { Sphere = new Sphere { Radius = 0.5 } }
+            }
+        });
+
+        // Small delay for state propagation
+        await Task.Delay(500);
+
+        // Static bodies are no longer in the tick stream (TickState only has dynamic BodyPose).
+        // Use StreamProperties to get the PropertySnapshot backfill which includes all bodies.
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var propCall = client.StreamProperties(new StateRequest(), cancellationToken: cts.Token);
+        var propStream = propCall.ResponseStream;
+
+        Assert.True(await propStream.MoveNext(cts.Token));
+        var backfill = propStream.Current;
+        Assert.NotNull(backfill.Snapshot);
+        var snapshot = backfill.Snapshot;
+
+        Assert.True(snapshot.Bodies.Count >= 2, $"Expected at least 2 bodies in snapshot, got {snapshot.Bodies.Count}");
+
+        var plane = snapshot.Bodies.FirstOrDefault(b => b.Id == "ground-plane");
+        Assert.NotNull(plane);
+        Assert.True(plane.IsStatic, "Plane should have IsStatic=true");
+
+        var sphere = snapshot.Bodies.FirstOrDefault(b => b.Id == "falling-sphere");
+        Assert.NotNull(sphere);
+        Assert.False(sphere.IsStatic, "Sphere should have IsStatic=false");
+
+        // Also verify that the tick stream does NOT contain the static body
+        using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var tickCall = client.StreamState(new StateRequest(), cancellationToken: cts2.Token);
+        if (await tickCall.ResponseStream.MoveNext(cts2.Token))
+        {
+            var tickState = tickCall.ResponseStream.Current;
+            Assert.DoesNotContain(tickState.Bodies, b => b.Id == "ground-plane");
+        }
+    }
+
+    // Merged from RestartIntegrationTests
+    [Fact]
+    public async Task ResetSimulation_ClearsAllBodies()
+    {
+        var (app, channel) = await IntegrationTestHelpers.StartAppAndConnect();
+        await using var _ = app;
+
+        var client = new PhysicsHub.PhysicsHubClient(channel);
+
+        // Wait for simulation to connect
+        await app.ResourceNotifications
+            .WaitForResourceAsync("simulation", "Running")
+            .WaitAsync(TimeSpan.FromSeconds(30));
+
+        // Add 5 bodies
+        for (int i = 0; i < 5; i++)
+        {
+            await client.SendCommandAsync(new SimulationCommand
+            {
+                AddBody = new AddBody
+                {
+                    Id = $"reset-test-{i}",
+                    Position = new Vec3 { X = i, Y = 5, Z = 0 },
+                    Mass = 1.0,
+                    Shape = new Shape { Sphere = new Sphere { Radius = 0.5 } }
+                }
+            });
+        }
+
+        // Small delay for state propagation
+        await Task.Delay(500);
+
+        // Send reset command
+        var ack = await client.SendCommandAsync(new SimulationCommand
+        {
+            Reset = new ResetSimulation()
+        });
+        Assert.True(ack.Success);
+
+        // Wait for state propagation
+        await Task.Delay(500);
+
+        // Check state via streaming — should have 0 bodies
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var call = client.StreamState(new StateRequest(), cancellationToken: cts.Token);
+        var stream = call.ResponseStream;
+
+        if (await stream.MoveNext(cts.Token))
+        {
+            var state = stream.Current;
+            Assert.Equal(0, state.Bodies.Count);
+            Assert.Equal(0.0, state.Time);
+        }
+    }
 }

@@ -1,34 +1,29 @@
 {
-  "applied_at": "2026-03-23T00:00:00Z",
-  "feature": "004-backlog-fix-test-progress",
-  "proposals_applied": 1,
-  "proposals_skipped": 0,
-  "changes": {
-    "specs_updated": [
-      {
-        "spec": "004-backlog-fix-test-progress",
-        "requirement": "FR-004a",
-        "change_type": "modified",
-        "before": "All 7 body registry TryAdd/TryRemove return Result.Error",
-        "after": "6 single-body operations return Result.Error; clearAll emits Trace.TraceWarning"
-      },
-      {
-        "spec": "004-backlog-fix-test-progress",
-        "requirement": "SC-003",
-        "change_type": "modified",
-        "before": "7 body registry operations return Result.Error, 3 cache operations emit structured warnings",
-        "after": "6 single-body registry operations return Result.Error, 1 bulk registry cleanup emits Trace.TraceWarning, 3 cache operations emit structured warnings"
-      }
-    ],
-    "code_updated": [
-      {
-        "file": "src/PhysicsClient/Commands/SimulationCommands.fs",
-        "line": 308,
-        "change": "Added Trace.TraceWarning for clearAll registry TryRemove failure"
-      }
-    ],
-    "backups": [
-      ".specify/sync/backups/004-backlog-fix-test-progress/spec.md.bak"
-    ]
-  }
+  "applied_at": "2026-03-25T14:10:00Z",
+  "feature": "004-test-suite-cleanup",
+  "changes": [
+    {
+      "spec": "004-test-suite-cleanup",
+      "requirement": "status",
+      "change_type": "modified",
+      "before": "Draft",
+      "after": "Implemented"
+    },
+    {
+      "spec": "004-test-suite-cleanup",
+      "requirement": "SC-002",
+      "change_type": "modified",
+      "before": "Number of test files containing duplicated helper functions decreases by at least 50%",
+      "after": "All extractable duplicated test helper functions (those with identical signatures and semantics across projects) are centralized in shared utility modules"
+    },
+    {
+      "spec": "004-test-suite-cleanup",
+      "requirement": "US2",
+      "change_type": "modified",
+      "before": "5 integration test files contain only 1 test each",
+      "after": "6 integration test files contain only 1 test each"
+    }
+  ],
+  "not_applied": [],
+  "backup_path": ".specify/sync/backups/"
 }

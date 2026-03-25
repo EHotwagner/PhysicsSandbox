@@ -5,7 +5,6 @@ open PhysicsSandbox.Shared.Contracts
 open PhysicsClient.MeshResolver
 
 let private makeResolver () =
-    // Create a resolver without a real gRPC client — only tests cache operations
     create (Unchecked.defaultof<PhysicsHub.PhysicsHubClient>)
 
 [<Fact>]
@@ -32,3 +31,13 @@ let ``processNewMeshes with multiple entries`` () =
     Assert.True((resolve "a" resolver).IsSome)
     Assert.True((resolve "b" resolver).IsSome)
     Assert.True((resolve "c" resolver).IsNone)
+
+[<Fact>]
+let ``duplicate processNewMeshes does not overwrite`` () =
+    let resolver = makeResolver ()
+    let mg1 = MeshGeometry(MeshId = "a", Shape = Shape(Sphere = Sphere(Radius = 1.0)))
+    let mg2 = MeshGeometry(MeshId = "a", Shape = Shape(Sphere = Sphere(Radius = 2.0)))
+    processNewMeshes [mg1] resolver
+    processNewMeshes [mg2] resolver
+    let result = (resolve "a" resolver).Value
+    Assert.Equal(1.0, result.Sphere.Radius) // first write wins (TryAdd)
