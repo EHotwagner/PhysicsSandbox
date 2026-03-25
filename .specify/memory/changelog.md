@@ -1,5 +1,33 @@
 # Merged Features Log
 
+## Test Suite Cleanup — 2026-03-25
+**Branch:** 004-test-suite-cleanup
+**Spec:** specs/004-test-suite-cleanup (archived to .specify/archive/)
+
+**What was added:**
+- Shared test builders (`makeBody`, `makeState`) extracted to `tests/CommonTestBuilders.fs`, linked into 4 F# test projects
+- `assertModuleSurface` helper added to `tests/SharedTestHelpers.fs`, simplifying 5 SurfaceAreaTests.fs files (32 calls)
+- MeshResolver idempotency test harmonized across PhysicsClient.Tests and PhysicsViewer.Tests
+- 6 single-test integration files merged into domain-grouped targets (MetricsIntegration, BatchIntegration, SimulationConnection, CommandRouting)
+- 4 oversized test files (30-40+ tests) split into 10 focused files (max 23 tests per file)
+
+**New Components:**
+- `tests/CommonTestBuilders.fs` — shared F# test data builders
+- `tests/PhysicsSimulation.Tests/ShapeConversionTests.fs` — split from ExtendedFeatureTests
+- `tests/PhysicsSimulation.Tests/ConstraintTests.fs` — split from ExtendedFeatureTests
+- `tests/PhysicsSimulation.Tests/KinematicBodyTests.fs` — split from ExtendedFeatureTests
+- `tests/PhysicsSimulation.Tests/SimulationWorldBasicsTests.fs` — split from SimulationWorldTests
+- `tests/PhysicsSimulation.Tests/SimulationWorldForcesTests.fs` — split from SimulationWorldTests
+- `tests/PhysicsViewer.Tests/ShapeRenderingTests.fs` — split from SceneManagerTests
+- `tests/PhysicsViewer.Tests/CustomMeshTests.fs` — split from SceneManagerTests
+- `tests/PhysicsViewer.Tests/SceneStateBehaviorTests.fs` — split from SceneManagerTests
+- `tests/PhysicsViewer.Tests/CameraBasicsTests.fs` — split from CameraControllerTests
+- `tests/PhysicsViewer.Tests/CameraModeTests.fs` — split from CameraControllerTests
+
+**Tasks Completed:** 37/37 tasks
+
+---
+
 ## MCP Tool Schema Fix & Aspire MCP Configuration — 2026-03-25
 **Branch:** 004-mcp-fix-aspire-config
 **Spec:** specs/004-mcp-fix-aspire-config (archived to .specify/archive/)

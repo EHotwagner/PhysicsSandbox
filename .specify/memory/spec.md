@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
 **Last Updated**: 2026-03-25
-**Revision**: Updated with 004-mcp-fix-aspire-config archival
+**Revision**: Updated with 004-test-suite-cleanup archival
 
 ## Overview
 
@@ -373,6 +373,18 @@ An AI assistant connected to the PhysicsSandbox MCP server invokes any of the 59
 ### US-121: Developer Uses Aspire Dashboard Tools in AI Workflow (P2)
 A developer working in Claude Code has access to Aspire Dashboard tools (resource listing, console logs, diagnostics, documentation search) alongside PhysicsSandbox tools via stdio transport, enabling infrastructure monitoring without leaving the AI workflow. [Source: specs/004-mcp-fix-aspire-config]
 
+### US-122: Eliminate Duplicate Tests (P1)
+A developer consolidates duplicate test helpers (`makeBody`, `makeState`) into `tests/CommonTestBuilders.fs` and harmonizes MeshResolver test coverage across PhysicsClient.Tests and PhysicsViewer.Tests. Surface area test boilerplate unified via `assertModuleSurface` helper in SharedTestHelpers.fs. [Source: specs/004-test-suite-cleanup]
+
+### US-123: Consolidate Small Integration Test Files (P2)
+Six single-test integration files (DiagnosticsIntegrationTests, ComparisonIntegrationTests, StaticBodyTests, StressTestIntegrationTests, RestartIntegrationTests, CommandAuditStreamTests) merged into domain-grouped files (MetricsIntegrationTests, BatchIntegrationTests, SimulationConnectionTests, CommandRoutingTests). [Source: specs/004-test-suite-cleanup]
+
+### US-124: Extract Shared Test Data Builders (P2)
+Shared test data builders (`makeBody`, `makeState`) extracted to `tests/CommonTestBuilders.fs`, linked into 4 F# test projects. `assertModuleSurface` helper added to `tests/SharedTestHelpers.fs`, used by 5 SurfaceAreaTests.fs files. [Source: specs/004-test-suite-cleanup]
+
+### US-125: Rebalance Oversized Test Files (P3)
+Four oversized test files (SceneManagerTests 40 tests, CameraControllerTests 32, ExtendedFeatureTests 36, SimulationWorldTests 30) split into 10 focused files. Largest file now 23 tests. [Source: specs/004-test-suite-cleanup]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -698,6 +710,12 @@ A developer working in Claude Code has access to Aspire Dashboard tools (resourc
 - **FR-321**: An automated MCP regression test (McpToolRegressionTests.cs, 31 test cases) MUST validate all 59 tools in the integration test suite. [Source: specs/004-mcp-fix-aspire-config]
 - **FR-322**: Every optional parameter description MUST include (a) when it applies and (b) its default value. Tool-level descriptions MUST summarize parameter groups for multi-variant tools. [Source: specs/004-mcp-fix-aspire-config]
 - **FR-323**: Sending `null` explicitly for an optional parameter and omitting the parameter entirely MUST produce identical behavior. [Source: specs/004-mcp-fix-aspire-config]
+- **FR-324**: The test suite MUST maintain or improve code coverage after cleanup — no previously-tested behavior loses its test. [Source: specs/004-test-suite-cleanup]
+- **FR-325**: Duplicate test helpers (same function duplicated across test projects) MUST be extracted into shared utility modules (`tests/CommonTestBuilders.fs`). [Source: specs/004-test-suite-cleanup]
+- **FR-326**: Surface Area test boilerplate MUST be unified via `assertModuleSurface` helper in SharedTestHelpers.fs. [Source: specs/004-test-suite-cleanup]
+- **FR-327**: Integration test files with only 1 test MUST be consolidated into logically related files. [Source: specs/004-test-suite-cleanup]
+- **FR-328**: Test files exceeding 30 tests SHOULD be split into focused sub-files organized by behavior (max 25 tests per file). [Source: specs/004-test-suite-cleanup]
+- **FR-329**: All tests MUST continue to pass after restructuring — cleanup is behavior-preserving. [Source: specs/004-test-suite-cleanup]
 
 ## Key Entities
 

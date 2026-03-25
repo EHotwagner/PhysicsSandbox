@@ -67,13 +67,13 @@ src/
   PhysicsSandbox.Mcp/               # F# MCP server (47 tools, interactive debugging via AI assistants, recording + query)
   PhysicsSandbox.Scripting/         # F# scripting convenience library (wraps PhysicsClient, 6 modules)
 tests/
-  PhysicsServer.Tests/              # F# unit tests (44 tests)
+  PhysicsServer.Tests/              # F# unit tests (48 tests)
   PhysicsSimulation.Tests/          # F# unit tests (114 tests)
   PhysicsViewer.Tests/              # F# unit tests (99 tests)
-  PhysicsClient.Tests/              # F# unit tests (77 tests)
+  PhysicsClient.Tests/              # F# unit tests (78 tests)
   PhysicsSandbox.Mcp.Tests/          # F# unit tests (19 tests)
   PhysicsSandbox.Scripting.Tests/   # F# unit + surface area tests (26 tests)
-  PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (60 tests)
+  PhysicsSandbox.Integration.Tests/ # C# Aspire integration tests (84 tests)
 Scripting/
   demos/                            # F# demo scripts (22 demos + runners)
   demos_py/                         # Python demo scripts (22 demos + runners)
@@ -113,7 +113,7 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
-- 004-test-suite-cleanup: Added F# on .NET 10.0 (unit tests), C# on .NET 10.0 (integration tests) + xUnit 2.x, Aspire.Hosting.Testing 10.x
+- 004-test-suite-cleanup: Test suite structural cleanup — shared CommonTestBuilders.fs + assertModuleSurface helper, 6 single-test integration files consolidated, 4 oversized files (30-40 tests) split into 10 focused files (max 23 tests). 384 unit tests, zero regressions.
 - 004-mcp-fix-aspire-config: Fixed 17 MCP tool deserialization failures by converting F# optional params to Nullable<T>. Improved tool descriptions (applicability, defaults). Configured Aspire Dashboard MCP stdio transport in .mcp.json. All 59 MCP tools now accept minimal relevant params.
 - 004-mesh-terrain-demos: Demo 23 (Ball Rollercoaster) and Demo 24 (Halfpipe Arena) — static mesh heightmap terrain, F#/Python, MotionType.Static for mesh bodies, heightmap grid approach for reliable BepuPhysics2 collision
 

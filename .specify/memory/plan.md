@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
-**Last Updated**: 2026-03-24
-**Revision**: Updated with 005-robust-network-connectivity archival
+**Last Updated**: 2026-03-25
+**Revision**: Updated with 004-test-suite-cleanup archival
 
 ## Technical Context
 
@@ -137,43 +137,50 @@ tests/
 │   ├── MetricsIntegrationTests.cs     # Metrics collection end-to-end tests
 │   ├── DiagnosticsIntegrationTests.cs # Pipeline diagnostics end-to-end tests
 │   ├── StaticBodyTests.cs             # Static body collision verification
-│   ├── StressTestIntegrationTests.cs  # Stress test MCP tool end-to-end tests
 │   ├── MeshCacheIntegrationTests.cs   # End-to-end mesh caching: CachedShapeRef + FetchMeshes + late-joiner
-│   ├── ComparisonIntegrationTests.cs  # MCP-vs-scripting comparison tests
 │   ├── StateStreamOptimizationIntegrationTests.cs  # 12 tests: split channels, backfill, bandwidth, velocity
 │   └── xunit.runner.json              # Test runner configuration
-├── SharedTestHelpers.fs                  # F# — shared getPublicMembers, assertContains (linked by all F# test projects)
-├── PhysicsServer.Tests/                 # F# — unit tests (45 tests)
+├── SharedTestHelpers.fs                  # F# — shared getPublicMembers, assertContains, assertModuleSurface (linked by all F# test projects)
+├── CommonTestBuilders.fs                 # F# — shared makeBody, makeState test builders (linked by 4 F# test projects)
+├── PhysicsServer.Tests/                 # F# — unit tests (48 tests)
 │   ├── StateCacheTests.fs
 │   ├── MessageRouterTests.fs            # Includes readViewCommand tests
 │   ├── BatchRoutingTests.fs             # Batch command routing tests
 │   ├── MetricsCounterTests.fs           # MetricsCounter unit tests
-│   ├── StateStreamOptimizationTests.fs  # Split channel routing, property events, backfill tests
+│   ├── StateStreamOptimizationTests.fs  # Split channel routing, property events, backfill tests (uses CommonTestBuilders)
 │   ├── QueryExpirationTests.fs          # Pending query timeout tests (4 tests)
 │   └── PublicApiBaseline.txt            # Surface-area baseline
 ├── PhysicsSimulation.Tests/             # F# — unit tests (114 tests)
-│   ├── SimulationWorldTests.fs          # Lifecycle, bodies, forces, gravity, stress
+│   ├── SimulationWorldBasicsTests.fs    # World lifecycle, bodies, time, running state (split from SimulationWorldTests)
+│   ├── SimulationWorldForcesTests.fs    # Forces, torques, raycast, overlap, stress (split from SimulationWorldTests)
 │   ├── CommandHandlerTests.fs           # Command dispatch, edge cases
 │   ├── ResetSimulationTests.fs          # Reset/restart command tests
 │   ├── StaticBodyTrackingTests.fs       # Static body state tracking tests
-│   ├── SurfaceAreaTests.fs              # Public API baseline verification
-│   └── StateDecompositionTests.fs       # buildTickState, detectPropertyEvents, state decomposition tests
+│   ├── ShapeConversionTests.fs          # Shape conversion: capsule, cylinder, triangle, convex hull, mesh (split from ExtendedFeatureTests)
+│   ├── ConstraintTests.fs               # Constraint types: ball-socket, hinge, weld, distance (split from ExtendedFeatureTests)
+│   ├── KinematicBodyTests.fs            # Kinematic/static body behavior (split from ExtendedFeatureTests)
+│   ├── SurfaceAreaTests.fs              # Public API baseline verification (uses assertModuleSurface)
+│   └── StateDecompositionTests.fs       # buildTickState, detectPropertyEvents (uses CommonTestBuilders)
 ├── PhysicsViewer.Tests/                 # F# — unit tests (99 tests)
-│   ├── SceneManagerTests.fs             # Shape classification, state accessors
-│   ├── CameraControllerTests.fs         # Camera math, command application
+│   ├── ShapeRenderingTests.fs           # primitiveType, defaultColor, shapeSize (split from SceneManagerTests)
+│   ├── CustomMeshTests.fs               # isCustomShape, buildTriangleMesh, buildMeshMesh, buildConvexHullMesh (split from SceneManagerTests)
+│   ├── SceneStateBehaviorTests.fs       # State application, narration (split from SceneManagerTests)
+│   ├── CameraBasicsTests.fs             # Default camera, setCamera, setZoom (split from CameraControllerTests)
+│   ├── CameraModeTests.fs               # Orbiting, chasing, framing modes (split from CameraControllerTests)
 │   ├── FpsCounterTests.fs               # FPS calculation, logging interval, threshold tests
 │   ├── ViewerSettingsTests.fs            # Settings persistence round-trip tests
 │   ├── DisplayManagerTests.fs           # Display manager logic tests
-│   ├── SurfaceAreaTests.fs              # Public API baseline (8 modules incl. Settings)
+│   ├── MeshResolverTests.fs             # Mesh cache resolution tests
+│   ├── SurfaceAreaTests.fs              # Public API baseline (uses assertModuleSurface)
 │   └── PublicApiBaseline.txt            # Surface-area baseline
 ├── PhysicsSandbox.Scripting.Tests/     # F# — unit + surface area tests (26 tests)
 │   ├── HelpersTests.fs
 │   ├── Vec3BuildersTests.fs
 │   ├── CommandBuildersTests.fs
 │   ├── ConstraintBuilderTests.fs        # 6 new constraint builder tests
-│   ├── SurfaceAreaTests.fs
+│   ├── SurfaceAreaTests.fs              # Uses assertModuleSurface
 │   └── SurfaceAreaBaseline.txt
-├── PhysicsClient.Tests/                 # F# — unit tests (77 tests)
+├── PhysicsClient.Tests/                 # F# — unit tests (78 tests)
 │   ├── IdGeneratorTests.fs              # Sequential IDs, reset, thread safety
 │   ├── SessionTests.fs                  # Connection lifecycle
 │   ├── SimulationCommandsTests.fs       # Proto message construction, Vec3 conversion
@@ -182,7 +189,8 @@ tests/
 │   ├── GeneratorsTests.fs               # Scene builder validation, count checks
 │   ├── SteeringTests.fs                 # Direction-to-Vec3 mapping
 │   ├── StateDisplayTests.fs             # Vec3 formatting, velocity magnitude, shapes
-│   └── SurfaceAreaTests.fs              # Public API baseline for all 9 modules
+│   ├── MeshResolverTests.fs             # Mesh cache resolution + idempotency test
+│   └── SurfaceAreaTests.fs              # Public API baseline (uses assertModuleSurface)
 ├── PhysicsSandbox.Mcp.Tests/            # F# — unit tests (19 tests)
 │   ├── ChunkWriterTests.fs
 │   ├── ChunkReaderTests.fs
