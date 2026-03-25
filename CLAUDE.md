@@ -49,6 +49,7 @@ Last updated: 2026-03-25
 - F# on .NET 10.0 (PhysicsSimulation), C# on .NET 10.0 (integration tests) + BepuFSharp 0.2.0-beta.1 → 0.3.0 (local NuGet at `~/.local/share/nuget-local/`). Transitive: BepuPhysics 2.5.0-beta.28 (unchanged), BepuUtilities 2.5.0-beta.28 (unchanged), FSharp.Core 10.0.104 (unchanged) (004-upgrade-bepufsharp)
 - N/A (no storage changes) (004-upgrade-bepufsharp)
 - F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient 0.4.0 (NuGet, F#), PhysicsSandbox.Shared.Contracts 0.4.0 (proto types), grpcio + protobuf (Python) (004-mesh-terrain-demos)
+- F# on .NET 10.0 (MCP server, tool modules), C# on .NET 10.0 (integration tests) + ModelContextProtocol.AspNetCore 1.1.* (MCP framework), Grpc.Net.Client 2.x, xUnit 2.x, Aspire.Hosting.Testing 10.x (004-mcp-fix-aspire-config)
 
 ## Project Structure
 
@@ -111,9 +112,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 004-mcp-fix-aspire-config: Fixed 17 MCP tool deserialization failures by converting F# optional params to Nullable<T>. Improved tool descriptions (applicability, defaults). Configured Aspire Dashboard MCP stdio transport in .mcp.json. All 59 MCP tools now accept minimal relevant params.
 - 004-mesh-terrain-demos: Demo 23 (Ball Rollercoaster) and Demo 24 (Halfpipe Arena) — static mesh heightmap terrain, F#/Python, MotionType.Static for mesh bodies, heightmap grid approach for reliable BepuPhysics2 collision
 - 004-upgrade-bepufsharp: Added F# on .NET 10.0 (PhysicsSimulation), C# on .NET 10.0 (integration tests) + BepuFSharp 0.2.0-beta.1 → 0.3.0 (local NuGet at `~/.local/share/nuget-local/`). Transitive: BepuPhysics 2.5.0-beta.28 (unchanged), BepuUtilities 2.5.0-beta.28 (unchanged), FSharp.Core 10.0.104 (unchanged)
-- 005-robust-network-connectivity: ViewCommand broadcast (ConcurrentDictionary subscriber pattern), MCP SSE endpoint fix (isProxied=false), NetworkProblems.md consolidation, container environment docs
 
 ## Environment
 
@@ -187,6 +188,12 @@ Static mesh bodies (mass=0) require explicit `MotionType.Static` (enum value 2) 
 
 ### BepuPhysics2 Mesh Triangle Size
 Mesh collision triangles must be ~2m+ per edge for reliable collision detection. Very thin or narrow triangles (from parametric cross-section strips) allow small objects to fall through. Use heightmap grids with well-shaped quads (2 triangles per ~2×2m cell) instead of narrow strip geometry.
+
+### MCP Tool Parameter Types (Nullable<T> Pattern)
+MCP tool parameters in `PhysicsSandbox.Mcp` use `Nullable<T>` (not F# `Option<T>`) for optional value types. The ModelContextProtocol.AspNetCore framework only recognizes `Nullable<T>` as optional in auto-generated JSON schemas — F#'s `?param: Type` (which compiles to `FSharpOption<T>`) is treated as required. Use `param.HasValue`/`param.Value` instead of `defaultArg`/pattern matching. String optional params use plain `string` with null checks. This pattern is required for all MCP tool methods marked with `[<McpServerTool>]`.
+
+### Aspire Dashboard MCP (stdio transport)
+The Aspire Dashboard MCP is configured in `.mcp.json` using stdio transport via `aspire agent mcp --nologo --non-interactive`. The HTTP/SSE endpoint at port 18093 returns 403 Forbidden (documented in NetworkProblems.md). The stdio transport provides 14 tools including `list_resources`, `list_console_logs`, `doctor`, `search_docs`. Requires the Aspire stack to be running first.
 
 ### Stride3D Asset Compiler
 `StrideCompilerSkipBuild=true` skips asset compilation for CI/headless builds. For live GPU runs, build without this flag (requires fonts + FreeImage). The viewer's `.fsproj` defaults to `false` unless overridden.

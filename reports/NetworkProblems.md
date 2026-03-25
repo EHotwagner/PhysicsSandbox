@@ -26,6 +26,36 @@ Structured log of Aspire, gRPC, port, certificate, and service connectivity issu
 
 ---
 
+### Aspire Dashboard MCP returns 403 Forbidden on HTTP/SSE connections — 2026-03-25
+
+**Context**: Attempting to connect to the Aspire Dashboard MCP server at `http://localhost:18093/sse` to test its tools using a Python MCP client over HTTP/SSE transport.
+
+**Error**: `HTTP/1.1 403 Forbidden` on all SSE connection attempts, regardless of auth header (no auth, empty Bearer, explicit API key, dashboard browser token).
+
+**Root Cause**: In .NET Aspire 13.1.3, the Dashboard MCP endpoint is configured with `DASHBOARD__MCP__USECLIMCP=true`, which means it only supports CLI-based stdio pipe transport, not HTTP/SSE. The DCP proxy (dcpctrl) on port 18093 enforces authentication that cannot be satisfied via HTTP headers.
+
+**Hypothesis**: The `AppHost__McpApiKey` setting (empty by default) is ignored when `UseCliMcp=true`. The MCP endpoint is designed exclusively for the `aspire mcp` CLI command which uses stdio transport, not for HTTP/SSE clients.
+
+**Resolution**: Resolved in `004-mcp-fix-aspire-config`. Configured Aspire Dashboard MCP in `.mcp.json` using stdio transport (`aspire agent mcp --nologo --non-interactive`), bypassing the 403 auth requirement. Available to all developers alongside the existing PhysicsSandbox MCP SSE config.
+
+**Prevention**: When integrating with Aspire Dashboard MCP, use the CLI/stdio transport path. Do not attempt HTTP/SSE connections to port 18093.
+
+---
+
+### MCP tool parameter deserialization failures (17 tools) — 2026-03-25
+
+**Context**: Testing all 59 PhysicsSandbox MCP tools via HTTP/SSE JSON-RPC client.
+
+**Error**: `"An error occurred invoking '<tool>'"` for 17 tools when sending JSON arguments with only the relevant parameters (omitting unused nullable parameters).
+
+**Root Cause**: The ModelContextProtocol.AspNetCore framework auto-generates JSON schemas that mark ALL F# method parameters as `required`, even those typed as `Nullable<T>` or `Option<T>`. When a client omits unused parameters (e.g., `half_extents_x` when creating a sphere), the framework fails to deserialize the arguments.
+
+**Resolution**: Resolved in `004-mcp-fix-aspire-config`. Converted F# optional parameters (`?param: Type`) to `Nullable<T>` which the MCP framework recognizes as optional. Also converted logically-optional required params (pagination, time ranges, seeds) to `Nullable<T>` with sensible defaults. All 59 tools now accept requests with only relevant parameters. Automated regression test added to integration suite.
+
+**Prevention**: No longer needed — optional parameters are now correctly marked in the schema. Clients can omit irrelevant parameters.
+
+---
+
 ### MCP SSE endpoint unreachable via DCP proxy — 2026-03-23
 
 **Context**: Testing MCP recording tools by curling `http://localhost:5180/sse`

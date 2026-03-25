@@ -5,8 +5,9 @@
       "url": "http://localhost:5180/sse"
     },
     "aspire-dashboard": {
-      "type": "http",
-      "url": "http://localhost:18093/mcp"
+      "type": "stdio",
+      "command": "aspire",
+      "args": ["agent", "mcp", "--nologo", "--non-interactive"]
     }
   }
 }

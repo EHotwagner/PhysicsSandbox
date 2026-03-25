@@ -31,13 +31,15 @@ type MeshFetchQueryTools() =
     static member query_mesh_fetches
         (
             engine: RecordingEngine,
-            [<Description("Session ID (empty for active session)")>] session_id: string,
-            [<Description("Time window in minutes from now (default 5)")>] minutes_ago: int,
-            [<Description("Filter to events involving this mesh ID (empty for all)")>] mesh_id: string,
-            [<Description("Number of results per page (default 100, max 500)")>] page_size: int,
-            [<Description("Pagination cursor from previous query")>] cursor: string
+            [<Description("Session ID. Empty or omit for active session.")>] session_id: string,
+            [<Description("Time window in minutes from now. Default: 5.")>] minutes_ago: Nullable<int>,
+            [<Description("Filter to events involving this mesh ID. Empty or omit for all.")>] mesh_id: string,
+            [<Description("Number of results per page. Default: 100. Max: 500.")>] page_size: Nullable<int>,
+            [<Description("Pagination cursor from previous query. Omit for first page.")>] cursor: string
         ) : string =
         try
+        let minutes_ago = if minutes_ago.HasValue then minutes_ago.Value else 5
+        let page_size = if page_size.HasValue then page_size.Value else 100
         let sb = StringBuilder()
         match resolveSession engine session_id with
         | None ->

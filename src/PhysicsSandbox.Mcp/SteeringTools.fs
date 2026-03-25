@@ -26,7 +26,7 @@ type SteeringTools() =
     static member push_body(connection: GrpcConnection,
                             [<Description("Body ID to push")>] body_id: string,
                             [<Description("Direction: up, down, north, south, east, west")>] direction: string,
-                            [<Description("Impulse magnitude (default 10)")>] strength: float) =
+                            [<Description("Impulse magnitude. Default: 10. Values <= 0 are treated as 10.")>] strength: float) =
         match directionToVec direction with
         | None -> $"Error: Unknown direction '{direction}'. Use: up, down, north, south, east, west"
         | Some (dx, dy, dz) ->
@@ -41,7 +41,7 @@ type SteeringTools() =
                               [<Description("Target X")>] target_x: float,
                               [<Description("Target Y")>] target_y: float,
                               [<Description("Target Z")>] target_z: float,
-                              [<Description("Launch speed (default 10)")>] speed: float) =
+                              [<Description("Launch speed. Default: 10. Values <= 0 are treated as 10.")>] speed: float) =
         match connection.LatestState with
         | None -> "Error: No simulation state available"
         | Some state ->
@@ -65,7 +65,7 @@ type SteeringTools() =
     static member spin_body(connection: GrpcConnection,
                             [<Description("Body ID to spin")>] body_id: string,
                             [<Description("Axis direction: up, down, north, south, east, west")>] axis: string,
-                            [<Description("Torque magnitude (default 10)")>] strength: float) =
+                            [<Description("Torque magnitude. Default: 10. Values <= 0 are treated as 10.")>] strength: float) =
         match directionToVec axis with
         | None -> $"Error: Unknown axis '{axis}'. Use: up, down, north, south, east, west"
         | Some (ax, ay, az) ->

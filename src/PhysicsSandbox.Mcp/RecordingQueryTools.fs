@@ -51,13 +51,16 @@ type RecordingQueryTools() =
         (
             engine: RecordingEngine,
             [<Description("Body ID to track (e.g. 'sphere-1', 'box-2')")>] body_id: string,
-            [<Description("Session ID (empty for active session)")>] session_id: string,
-            [<Description("Start time as Unix epoch seconds (0 for session start)")>] start_time: double,
-            [<Description("End time as Unix epoch seconds (0 for session end/now)")>] end_time: double,
-            [<Description("Number of results per page (default 100, max 500)")>] page_size: int,
-            [<Description("Pagination cursor from previous query")>] cursor: string
+            [<Description("Session ID. Empty or omit for active session.")>] session_id: string,
+            [<Description("Start time as Unix epoch seconds. Default: 0 (session start).")>] start_time: Nullable<double>,
+            [<Description("End time as Unix epoch seconds. Default: 0 (session end/now).")>] end_time: Nullable<double>,
+            [<Description("Number of results per page. Default: 100. Max: 500.")>] page_size: Nullable<int>,
+            [<Description("Pagination cursor from previous query. Omit for first page.")>] cursor: string
         ) : string =
         try
+        let start_time = if start_time.HasValue then start_time.Value else 0.0
+        let end_time = if end_time.HasValue then end_time.Value else 0.0
+        let page_size = if page_size.HasValue then page_size.Value else 100
         let sb = StringBuilder()
         match resolveSession engine session_id with
         | None ->
@@ -116,13 +119,16 @@ type RecordingQueryTools() =
     static member query_snapshots
         (
             engine: RecordingEngine,
-            [<Description("Session ID (empty for active session)")>] session_id: string,
-            [<Description("Start time as Unix epoch seconds (0 for session start)")>] start_time: double,
-            [<Description("End time as Unix epoch seconds (0 for session end/now)")>] end_time: double,
-            [<Description("Number of results per page (default 100, max 500)")>] page_size: int,
-            [<Description("Pagination cursor from previous query")>] cursor: string
+            [<Description("Session ID. Empty or omit for active session.")>] session_id: string,
+            [<Description("Start time as Unix epoch seconds. Default: 0 (session start).")>] start_time: Nullable<double>,
+            [<Description("End time as Unix epoch seconds. Default: 0 (session end/now).")>] end_time: Nullable<double>,
+            [<Description("Number of results per page. Default: 100. Max: 500.")>] page_size: Nullable<int>,
+            [<Description("Pagination cursor from previous query. Omit for first page.")>] cursor: string
         ) : string =
         try
+        let start_time = if start_time.HasValue then start_time.Value else 0.0
+        let end_time = if end_time.HasValue then end_time.Value else 0.0
+        let page_size = if page_size.HasValue then page_size.Value else 100
         let sb = StringBuilder()
         match resolveSession engine session_id with
         | None ->
@@ -168,14 +174,17 @@ type RecordingQueryTools() =
     static member query_events
         (
             engine: RecordingEngine,
-            [<Description("Session ID (empty for active session)")>] session_id: string,
-            [<Description("Start time as Unix epoch seconds (0 for session start)")>] start_time: double,
-            [<Description("End time as Unix epoch seconds (0 for session end/now)")>] end_time: double,
-            [<Description("Filter by event type (e.g. 'AddBody', 'ApplyForce', 'SetGravity'). Empty for all.")>] event_type: string,
-            [<Description("Number of results per page (default 100, max 500)")>] page_size: int,
-            [<Description("Pagination cursor from previous query")>] cursor: string
+            [<Description("Session ID. Empty or omit for active session.")>] session_id: string,
+            [<Description("Start time as Unix epoch seconds. Default: 0 (session start).")>] start_time: Nullable<double>,
+            [<Description("End time as Unix epoch seconds. Default: 0 (session end/now).")>] end_time: Nullable<double>,
+            [<Description("Filter by event type (e.g. 'AddBody', 'ApplyForce', 'SetGravity'). Empty or omit for all.")>] event_type: string,
+            [<Description("Number of results per page. Default: 100. Max: 500.")>] page_size: Nullable<int>,
+            [<Description("Pagination cursor from previous query. Omit for first page.")>] cursor: string
         ) : string =
         try
+        let start_time = if start_time.HasValue then start_time.Value else 0.0
+        let end_time = if end_time.HasValue then end_time.Value else 0.0
+        let page_size = if page_size.HasValue then page_size.Value else 100
         let sb = StringBuilder()
         match resolveSession engine session_id with
         | None ->
@@ -242,7 +251,7 @@ type RecordingQueryTools() =
     static member query_summary
         (
             engine: RecordingEngine,
-            [<Description("Session ID (empty for active session)")>] session_id: string
+            [<Description("Session ID. Empty or omit for active session.")>] session_id: string
         ) : string =
         try
         let sb = StringBuilder()
