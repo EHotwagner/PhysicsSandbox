@@ -4,15 +4,10 @@ module PhysicsSandbox.Mcp.GeneratorTools
 open System
 open System.ComponentModel
 open System.Text
-open System.Threading
 open ModelContextProtocol.Server
 open PhysicsSandbox.Mcp.GrpcConnection
 open PhysicsSandbox.Mcp.ClientAdapter
-
-let mutable private genCount = 0
-let private nextGenId (prefix: string) =
-    let n = Interlocked.Increment(&genCount)
-    $"{prefix}-{n}"
+open PhysicsClient.IdGenerator
 
 /// <summary>MCP server tool type for procedurally generating spatial arrangements of physics bodies.</summary>
 [<McpServerToolType>]
@@ -38,14 +33,14 @@ type GeneratorTools() =
                 let isSphere = rng.Next(2) = 0
                 if isSphere then
                     let radius = rng.NextDouble() * 0.45 + 0.05
-                    let id = nextGenId "sphere"
+                    let id = nextId "sphere"
                     let result = addSphere connection (x, y, z) radius mass id
                     sb.AppendLine($"  {id}: {result}") |> ignore
                 else
                     let hx = rng.NextDouble() * 0.45 + 0.05
                     let hy = rng.NextDouble() * 0.45 + 0.05
                     let hz = rng.NextDouble() * 0.45 + 0.05
-                    let id = nextGenId "box"
+                    let id = nextId "box"
                     let result = addBox connection (x, y, z) (hx, hy, hz) mass id
                     sb.AppendLine($"  {id}: {result}") |> ignore
             sb.ToString()
@@ -64,7 +59,7 @@ type GeneratorTools() =
             sb.AppendLine($"Generated stack of {count} crates:") |> ignore
             for i in 0..(count - 1) do
                 let cy = y + (float i) * 1.0 + 0.5
-                let id = nextGenId "crate"
+                let id = nextId "crate"
                 let result = addBox connection (x, cy, z) (0.5, 0.5, 0.5) 20.0 id
                 sb.AppendLine($"  {id}: {result}") |> ignore
             sb.ToString()
@@ -86,7 +81,7 @@ type GeneratorTools() =
             sb.AppendLine($"Generated row of {count} spheres:") |> ignore
             for i in 0..(count - 1) do
                 let cx = x + (float i) * sp
-                let id = nextGenId "sphere"
+                let id = nextId "sphere"
                 let result = addSphere connection (cx, y, z) 0.2 1.0 id
                 sb.AppendLine($"  {id}: {result}") |> ignore
             sb.ToString()
@@ -109,7 +104,7 @@ type GeneratorTools() =
                     let cx = x + (float c) * 1.0
                     let cz = z + (float r) * 1.0
                     let cy = if y <= 0.0 then 0.5 else y
-                    let id = nextGenId "crate"
+                    let id = nextId "crate"
                     let result = addBox connection (cx, cy, cz) (0.5, 0.5, 0.5) 20.0 id
                     sb.AppendLine($"  {id}: {result}") |> ignore
             sb.ToString()
@@ -132,7 +127,7 @@ type GeneratorTools() =
                 let cy = y + (float i) * 1.0 + 0.5
                 for j in 0..(width - 1) do
                     let cx = x + offsetX + (float j) * 1.0
-                    let id = nextGenId "crate"
+                    let id = nextId "crate"
                     let _ = addBox connection (cx, cy, z) (0.5, 0.5, 0.5) 20.0 id
                     total <- total + 1
             sb.AppendLine($"Generated pyramid with {layers} layers ({total} crates)") |> ignore

@@ -3,8 +3,6 @@ module PhysicsClient.SimulationCommands
 open PhysicsClient.Session
 open PhysicsSandbox.Shared.Contracts
 
-val internal toVec3 : (float * float * float) -> Vec3
-
 val addSphere : session: Session -> position: (float * float * float) -> radius: float -> mass: float -> id: string option -> material: MaterialProperties option -> color: Color option -> motionType: BodyMotionType option -> collisionGroup: uint32 option -> collisionMask: uint32 option -> Result<string, string>
 val addBox : session: Session -> position: (float * float * float) -> halfExtents: (float * float * float) -> mass: float -> id: string option -> material: MaterialProperties option -> color: Color option -> motionType: BodyMotionType option -> collisionGroup: uint32 option -> collisionMask: uint32 option -> Result<string, string>
 val addCapsule : session: Session -> position: (float * float * float) -> radius: float -> length: float -> mass: float -> id: string option -> Result<string, string>

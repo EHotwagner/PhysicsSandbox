@@ -4,9 +4,6 @@ open System
 open System.Threading.Tasks
 open PhysicsSandbox.Mcp.GrpcConnection
 
-/// Generate a unique body ID from a shape name (e.g. "sphere" -> "sphere-1")
-val nextId : shape: string -> string
-
 [<Class>]
 type SimulationTools =
     static member add_body : conn: GrpcConnection * shape: string * radius: Nullable<float> * half_extents_x: Nullable<float> * half_extents_y: Nullable<float> * half_extents_z: Nullable<float> * capsule_radius: Nullable<float> * capsule_length: Nullable<float> * cylinder_radius: Nullable<float> * cylinder_length: Nullable<float> * tri_ax: Nullable<float> * tri_ay: Nullable<float> * tri_az: Nullable<float> * tri_bx: Nullable<float> * tri_by: Nullable<float> * tri_bz: Nullable<float> * tri_cx: Nullable<float> * tri_cy: Nullable<float> * tri_cz: Nullable<float> * plane_nx: Nullable<float> * plane_ny: Nullable<float> * plane_nz: Nullable<float> * x: Nullable<float> * y: Nullable<float> * z: Nullable<float> * mass: Nullable<float> * friction: Nullable<float> * max_recovery_velocity: Nullable<float> * spring_frequency: Nullable<float> * spring_damping_ratio: Nullable<float> * color_r: Nullable<float> * color_g: Nullable<float> * color_b: Nullable<float> * color_a: Nullable<float> * motion_type: string * collision_group: Nullable<int> * collision_mask: Nullable<int> -> Task<string>

@@ -43,7 +43,7 @@ type BatchTools() =
             let body = AddBody()
             let shape = tryGetString elem "shape" "sphere"
             let id = tryGetString elem "id" ""
-            body.Id <- if id = "" then SimulationTools.nextId shape else id
+            body.Id <- if id = "" then PhysicsClient.IdGenerator.nextId shape else id
             body.Position <- Vec3(X = tryGetDouble elem "x" 0.0, Y = tryGetDouble elem "y" 0.0, Z = tryGetDouble elem "z" 0.0)
             body.Mass <- tryGetDouble elem "mass" 1.0
             let shape = Shape()

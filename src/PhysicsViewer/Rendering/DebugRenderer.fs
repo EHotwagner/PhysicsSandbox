@@ -9,6 +9,7 @@ open Stride.CommunityToolkit.Engine
 open Stride.CommunityToolkit.Games
 open Stride.CommunityToolkit.Rendering.ProceduralModels
 open PhysicsSandbox.Shared.Contracts
+open PhysicsViewer.Rendering.ProtoConversions
 
 type StrideColor = Stride.Core.Mathematics.Color
 
@@ -24,14 +25,6 @@ let create () =
     { Enabled = false
       WireframeEntities = Map.empty
       ConstraintEntities = Map.empty }
-
-let private protoVec3ToStride (v: Vec3) =
-    if isNull v then Vector3.Zero
-    else Vector3(float32 v.X, float32 v.Y, float32 v.Z)
-
-let private protoQuatToStride (v: Vec4) =
-    if isNull v then Quaternion.Identity
-    else Quaternion(float32 v.X, float32 v.Y, float32 v.Z, float32 v.W)
 
 /// Create a wireframe entity from custom mesh wireframe data (LineList).
 let private createCustomWireframe (game: Game) (scene: Scene) (meshData: ShapeGeometry.CustomMeshData) (pos: Vector3) (rot: Quaternion) =

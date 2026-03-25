@@ -17,6 +17,8 @@
     <Compile Include="Rendering/ShapeGeometry.fs" />
     <Compile Include="Streaming/MeshResolver.fsi" />
     <Compile Include="Streaming/MeshResolver.fs" />
+    <Compile Include="Rendering/ProtoConversions.fsi" />
+    <Compile Include="Rendering/ProtoConversions.fs" />
     <Compile Include="Rendering/SceneManager.fsi" />
     <Compile Include="Rendering/SceneManager.fs" />
     <Compile Include="Rendering/DebugRenderer.fsi" />

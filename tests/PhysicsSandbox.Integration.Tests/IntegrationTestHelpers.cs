@@ -6,6 +6,22 @@ namespace PhysicsSandbox.Integration.Tests;
 
 public static class IntegrationTestHelpers
 {
+    private static GrpcChannel CreateGrpcChannel(DistributedApplication app)
+    {
+        var httpClient = app.CreateHttpClient("server", "https");
+        return GrpcChannel.ForAddress(httpClient.BaseAddress!, new GrpcChannelOptions
+        {
+            HttpHandler = new SocketsHttpHandler
+            {
+                EnableMultipleHttp2Connections = true,
+                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+                {
+                    RemoteCertificateValidationCallback = (_, _, _, _) => true
+                }
+            }
+        });
+    }
+
     public static async Task<(DistributedApplication App, GrpcChannel Channel)> StartAppAndConnect()
     {
         var appHost = await DistributedApplicationTestingBuilder
@@ -18,20 +34,7 @@ public static class IntegrationTestHelpers
             .WaitForResourceHealthyAsync("server")
             .WaitAsync(TimeSpan.FromSeconds(30));
 
-        var httpClient = app.CreateHttpClient("server", "https");
-        var channel = GrpcChannel.ForAddress(httpClient.BaseAddress!, new GrpcChannelOptions
-        {
-            HttpHandler = new SocketsHttpHandler
-            {
-                EnableMultipleHttp2Connections = true,
-                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
-                {
-                    RemoteCertificateValidationCallback = (_, _, _, _) => true
-                }
-            }
-        });
-
-        return (app, channel);
+        return (app, CreateGrpcChannel(app));
     }
 
     public static async Task<(DistributedApplication App, GrpcChannel Channel)> StartAppAndConnectWithSimulation()
@@ -52,20 +55,7 @@ public static class IntegrationTestHelpers
         // Give the simulation time to establish gRPC connection to server
         await Task.Delay(3000);
 
-        var httpClient = app.CreateHttpClient("server", "https");
-        var channel = GrpcChannel.ForAddress(httpClient.BaseAddress!, new GrpcChannelOptions
-        {
-            HttpHandler = new SocketsHttpHandler
-            {
-                EnableMultipleHttp2Connections = true,
-                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
-                {
-                    RemoteCertificateValidationCallback = (_, _, _, _) => true
-                }
-            }
-        });
-
-        return (app, channel);
+        return (app, CreateGrpcChannel(app));
     }
 
     public static async Task<(DistributedApplication App, GrpcChannel Channel)> StartServerOnly()
@@ -77,18 +67,6 @@ public static class IntegrationTestHelpers
         await app.ResourceNotifications
             .WaitForResourceHealthyAsync("server")
             .WaitAsync(TimeSpan.FromSeconds(30));
-        var httpClient = app.CreateHttpClient("server", "https");
-        var channel = GrpcChannel.ForAddress(httpClient.BaseAddress!, new GrpcChannelOptions
-        {
-            HttpHandler = new SocketsHttpHandler
-            {
-                EnableMultipleHttp2Connections = true,
-                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
-                {
-                    RemoteCertificateValidationCallback = (_, _, _, _) => true
-                }
-            }
-        });
-        return (app, channel);
+        return (app, CreateGrpcChannel(app));
     }
 }

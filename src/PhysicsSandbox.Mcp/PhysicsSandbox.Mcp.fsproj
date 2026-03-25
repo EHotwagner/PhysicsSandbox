@@ -10,8 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="MeshResolver.fsi" />
-    <Compile Include="MeshResolver.fs" />
     <Compile Include="GrpcConnection.fsi" />
     <Compile Include="GrpcConnection.fs" />
     <Compile Include="SimulationTools.fsi" />

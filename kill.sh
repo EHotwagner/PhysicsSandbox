@@ -23,6 +23,10 @@ PATTERNS=(
     "tools/ext/dcpctrl"
     "tools/ext/bin/dcpproc"
     "testhost.dll.*PhysicsSandbox"
+    "dotnet test PhysicsSandbox"
+    "vstest.console.dll.*PhysicsSandbox"
+    "MSBuild.dll.*nodemode"
+    "aspire agent mcp"
 )
 
 FOUND=false

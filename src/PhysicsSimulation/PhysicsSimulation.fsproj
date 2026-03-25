@@ -8,6 +8,10 @@
   <ItemGroup>
     <Compile Include="World/MeshIdGenerator.fsi" />
     <Compile Include="World/MeshIdGenerator.fs" />
+    <Compile Include="Conversions/ProtoConversions.fsi" />
+    <Compile Include="Conversions/ProtoConversions.fs" />
+    <Compile Include="Conversions/ShapeConversion.fsi" />
+    <Compile Include="Conversions/ShapeConversion.fs" />
     <Compile Include="World/SimulationWorld.fsi" />
     <Compile Include="World/SimulationWorld.fs" />
     <Compile Include="Queries/QueryHandler.fsi" />

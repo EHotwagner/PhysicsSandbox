@@ -21,9 +21,7 @@ open PhysicsSandbox.Shared.Contracts
 /// </code>
 /// </example>
 let toVec3 (x: float, y: float, z: float) =
-    let v = Vec3()
-    v.X <- x; v.Y <- y; v.Z <- z
-    v
+    PhysicsClient.Vec3Helpers.toVec3 (x, y, z)
 
 /// <summary>Extracts the components of a <c>Vec3</c> as a float triple.</summary>
 /// <param name="v">The Vec3 to decompose.</param>
@@ -34,4 +32,4 @@ let toVec3 (x: float, y: float, z: float) =
 /// let (x, y, z) = toTuple pos   // x=1.0, y=2.0, z=3.0
 /// </code>
 /// </example>
-let toTuple (v: Vec3) = (v.X, v.Y, v.Z)
+let toTuple (v: Vec3) = PhysicsClient.Vec3Helpers.toTuple v

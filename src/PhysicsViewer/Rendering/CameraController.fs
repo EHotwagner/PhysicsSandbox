@@ -5,6 +5,7 @@ open Stride.Core.Mathematics
 open Stride.Engine
 open Stride.Input
 open PhysicsSandbox.Shared.Contracts
+open PhysicsViewer.Rendering.ProtoConversions
 
 /// Discriminated union representing active camera behavior modes.
 type CameraMode =
@@ -33,10 +34,6 @@ let defaultCamera () =
       Up = Vector3.UnitY
       ZoomLevel = 1.0
       ActiveMode = None }
-
-let private protoVec3ToStride (v: Vec3) =
-    if isNull v then Vector3.Zero
-    else Vector3(float32 v.X, float32 v.Y, float32 v.Z)
 
 /// <summary>
 /// Applies a SetCamera gRPC command, overriding the camera's position, target, and optionally up vector.
