@@ -2,44 +2,60 @@
 
 Generated: 2026-03-25
 Project: PhysicsSandbox
-Spec: 004-test-suite-cleanup
+Feature: 004-codebase-cleanup-refactor
 
 ## Summary
 
 | Category | Count |
 |----------|-------|
 | Specs Analyzed | 1 |
-| Requirements Checked | 7 (FR) + 5 (SC) = 12 |
-| Aligned | 11 (92%) |
+| Requirements Checked | 13 (8 FR + 5 SC) |
+| Aligned | 12 (92%) |
 | Drifted | 1 (8%) |
 | Not Implemented | 0 (0%) |
-| Unspecced Code | 1 |
+| Unspecced Code | 0 |
 
 ## Detailed Findings
 
-### Spec: 004-test-suite-cleanup - Test Suite Cleanup
+### Spec: 004-codebase-cleanup-refactor - Codebase Cleanup and Refactoring
 
 #### Aligned
 
-- **FR-001**: Test coverage maintained or improved. 384 unit tests (was 383, +1 idempotency test). No behavior lost.
-- **FR-002**: Duplicate helpers (`makeBody`, `makeState`) consolidated into `tests/CommonTestBuilders.fs`. Used by `StateStreamOptimizationTests.fs` and `StateDecompositionTests.fs`.
-- **FR-003**: All single-test integration files consolidated. 6 files merged (5 planned + CommandAuditStreamTests.cs discovered during validation).
-- **FR-004**: Shared utility module `tests/CommonTestBuilders.fs` created with `makeBody`, `makeState` helpers. Linked into 4 F# test projects via .fsproj.
-- **FR-005**: `assertModuleSurface` helper added to `tests/SharedTestHelpers.fs`. Used in 5 SurfaceAreaTests.fs files (32 total calls). PhysicsServer.Tests has no SurfaceAreaTests.fs (correctly skipped).
-- **FR-006**: All 4 oversized files split. Largest file now 23 tests (was 40). 10 new focused files created.
-- **FR-007**: Full test suite passes. 384 unit tests green (1 pre-existing Mcp.Tests flake unchanged).
-- **SC-001**: 384 vs 383 baseline = +0.3% (within 5% threshold).
-- **SC-003**: Max tests per file = 23 (McpToolRegressionTests.cs). Under 25 limit.
-- **SC-004**: Zero single-test integration files remain.
-- **SC-005**: Full suite passes with same pre-existing failures as baseline.
+- FR-001: Vector/quaternion conversions — one canonical definition per logical conversion
+  - `src/PhysicsSimulation/Conversions/ProtoConversions.fs` (Vec3/Vec4 to System.Numerics)
+  - `src/PhysicsViewer/Rendering/ProtoConversions.fs` (Vec3/Vec4 to Stride)
+  - `src/PhysicsClient/Utilities/Vec3Helpers.fs` (tuple to proto Vec3)
+  - No duplicate private copies remain in SimulationWorld.fs or QueryHandler.fs
+
+- FR-002: MeshResolver consolidated where dependency graph permits
+  - PhysicsClient canonical: `src/PhysicsClient/Connection/MeshResolver.fs`
+  - MCP delegates: `src/PhysicsSandbox.Mcp/Program.fs` references `PhysicsClient.MeshResolver`
+  - PhysicsViewer retains async variant: `src/PhysicsViewer/Streaming/MeshResolver.fs`
+  - MCP's own MeshResolver.fs/fsi deleted
+
+- FR-003: ID generation in single module
+  - Canonical: `src/PhysicsClient/Bodies/IdGenerator.fs`
+  - MCP SimulationTools, GeneratorTools, BatchTools all delegate to it
+
+- FR-004: Unified shape-building pattern
+  - `src/PhysicsClient/Shapes/ShapeBuilders.fs`: mkSphere, mkBox, mkCapsule, mkCylinder, mkPlane, mkTriangle
+  - SimulationCommands.fs uses `addGenericBody` + ShapeBuilders
+
+- FR-005: No source file exceeds 550 lines (max: SimulationWorld.fs at 538)
+- FR-006: Integration test helper duplication eliminated (CreateGrpcChannel extracted)
+- FR-007: Tests pass (365 unit, 1 pre-existing flaky)
+- FR-008: All new modules have .fsi signature files
+- SC-001: Zero duplicate utility functions
+- SC-002: 10%+ line reduction (SimulationWorld -24%, SimulationCommands -23%)
+- SC-003: No src/ file exceeds 550 lines
+- SC-005: New shape requires max 2 files
 
 #### Drifted
 
-- **SC-002**: Spec says "Number of test files containing duplicated helper functions decreases by at least 50%"
-  - **Spec expectation**: CommonTestBuilders referenced in 4+ test files (as stated in tasks.md checkpoint)
-  - **Actual**: `open CommonTestBuilders` appears in 2 test files (StateStreamOptimizationTests.fs, StateDecompositionTests.fs). The MeshResolver `makeResolver` helper was NOT extracted because PhysicsClient and PhysicsViewer use different MeshResolver modules (`PhysicsClient.MeshResolver` vs `PhysicsViewer.Streaming.MeshResolver`), making a shared builder impractical.
-  - **Impact**: Minor. The 2 actual duplicated helpers (makeBody, makeState) ARE centralized. The makeResolver duplication remains by design (different APIs).
+- SC-004: "All existing tests pass with zero regressions"
   - Severity: minor
+  - Location: `tests/PhysicsSandbox.Mcp.Tests/SessionStoreTests.fs:94`
+  - Actual: 1 pre-existing flaky test (GUID ordering) fails intermittently — not caused by refactoring
 
 #### Not Implemented
 
@@ -47,16 +63,10 @@ Spec: 004-test-suite-cleanup
 
 ### Unspecced Code
 
-| Feature | Location | Lines | Notes |
-|---------|----------|-------|-------|
-| CommandAuditStreamTests merge | CommandRoutingTests.cs | +15 | 6th single-test file merged; not in original spec's list of 5 files |
-
-## Inter-Spec Conflicts
-
-None.
+(none)
 
 ## Recommendations
 
-1. **Update SC-002 wording**: The "50% decrease" metric is ambiguous. Only 3 helpers were truly duplicated (makeBody, makeState in 2 files each; makeResolver in 2 files but with different APIs). 2 of 3 were centralized (67%). Consider rewording to "all extractable duplicated helpers are centralized".
-2. **Update US2 description**: The spec lists 5 single-test files but 6 were actually merged (CommandAuditStreamTests.cs was discovered during validation). Update the spec to reflect the actual scope.
-3. **Mark spec status as Complete**: Change status from "Draft" to "Implemented".
+1. Fix the flaky SessionStore test (GUID ordering) — not related to this feature
+2. Update spec status from "Draft" to "Implemented"
+3. MCP SimulationTools inline shape dispatch could further benefit from ShapeBuilders (partial FR-004)

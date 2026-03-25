@@ -3,7 +3,7 @@ module PhysicsClient.ViewCommands
 
 open PhysicsSandbox.Shared.Contracts
 open PhysicsClient.Session
-open PhysicsClient.SimulationCommands
+open PhysicsClient.Vec3Helpers
 
 /// <summary>Sets the viewer camera position and look-at target. The up vector is always (0, 1, 0).</summary>
 /// <param name="session">The active server session.</param>

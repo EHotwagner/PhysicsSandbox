@@ -8,6 +8,7 @@ open Stride.Rendering
 open Stride.CommunityToolkit.Engine
 open Stride.CommunityToolkit.Games
 open PhysicsSandbox.Shared.Contracts
+open PhysicsViewer.Rendering.ProtoConversions
 module MeshResolver = PhysicsViewer.Streaming.MeshResolver
 
 type StrideColor = Stride.Core.Mathematics.Color
@@ -34,14 +35,6 @@ let create () =
       DemoName = None
       DemoDescription = None
       NarrationText = None }
-
-let private protoVec3ToStride (v: Vec3) =
-    if isNull v then Vector3.Zero
-    else Vector3(float32 v.X, float32 v.Y, float32 v.Z)
-
-let private protoQuatToStride (v: Vec4) =
-    if isNull v then Quaternion.Identity
-    else Quaternion(float32 v.X, float32 v.Y, float32 v.Z, float32 v.W)
 
 /// Convert proto Color to Stride Color.
 let private protoColorToStride (c: ProtoColor) =

@@ -8,15 +8,7 @@ open System.Threading.Tasks
 open ModelContextProtocol.Server
 open PhysicsSandbox.Shared.Contracts
 open PhysicsSandbox.Mcp.GrpcConnection
-
-let private counters = System.Collections.Concurrent.ConcurrentDictionary<string, int>()
-
-/// <summary>Generates a unique body ID by appending an auto-incrementing counter to the shape name (e.g., "sphere" produces "sphere-1", "sphere-2", etc.).</summary>
-/// <param name="shape">The shape name prefix.</param>
-/// <returns>A unique identifier string.</returns>
-let nextId (shape: string) =
-    let value = counters.AddOrUpdate(shape, 1, fun _ current -> current + 1)
-    $"{shape}-{value}"
+open PhysicsClient.IdGenerator
 
 let private sendCmd (conn: GrpcConnection) (cmd: SimulationCommand) =
     task {

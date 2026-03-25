@@ -4,14 +4,8 @@ module PhysicsClient.SimulationCommands
 open PhysicsSandbox.Shared.Contracts
 open PhysicsClient.Session
 open PhysicsClient.IdGenerator
-
-/// <summary>Converts an F# float triple to a protobuf Vec3 message.</summary>
-let internal toVec3 (x: float, y: float, z: float) =
-    let v = Vec3()
-    v.X <- x
-    v.Y <- y
-    v.Z <- z
-    v
+open PhysicsClient.Vec3Helpers
+open PhysicsClient.ShapeBuilders
 
 /// <summary>Applies optional material, color, motion type, and collision parameters to an AddBody message.</summary>
 let private applyBodyOptions
@@ -28,22 +22,12 @@ let private applyBodyOptions
     collisionGroup |> Option.iter (fun cg -> addBody.CollisionGroup <- cg)
     collisionMask |> Option.iter (fun cm -> addBody.CollisionMask <- cm)
 
-/// <summary>Adds a sphere body to the simulation and registers it in the local body registry.</summary>
-/// <param name="session">The active server session.</param>
-/// <param name="position">World-space position as (x, y, z).</param>
-/// <param name="radius">Sphere radius in meters.</param>
-/// <param name="mass">Body mass in kilograms.</param>
-/// <param name="id">Optional custom body ID; auto-generated if None.</param>
-/// <param name="material">Optional material properties (friction, spring, etc.).</param>
-/// <param name="color">Optional RGBA color for the body.</param>
-/// <param name="motionType">Optional motion type (Dynamic, Kinematic, Static).</param>
-/// <param name="collisionGroup">Optional collision group bitmask.</param>
-/// <param name="collisionMask">Optional collision mask bitmask.</param>
-/// <returns>Ok with the assigned body ID, or Error with a failure message.</returns>
-let addSphere
+/// <summary>Generic body creation: builds AddBody, sends command, registers in body registry.</summary>
+let private addGenericBody
     (session: Session)
+    (shapeKind: string)
+    (shape: Shape)
     (position: float * float * float)
-    (radius: float)
     (mass: float)
     (id: string option)
     (material: MaterialProperties option)
@@ -52,11 +36,7 @@ let addSphere
     (collisionGroup: uint32 option)
     (collisionMask: uint32 option)
     : Result<string, string> =
-    let bodyId = id |> Option.defaultWith (fun () -> nextId "sphere")
-    let sphere = Sphere()
-    sphere.Radius <- radius
-    let shape = Shape()
-    shape.Sphere <- sphere
+    let bodyId = id |> Option.defaultWith (fun () -> nextId shapeKind)
     let addBody = AddBody()
     addBody.Id <- bodyId
     addBody.Position <- toVec3 position
@@ -67,116 +47,24 @@ let addSphere
     cmd.AddBody <- addBody
     match sendCommand session cmd with
     | Ok () ->
-        if not ((bodyRegistry session).TryAdd(bodyId, "sphere")) then
+        if not ((bodyRegistry session).TryAdd(bodyId, shapeKind)) then
             Error $"Body '{bodyId}' already exists in registry"
         else
             Ok bodyId
     | Error e -> Error e
 
-/// <summary>Adds a box body to the simulation and registers it in the local body registry.</summary>
-/// <param name="session">The active server session.</param>
-/// <param name="position">World-space position as (x, y, z).</param>
-/// <param name="halfExtents">Half-extents of the box as (hx, hy, hz).</param>
-/// <param name="mass">Body mass in kilograms.</param>
-/// <param name="id">Optional custom body ID; auto-generated if None.</param>
-/// <param name="material">Optional material properties (friction, spring, etc.).</param>
-/// <param name="color">Optional RGBA color for the body.</param>
-/// <param name="motionType">Optional motion type (Dynamic, Kinematic, Static).</param>
-/// <param name="collisionGroup">Optional collision group bitmask.</param>
-/// <param name="collisionMask">Optional collision mask bitmask.</param>
-/// <returns>Ok with the assigned body ID, or Error with a failure message.</returns>
-let addBox
-    (session: Session)
-    (position: float * float * float)
-    (halfExtents: float * float * float)
-    (mass: float)
-    (id: string option)
-    (material: MaterialProperties option)
-    (color: Color option)
-    (motionType: BodyMotionType option)
-    (collisionGroup: uint32 option)
-    (collisionMask: uint32 option)
-    : Result<string, string> =
-    let bodyId = id |> Option.defaultWith (fun () -> nextId "box")
-    let box = Box()
-    box.HalfExtents <- toVec3 halfExtents
-    let shape = Shape()
-    shape.Box <- box
-    let addBody = AddBody()
-    addBody.Id <- bodyId
-    addBody.Position <- toVec3 position
-    addBody.Mass <- mass
-    addBody.Shape <- shape
-    applyBodyOptions addBody material color motionType collisionGroup collisionMask
-    let cmd = SimulationCommand()
-    cmd.AddBody <- addBody
-    match sendCommand session cmd with
-    | Ok () ->
-        if not ((bodyRegistry session).TryAdd(bodyId, "box")) then
-            Error $"Body '{bodyId}' already exists in registry"
-        else
-            Ok bodyId
-    | Error e -> Error e
+let addSphere (session: Session) (position: float * float * float) (radius: float) (mass: float) (id: string option) (material: MaterialProperties option) (color: Color option) (motionType: BodyMotionType option) (collisionGroup: uint32 option) (collisionMask: uint32 option) : Result<string, string> =
+    addGenericBody session "sphere" (mkSphere radius) position mass id material color motionType collisionGroup collisionMask
 
-/// <summary>Adds a capsule body to the simulation and registers it in the local body registry.</summary>
-/// <param name="session">The active server session.</param>
-/// <param name="position">World-space position as (x, y, z).</param>
-/// <param name="radius">Capsule radius in meters.</param>
-/// <param name="length">Capsule length (between hemisphere centers) in meters.</param>
-/// <param name="mass">Body mass in kilograms.</param>
-/// <param name="id">Optional custom body ID; auto-generated if None.</param>
-/// <returns>Ok with the assigned body ID, or Error with a failure message.</returns>
+let addBox (session: Session) (position: float * float * float) (halfExtents: float * float * float) (mass: float) (id: string option) (material: MaterialProperties option) (color: Color option) (motionType: BodyMotionType option) (collisionGroup: uint32 option) (collisionMask: uint32 option) : Result<string, string> =
+    let (hx, hy, hz) = halfExtents
+    addGenericBody session "box" (mkBox hx hy hz) position mass id material color motionType collisionGroup collisionMask
+
 let addCapsule (session: Session) (position: float * float * float) (radius: float) (length: float) (mass: float) (id: string option) : Result<string, string> =
-    let bodyId = id |> Option.defaultWith (fun () -> nextId "capsule")
-    let capsule = Capsule()
-    capsule.Radius <- radius
-    capsule.Length <- length
-    let shape = Shape()
-    shape.Capsule <- capsule
-    let addBody = AddBody()
-    addBody.Id <- bodyId
-    addBody.Position <- toVec3 position
-    addBody.Mass <- mass
-    addBody.Shape <- shape
-    let cmd = SimulationCommand()
-    cmd.AddBody <- addBody
-    match sendCommand session cmd with
-    | Ok () ->
-        if not ((bodyRegistry session).TryAdd(bodyId, "capsule")) then
-            Error $"Body '{bodyId}' already exists in registry"
-        else
-            Ok bodyId
-    | Error e -> Error e
+    addGenericBody session "capsule" (mkCapsule radius length) position mass id None None None None None
 
-/// <summary>Adds a cylinder body to the simulation and registers it in the local body registry.</summary>
-/// <param name="session">The active server session.</param>
-/// <param name="position">World-space position as (x, y, z).</param>
-/// <param name="radius">Cylinder radius in meters.</param>
-/// <param name="length">Cylinder length in meters.</param>
-/// <param name="mass">Body mass in kilograms.</param>
-/// <param name="id">Optional custom body ID; auto-generated if None.</param>
-/// <returns>Ok with the assigned body ID, or Error with a failure message.</returns>
 let addCylinder (session: Session) (position: float * float * float) (radius: float) (length: float) (mass: float) (id: string option) : Result<string, string> =
-    let bodyId = id |> Option.defaultWith (fun () -> nextId "cylinder")
-    let cylinder = Cylinder()
-    cylinder.Radius <- radius
-    cylinder.Length <- length
-    let shape = Shape()
-    shape.Cylinder <- cylinder
-    let addBody = AddBody()
-    addBody.Id <- bodyId
-    addBody.Position <- toVec3 position
-    addBody.Mass <- mass
-    addBody.Shape <- shape
-    let cmd = SimulationCommand()
-    cmd.AddBody <- addBody
-    match sendCommand session cmd with
-    | Ok () ->
-        if not ((bodyRegistry session).TryAdd(bodyId, "cylinder")) then
-            Error $"Body '{bodyId}' already exists in registry"
-        else
-            Ok bodyId
-    | Error e -> Error e
+    addGenericBody session "cylinder" (mkCylinder radius length) position mass id None None None None None
 
 /// <summary>Adds a constraint between two bodies in the simulation.</summary>
 /// <param name="session">The active server session.</param>
@@ -243,32 +131,9 @@ let setCollisionFilter (session: Session) (bodyId: string) (collisionGroup: uint
     cmd.SetCollisionFilter <- scf
     sendCommand session cmd
 
-/// <summary>Adds a static ground plane to the simulation. Planes are approximated as large static boxes.</summary>
-/// <param name="session">The active server session.</param>
-/// <param name="normal">Plane normal direction; defaults to (0, 1, 0) (upward).</param>
-/// <param name="id">Optional custom body ID; auto-generated if None.</param>
-/// <returns>Ok with the assigned body ID, or Error with a failure message.</returns>
 let addPlane (session: Session) (normal: (float * float * float) option) (id: string option) : Result<string, string> =
-    let bodyId = id |> Option.defaultWith (fun () -> nextId "plane")
     let n = normal |> Option.defaultValue (0.0, 1.0, 0.0)
-    let plane = Plane()
-    plane.Normal <- toVec3 n
-    let shape = Shape()
-    shape.Plane <- plane
-    let addBody = AddBody()
-    addBody.Id <- bodyId
-    addBody.Position <- toVec3 (0.0, 0.0, 0.0)
-    addBody.Mass <- 0.0
-    addBody.Shape <- shape
-    let cmd = SimulationCommand()
-    cmd.AddBody <- addBody
-    match sendCommand session cmd with
-    | Ok () ->
-        if not ((bodyRegistry session).TryAdd(bodyId, "plane")) then
-            Error $"Body '{bodyId}' already exists in registry"
-        else
-            Ok bodyId
-    | Error e -> Error e
+    addGenericBody session "plane" (mkPlane n) (0.0, 0.0, 0.0) 0.0 id None None None None None
 
 /// <summary>Removes a body from the simulation by its ID and unregisters it locally.</summary>
 /// <param name="session">The active server session.</param>

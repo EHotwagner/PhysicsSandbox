@@ -14,12 +14,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Utilities/Vec3Helpers.fsi" />
+    <Compile Include="Utilities/Vec3Helpers.fs" />
     <Compile Include="Bodies/IdGenerator.fsi" />
     <Compile Include="Bodies/IdGenerator.fs" />
     <Compile Include="Connection/MeshResolver.fsi" />
     <Compile Include="Connection/MeshResolver.fs" />
     <Compile Include="Connection/Session.fsi" />
     <Compile Include="Connection/Session.fs" />
+    <Compile Include="Shapes/ShapeBuilders.fsi" />
+    <Compile Include="Shapes/ShapeBuilders.fs" />
     <Compile Include="Commands/SimulationCommands.fsi" />
     <Compile Include="Commands/SimulationCommands.fs" />
     <Compile Include="Commands/ViewCommands.fsi" />

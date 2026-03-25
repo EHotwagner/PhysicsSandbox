@@ -1,0 +1,12 @@
+ 10894 total
+   708 /home/developer/projects/PhysicsSandbox/src/PhysicsSimulation/World/SimulationWorld.fs
+   577 /home/developer/projects/PhysicsSandbox/src/PhysicsClient/Commands/SimulationCommands.fs
+   543 /home/developer/projects/PhysicsSandbox/src/PhysicsSandbox.Mcp/SimulationTools.fs
+   524 /home/developer/projects/PhysicsSandbox/src/PhysicsViewer/Program.fs
+   476 /home/developer/projects/PhysicsSandbox/src/PhysicsServer/Hub/MessageRouter.fs
+   461 /home/developer/projects/PhysicsSandbox/src/PhysicsSandbox.Mcp/StressTestRunner.fs
+   363 /home/developer/projects/PhysicsSandbox/src/PhysicsSandbox.Mcp/GrpcConnection.fs
+   303 /home/developer/projects/PhysicsSandbox/src/PhysicsViewer/Rendering/SceneManager.fs
+   302 /home/developer/projects/PhysicsSandbox/src/PhysicsSandbox.Mcp/RecordingQueryTools.fs
+   302 /home/developer/projects/PhysicsSandbox/src/PhysicsClient/Connection/Session.fs
+   301 /home/developer/projects/PhysicsSandbox/src/PhysicsViewer/Rendering/CameraController.fs
