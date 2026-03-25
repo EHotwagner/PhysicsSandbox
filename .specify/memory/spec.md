@@ -673,6 +673,16 @@ Stride3D viewer maintains 60 FPS even when window loses focus or is minimized, p
 - **FR-302**: NetworkProblems.md MUST include a container environment section with Podman runtime, port mapping table, and networking boundary. [Source: specs/005-robust-network-connectivity]
 - **FR-303**: The ViewCommand broadcast system MUST silently discard commands when no subscribers are connected — no buffering, no error, no replay. [Source: specs/005-robust-network-connectivity]
 - **FR-304**: The viewer MUST maintain 60 FPS when unfocused or minimized via WindowMinimumUpdateRate and MinimizedMinimumUpdateRate set to 16ms. [Source: specs/005-robust-network-connectivity]
+- **FR-305**: Each mesh terrain demo MUST construct its terrain entirely from static mesh triangles (mass=0, MotionType.Static) using the existing mesh body creation pattern. [Source: specs/004-mesh-terrain-demos]
+- **FR-306**: The rollercoaster demo MUST include at least 3 distinct terrain features: a steep drop, a hill/hump, and a banked curve. [Source: specs/004-mesh-terrain-demos]
+- **FR-307**: The halfpipe demo MUST construct a concave curved surface (U-shaped cross-section) with sufficient triangle density to appear smooth. [Source: specs/004-mesh-terrain-demos]
+- **FR-308**: Each mesh terrain demo MUST release at least 5 dynamic bodies (balls or mixed shapes) that interact with the terrain. [Source: specs/004-mesh-terrain-demos]
+- **FR-309**: Each mesh terrain demo MUST include cinematic camera movements and narration text describing each phase. [Source: specs/004-mesh-terrain-demos]
+- **FR-310**: Each mesh terrain demo MUST follow existing demo script conventions: shared prelude, reset, demo info, standalone runnable. [Source: specs/004-mesh-terrain-demos]
+- **FR-311**: Both mesh terrain demos MUST be registered in demo suite runners (AllDemos.fsx, all_demos.py). [Source: specs/004-mesh-terrain-demos]
+- **FR-312**: Both F# and Python versions of each mesh terrain demo MUST be created. [Source: specs/004-mesh-terrain-demos]
+- **FR-313**: Mesh terrain bodies MUST be colored distinctly from dynamic objects. [Source: specs/004-mesh-terrain-demos]
+- **FR-314**: Mesh terrain demos MUST use appropriate material properties (slippery for rollercoaster, moderate friction for halfpipe). [Source: specs/004-mesh-terrain-demos]
 
 ## Key Entities
 
@@ -972,3 +982,9 @@ Stride3D viewer maintains 60 FPS even when window loses focus or is minimized, p
 - **SC-124**: kill.sh terminates all processes and returns exit code 0 without killing the calling shell (./kill.sh && echo "alive" prints "alive"). [Source: specs/005-robust-network-connectivity]
 - **SC-125**: Camera modes targeting newly-created bodies begin tracking within 2 seconds of the body appearing. [Source: specs/005-robust-network-connectivity]
 - **SC-126**: NetworkProblems.md contains 7+ structured entries plus container environment documentation. [Source: specs/005-robust-network-connectivity]
+- **SC-127**: Both mesh terrain demos run to completion without errors against a running server. [Source: specs/004-mesh-terrain-demos]
+- **SC-128**: All dynamic objects remain on mesh terrain surface (no clipping through) for at least 90% of demo duration. [Source: specs/004-mesh-terrain-demos]
+- **SC-129**: Rollercoaster demo shows balls traversing the full terrain from high launch platform through drops and hills. [Source: specs/004-mesh-terrain-demos]
+- **SC-130**: Halfpipe demo shows at least 3 visible oscillation cycles of objects rolling back and forth before settling. [Source: specs/004-mesh-terrain-demos]
+- **SC-131**: Both mesh terrain demos complete within 30 seconds of total runtime. [Source: specs/004-mesh-terrain-demos]
+- **SC-132**: Demo narration and camera work provide a clear, watchable experience. [Source: specs/004-mesh-terrain-demos]

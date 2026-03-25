@@ -111,7 +111,7 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
-- 004-mesh-terrain-demos: Added F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient 0.4.0 (NuGet, F#), PhysicsSandbox.Shared.Contracts 0.4.0 (proto types), grpcio + protobuf (Python)
+- 004-mesh-terrain-demos: Demo 23 (Ball Rollercoaster) and Demo 24 (Halfpipe Arena) — static mesh heightmap terrain, F#/Python, MotionType.Static for mesh bodies, heightmap grid approach for reliable BepuPhysics2 collision
 - 004-upgrade-bepufsharp: Added F# on .NET 10.0 (PhysicsSimulation), C# on .NET 10.0 (integration tests) + BepuFSharp 0.2.0-beta.1 → 0.3.0 (local NuGet at `~/.local/share/nuget-local/`). Transitive: BepuPhysics 2.5.0-beta.28 (unchanged), BepuUtilities 2.5.0-beta.28 (unchanged), FSharp.Core 10.0.104 (unchanged)
 - 005-robust-network-connectivity: ViewCommand broadcast (ConcurrentDictionary subscriber pattern), MCP SSE endpoint fix (isProxied=false), NetworkProblems.md consolidation, container environment docs
 
@@ -181,6 +181,12 @@ The viewer displays a demo name/description overlay at (10, 10) via `DebugTextSy
 
 ### PhysicsClient NuGet Version
 Demo scripts pin `PhysicsClient 0.4.0` (added smooth camera + narration commands). The Prelude.fsx uses `#r "nuget: PhysicsClient, 0.4.0"`. Contracts also at 0.4.0.
+
+### Static Mesh Body MotionType
+Static mesh bodies (mass=0) require explicit `MotionType.Static` (enum value 2) via `withMotionType BodyMotionType.Static` (F#) or `with_motion_type(cmd, 2)` (Python). The default MotionType is Dynamic (0), and mass=0 + Dynamic is rejected by the server. Without the explicit MotionType, the mesh body silently fails to be created.
+
+### BepuPhysics2 Mesh Triangle Size
+Mesh collision triangles must be ~2m+ per edge for reliable collision detection. Very thin or narrow triangles (from parametric cross-section strips) allow small objects to fall through. Use heightmap grids with well-shaped quads (2 triangles per ~2×2m cell) instead of narrow strip geometry.
 
 ### Stride3D Asset Compiler
 `StrideCompilerSkipBuild=true` skips asset compilation for CI/headless builds. For live GPU runs, build without this flag (requires fonts + FreeImage). The viewer's `.fsproj` defaults to `false` unless overridden.

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-mesh-terrain-demos`
 **Created**: 2026-03-25
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "create 2 new demos showcasing using static mesh as interesting ground. a rollercoaster for balls, halfpipes....."
 
 ## User Scenarios & Testing *(mandatory)*

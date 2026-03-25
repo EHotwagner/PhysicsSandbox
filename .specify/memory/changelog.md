@@ -1,5 +1,28 @@
 # Merged Features Log
 
+## Static Mesh Terrain Demos — 2026-03-25
+**Branch:** 004-mesh-terrain-demos
+**Spec:** specs/004-mesh-terrain-demos
+
+**What was added:**
+- Demo 23: Ball Rollercoaster — heightmap terrain with steep drop, hill, banked curves, parabolic channel walls; 6 balls roll down the track
+- Demo 24: Halfpipe Arena — U-shaped bowl terrain with end caps; 6 balls + 2 capsules oscillate and settle
+- Both demos use heightmap grid approach (2m+ triangles) for reliable BepuPhysics2 mesh collision
+- Static mesh bodies with explicit MotionType.Static for proper collision detection and viewer rendering
+- Cinematic camera sequences and narration for each demo phase
+- F# (.fsx) and Python (.py) standalone scripts + AllDemos registry entries
+- Key discovery: mesh triangles must be ~2m+ per edge for reliable collision; parametric cross-section strips are too thin
+
+**New Components:**
+- `Scripting/demos/Demo23_BallRollercoaster.fsx` — F# rollercoaster demo
+- `Scripting/demos/Demo24_HalfpipeArena.fsx` — F# halfpipe demo
+- `Scripting/demos_py/demo23_ball_rollercoaster.py` — Python rollercoaster demo
+- `Scripting/demos_py/demo24_halfpipe_arena.py` — Python halfpipe demo
+
+**Tasks Completed:** 8/13 tasks (3 runtime verification tasks + 2 setup verification tasks deferred)
+
+---
+
 ## Robust Network Connectivity — 2026-03-24
 **Branch:** 005-robust-network-connectivity
 **Spec:** specs/005-robust-network-connectivity
