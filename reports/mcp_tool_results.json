@@ -1,0 +1,376 @@
+{
+  "timestamp": "2026-03-25T11:08:23.619183",
+  "total": 61,
+  "ok": 44,
+  "errors": 17,
+  "skipped": 0,
+  "tools_available": 59,
+  "results": [
+    {
+      "tool": "get_status",
+      "status": "OK",
+      "ms": 1,
+      "msg": "MCP Server Status\nServer: http://localhost:5180\nState Stream: connected (last update 99.0s ago)\nView Command Stream: connected\nAudit Stream: connected\nHas State Data: True"
+    },
+    {
+      "tool": "get_state",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Simulation State (cached 99.0s ago)\nTime: 0.050s | Running: False | Bodies: 5\n\n  ID              | Position            | Velocity            | Mass  | Shape\n  cmp-batch-0     | (0.0, 5.0, 0.0)       | (0.0, -0.5, 0.0)    | 1.0   | Sphere(r=0.5)\n  cmp-batch-1     | (2.0, 5.0, 0.0)       | (0.0, -0.5,"
+    },
+    {
+      "tool": "restart_simulation",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "set_gravity",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "add_body",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'add_body'."
+    },
+    {
+      "tool": "add_body",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'add_body'."
+    },
+    {
+      "tool": "apply_force",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "apply_impulse",
+      "status": "OK",
+      "ms": 3,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "apply_torque",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "step",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "play",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "pause",
+      "status": "OK",
+      "ms": 3,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "clear_forces",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "add_constraint",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'add_constraint'."
+    },
+    {
+      "tool": "remove_constraint",
+      "status": "OK",
+      "ms": 3,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "remove_body",
+      "status": "OK",
+      "ms": 1,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "register_shape",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'register_shape'."
+    },
+    {
+      "tool": "unregister_shape",
+      "status": "OK",
+      "ms": 3,
+      "msg": "Success: Command forwarded to simulation"
+    },
+    {
+      "tool": "set_collision_filter",
+      "status": "TOOL_ERROR",
+      "ms": 2,
+      "msg": "An error occurred invoking 'set_collision_filter'."
+    },
+    {
+      "tool": "set_body_pose",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'set_body_pose'."
+    },
+    {
+      "tool": "raycast",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'raycast'."
+    },
+    {
+      "tool": "sweep_cast",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'sweep_cast'."
+    },
+    {
+      "tool": "overlap",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'overlap'."
+    },
+    {
+      "tool": "add_marble",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Command forwarded to simulation"
+    },
+    {
+      "tool": "add_bowling_ball",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Command forwarded to simulation"
+    },
+    {
+      "tool": "add_beach_ball",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Command forwarded to simulation"
+    },
+    {
+      "tool": "add_crate",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Command forwarded to simulation"
+    },
+    {
+      "tool": "add_brick",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Command forwarded to simulation"
+    },
+    {
+      "tool": "add_boulder",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Command forwarded to simulation"
+    },
+    {
+      "tool": "add_die",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Command forwarded to simulation"
+    },
+    {
+      "tool": "generate_random_bodies",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'generate_random_bodies'."
+    },
+    {
+      "tool": "generate_stack",
+      "status": "OK",
+      "ms": 3,
+      "msg": "Generated stack of 3 crates:\n  crate-14: Command forwarded to simulation\n  crate-15: Command forwarded to simulation\n  crate-16: Command forwarded to simulation\n"
+    },
+    {
+      "tool": "generate_row",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'generate_row'."
+    },
+    {
+      "tool": "generate_grid",
+      "status": "OK",
+      "ms": 3,
+      "msg": "Generated 2x2 grid:\n  crate-17: Command forwarded to simulation\n  crate-18: Command forwarded to simulation\n  crate-19: Command forwarded to simulation\n  crate-20: Command forwarded to simulation\n"
+    },
+    {
+      "tool": "generate_pyramid",
+      "status": "OK",
+      "ms": 8,
+      "msg": "Generated pyramid with 3 layers (6 crates)\n"
+    },
+    {
+      "tool": "push_body",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Command forwarded to simulation"
+    },
+    {
+      "tool": "launch_body",
+      "status": "OK",
+      "ms": 1,
+      "msg": "Error: Body 'sphere-1' not found in state"
+    },
+    {
+      "tool": "spin_body",
+      "status": "OK",
+      "ms": 1,
+      "msg": "Error: Unknown axis 'y'. Use: up, down, north, south, east, west"
+    },
+    {
+      "tool": "stop_body",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Command forwarded to simulation"
+    },
+    {
+      "tool": "set_camera",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Success: View command accepted"
+    },
+    {
+      "tool": "set_zoom",
+      "status": "OK",
+      "ms": 3,
+      "msg": "Success: View command accepted"
+    },
+    {
+      "tool": "toggle_wireframe",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Success: View command accepted"
+    },
+    {
+      "tool": "batch_commands",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Batch: 2 commands processed in 0.0ms\n  Results: 2 succeeded, 0 failed\n"
+    },
+    {
+      "tool": "batch_view_commands",
+      "status": "OK",
+      "ms": 2,
+      "msg": "Batch: 1 view commands processed in 0.0ms\n  Results: 1 succeeded, 0 failed\n"
+    },
+    {
+      "tool": "recording_status",
+      "status": "OK",
+      "ms": 1,
+      "msg": "Recording Status\n---\n  Session ID: 650df6cd-ded6-4bce-8714-5a5e546204d3\n  Label: recording-20260325-110346\n  Status: Completed\n  Started: 2026-03-25T11:03:46.7244110+00:00\n  Ended: 2026-03-25T11:06:30.0199350+00:00\n\nStorage:\n  Current size: 0.02 MB / 476.84 MB (0.0%)\n  Chunk count: 2\n  Time limit: 1"
+    },
+    {
+      "tool": "start_recording",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'start_recording'."
+    },
+    {
+      "tool": "stop_recording",
+      "status": "OK",
+      "ms": 1,
+      "msg": "Error: No active recording session to stop."
+    },
+    {
+      "tool": "list_sessions",
+      "status": "OK",
+      "ms": 4,
+      "msg": "Recording Sessions (6 total):\n---\n  [Completed] recording-20260325-090434\n    ID: 076eef7a-6727-4bd4-976c-6899fbb6fc43\n    Started: 2026-03-25T09:04:34.1198493+00:00\n    Ended: 2026-03-25T09:16:24.6014079+00:00\n    Size: 0.00 MB | Chunks: 0 | Snapshots: 0 | Events: 0\n\n  [Completed] recording-2026032"
+    },
+    {
+      "tool": "query_summary",
+      "status": "OK",
+      "ms": 1,
+      "msg": "No recording session found. Start a recording or provide a valid session_id."
+    },
+    {
+      "tool": "query_snapshots",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'query_snapshots'."
+    },
+    {
+      "tool": "query_events",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'query_events'."
+    },
+    {
+      "tool": "query_body_trajectory",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'query_body_trajectory'."
+    },
+    {
+      "tool": "query_mesh_fetches",
+      "status": "TOOL_ERROR",
+      "ms": 0,
+      "msg": "An error occurred invoking 'query_mesh_fetches'."
+    },
+    {
+      "tool": "delete_session",
+      "status": "OK",
+      "ms": 1,
+      "msg": "Error: Session 'recording-20260325-090434' not found."
+    },
+    {
+      "tool": "get_metrics",
+      "status": "OK",
+      "ms": 2,
+      "msg": "=== Service Metrics ===\n  [PhysicsServer]\n    Messages: sent=91 recv=296\n    Bytes:    sent=3806 recv=240570\n  [McpServer]\n    Messages: sent=4 recv=296\n    Bytes:    sent=188 recv=167406\n\n=== Pipeline Timings ===\n  Simulation tick:   0.37 ms\n  Serialization:     0.02 ms\n  gRPC transfer:     15.97 m"
+    },
+    {
+      "tool": "get_diagnostics",
+      "status": "OK",
+      "ms": 3,
+      "msg": "=== Pipeline Diagnostics ===\n\n  Simulation tick          0.37 ms  (2%)\n  Serialization            0.02 ms  (0%)\n  gRPC transfer           15.97 ms  (98%) << SLOWEST\n  Viewer render            0.00 ms  (0%)\n  Total                   16.37 ms\n"
+    },
+    {
+      "tool": "get_command_log",
+      "status": "OK",
+      "ms": 5,
+      "msg": "Command Log (most recent 10 entries):\n---\n  PlayPause: running=False\n  PlayPause: running=True\n  SetCamera\n  StepSimulation\n  AddBody: id=batch-1 mass=1\n  ToggleWireframe: enabled=False\n  SetZoom: level=1.5\n  SetCamera\n  ClearForces: body=sphere-1\n  ApplyImpulse: body=sphere-1\n"
+    },
+    {
+      "tool": "start_stress_test",
+      "status": "TOOL_ERROR",
+      "ms": 1,
+      "msg": "An error occurred invoking 'start_stress_test'."
+    },
+    {
+      "tool": "get_stress_test_status",
+      "status": "OK",
+      "ms": 2,
+      "msg": "No stress test found with ID: unknown"
+    },
+    {
+      "tool": "start_comparison_test",
+      "status": "OK",
+      "ms": 1,
+      "msg": "Comparison test started: stress-002. Poll with get_stress_test_status."
+    },
+    {
+      "tool": "comparison_test_result",
+      "status": "OK",
+      "ms": 1,
+      "msg": "No stress test found with ID: unknown"
+    }
+  ]
+}

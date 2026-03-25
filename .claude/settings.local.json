@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(__NEW_LINE_c506b209583d883a__ echo:*)",
+      "Bash(wc -l echo \"\" echo \"set_collision_filter: NO Nullable params \\(all required - CORRECT\\)\" grep \"static member set_collision_filter\" /home/developer/projects/PhysicsSandbox/src/PhysicsSandbox.Mcp/SimulationTools.fs)"
     ]
   },
   "mcpServers": {
