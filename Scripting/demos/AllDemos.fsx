@@ -220,7 +220,7 @@ let demos = [|
       printfn "  Admiring the pyramid..."
       sleep 1500
       printfn "  STRIKE! Launching ball..."
-      launch s ballId (0.0, 1.0, 5.0) 40.0 |> ignore
+      launch s ballId (0.0, 1.0, 5.0) 150.0 |> ignore
       runFor s 2.5
       setCamera s (3.0, 1.0, 3.0) (0.0, 0.5, 5.0) |> ignore
       printfn "  Low-angle debris view"
@@ -763,8 +763,19 @@ let demos = [|
                       let z = radius * sin angle
                       let t = float i / float (count - 1)
                       let c = makeColor (0.3 + t * 0.7) (0.6 - t * 0.4) (1.0 - t * 0.9) 1.0
-                      makeBoxCmd dominoIds.[i] (x, 0.3, z) (0.05, 0.3, 0.15) 1.0
-                      |> withColorAndMaterial (Some c) None ]
+                      // Rotate domino so thin axis aligns with tangent to arc
+                      let halfA = -(System.Math.PI / 4.0 + angle / 2.0)
+                      let qw = cos halfA
+                      let qy = sin halfA
+                      let orient = Vec4()
+                      orient.X <- 0.0
+                      orient.Y <- qy
+                      orient.Z <- 0.0
+                      orient.W <- qw
+                      let cmd = makeBoxCmd dominoIds.[i] (x, 0.3, z) (0.05, 0.3, 0.15) 1.0
+                                |> withColorAndMaterial (Some c) None
+                      cmd.AddBody.Orientation <- orient
+                      cmd ]
               batchAdd s cmds
               dominoIds)
       // Add compound L-shaped domino pieces at intervals along the arc
@@ -791,7 +802,8 @@ let demos = [|
       // Move to side view for the push
       setCamera s (radius + 2.0, 3.0, 0.0) (0.0, 0.5, 0.0) |> ignore
       printfn "  Pushing first domino..."
-      push s ids.[0] East 4.0 |> ignore
+      // Tangent to circle at angle 0 is +Z direction
+      pushVec s ids.[0] (0.0, 0.0, 5.0) |> ignore
       timed "Cascade propagation" (fun () ->
           runFor s 10.0)
       // Camera sweep along the cascade

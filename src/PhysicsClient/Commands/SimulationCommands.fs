@@ -400,7 +400,11 @@ let step (session: Session) : Result<unit, string> =
 let reset (session: Session) : Result<unit, string> =
     let cmd = SimulationCommand()
     cmd.Reset <- ResetSimulation()
-    sendCommand session cmd
+    match sendCommand session cmd with
+    | Ok () ->
+        (bodyRegistry session).Clear()
+        Ok ()
+    | Error e -> Error e
 
 /// <summary>Sends multiple simulation commands in a single batch request for better performance.</summary>
 /// <param name="session">The active server session.</param>

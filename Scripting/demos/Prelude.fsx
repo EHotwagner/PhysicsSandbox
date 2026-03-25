@@ -29,11 +29,11 @@ let toVec3 (x: float, y: float, z: float) =
 
 let resetSimulation (s: Session) =
     pause s |> ignore
+    clearAll s |> ignore
     try
         reset s |> ok
     with ex ->
         printfn "  [RESET ERROR] %s — falling back to manual clear" ex.Message
-        clearAll s |> ignore
     PhysicsClient.IdGenerator.reset ()
     addPlane s None None |> ignore
     setGravity s (0.0, -9.81, 0.0) |> ignore
