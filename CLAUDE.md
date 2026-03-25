@@ -4,7 +4,7 @@ Last updated: 2026-03-25
 
 ## Active Technologies
 - F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts)
-- .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x
+- .NET Aspire 13.2.0, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x
 - BepuFSharp 0.3.0 (local NuGet, physics engine wrapper — 10 shape types, 10 constraint types, sweep/overlap queries, collision filtering, material properties), Grpc.Net.Client 2.x
 - Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, 3D viewer)
 - Spectre.Console (client library TUI display)
@@ -22,19 +22,19 @@ Last updated: 2026-03-25
 - N/A (local NuGet feed at `~/.local/share/nuget-local/`) (004-scripting-nuget-package)
 - F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient (F# NuGet), prelude.py (Python), existing Prelude.fsx helpers (004-improve-demos)
 - N/A (stateless scripts communicating with running physics server) (004-improve-demos)
-- F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0→0.2.0 (local NuGet), Stride.CommunityToolkit.Bepu 1.0.0-preview.62, Spectre.Console, ModelContextProtocol.AspNetCore 1.1.* (005-stride-bepu-integration)
+- F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts) + .NET Aspire 13.2.0, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.1.0→0.2.0 (local NuGet), Stride.CommunityToolkit.Bepu 1.0.0-preview.62, Spectre.Console, ModelContextProtocol.AspNetCore 1.1.* (005-stride-bepu-integration)
 - In-memory (physics world, shape cache, constraint registry, metrics counters) (005-stride-bepu-integration)
 - F# on .NET 10.0 (PhysicsViewer project) + Stride.CommunityToolkit 1.0.0-preview.62 (rendering), Stride.CommunityToolkit.Bepu 1.0.0-preview.62 (Bepu3DPhysicsOptions, Create3DPrimitive), Grpc.Net.Client 2.x (server communication), System.Text.Json (settings persistence) (005-viewer-settings-sizing-fix)
 - JSON file at `~/.config/PhysicsSandbox/viewer-settings.json` (005-viewer-settings-sizing-fix)
 - F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient.dll (NuGet), PhysicsSandbox.Shared.Contracts.dll (proto types), Grpc.Net.Client 2.x, Google.Protobuf 3.x (005-enhance-demos)
-- F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts), Python 3.10+ (demo scripts) + .NET Aspire 13.1.3, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console, xUnit 2.x (005-refactor-evaluation)
+- F# on .NET 10.0 (services, MCP, client, scripting), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts), Python 3.10+ (demo scripts) + .NET Aspire 13.2.0, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console, xUnit 2.x (005-refactor-evaluation)
 - F# on .NET 10.0 + Google.Protobuf 3.x (binary serialization), System.Text.Json (session metadata), System.Threading.Channels (async producer-consumer), ModelContextProtocol.AspNetCore 1.1.* (MCP tool registration) (005-mcp-data-logging)
 - Append-only protobuf binary files at `~/.config/PhysicsSandbox/recordings/`, JSON metadata per session (005-mcp-data-logging)
-- F# on .NET 10.0 (services, MCP, client, viewer), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console (004-mesh-cache-transport)
+- F# on .NET 10.0 (services, MCP, client, viewer), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.2.0, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console (004-mesh-cache-transport)
 - In-memory (physics world, mesh caches). Append-only protobuf binary files for MCP recordings. (004-mesh-cache-transport)
 - F# on .NET 10.0 (PhysicsServer, PhysicsSandbox.Mcp), C# on .NET 10.0 (integration tests) + Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, ModelContextProtocol.AspNetCore 1.1.*, System.Threading.Channels (004-mcp-mesh-logging)
 - Append-only protobuf binary files at `~/.config/PhysicsSandbox/recordings/` (existing recording infrastructure) (004-mcp-mesh-logging)
-- F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console (004-state-stream-optimization)
+- F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.2.0, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, BepuFSharp 0.2.0-beta.1, Stride.CommunityToolkit 1.0.0-preview.62, ModelContextProtocol.AspNetCore 1.1.*, Spectre.Console (004-state-stream-optimization)
 - In-memory (physics world, mesh caches, state caches). Append-only protobuf binary files for MCP recordings. (004-state-stream-optimization)
 - F# on .NET 10.0 (PhysicsClient, PhysicsServer, Scripting), C# on .NET 10.0 (Integration Tests), Bash (test progress script) + xUnit 2.x, Aspire.Hosting.Testing 10.x, Grpc.Net.Client 2.x, Google.Protobuf 3.x (004-backlog-fix-test-progress)
 - N/A (in-memory ConcurrentDictionary for pending queries) (004-backlog-fix-test-progress)
@@ -44,7 +44,7 @@ Last updated: 2026-03-25
 - N/A (in-memory only, no persistence changes) (004-enhance-demos-shapes)
 - F# on .NET 10.0 (viewer, client, scripting), C# on .NET 10.0 (contracts), Python 3.10+ (demo scripts) + Stride.CommunityToolkit 1.0.0-preview.62 (viewer), Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, grpcio (Python) (004-camera-smooth-demos)
 - N/A (in-memory camera state only) (004-camera-smooth-demos)
-- F# on .NET 10.0 (services, MCP, client, viewer), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.1.3, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, System.Threading.Channels (in-box) (005-robust-network-connectivity)
+- F# on .NET 10.0 (services, MCP, client, viewer), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + .NET Aspire 13.2.0, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x, System.Threading.Channels (in-box) (005-robust-network-connectivity)
 - N/A (in-memory channel/subscriber state only) (005-robust-network-connectivity)
 - F# on .NET 10.0 (PhysicsSimulation), C# on .NET 10.0 (integration tests) + BepuFSharp 0.2.0-beta.1 → 0.3.0 (local NuGet at `~/.local/share/nuget-local/`). Transitive: BepuPhysics 2.5.0-beta.28 (unchanged), BepuUtilities 2.5.0-beta.28 (unchanged), FSharp.Core 10.0.104 (unchanged) (004-upgrade-bepufsharp)
 - N/A (no storage changes) (004-upgrade-bepufsharp)
