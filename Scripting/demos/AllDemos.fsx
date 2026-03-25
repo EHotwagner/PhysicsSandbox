@@ -1282,84 +1282,76 @@ let demos = [|
 
   // ─── Demo 23: Ball Rollercoaster ──────────────────────────────────────
   { Name = "Ball Rollercoaster"
-    Description = "Balls roll down a mesh rollercoaster track with drops, hills, and banked curves."
+    Description = "Balls roll down a mesh terrain with drops, hills, and banked curves."
     Run = fun s ->
       let pi = System.Math.PI
-      let segments = 60
-      let trackWidth = 1.4
-      let wallHeight = 0.4
-      let pathPt (t: float) =
-          let z = t * 30.0 - 15.0
-          let x = if t < 0.08 then 0.0 else 3.0 * sin((t - 0.08) / 0.92 * 2.0 * pi)
-          let y =
+      let terrainHeight (x: float) (z: float) =
+          let t = (z + 15.0) / 30.0 |> max 0.0 |> min 1.0
+          let baseY =
               if t < 0.1 then 8.0
               elif t < 0.25 then 8.0 - (t - 0.1) / 0.15 * 6.0
               elif t < 0.45 then 2.0 + 3.0 * sin((t - 0.25) / 0.20 * pi)
               elif t < 0.65 then 2.0 - (t - 0.45) * 3.0
               elif t < 0.85 then 0.8 + 2.0 * sin((t - 0.65) / 0.20 * pi)
-              else 0.8 - (t - 0.85) / 0.15 * 0.4
-          (x, y, z)
-      let tangentAt (t: float) =
-          let dt = 0.001
-          let (x0, y0, z0) = pathPt (max 0.0 (t - dt))
-          let (x1, y1, z1) = pathPt (min 1.0 (t + dt))
-          let dx, dy, dz = x1 - x0, y1 - y0, z1 - z0
-          let len = sqrt(dx*dx + dy*dy + dz*dz)
-          if len < 0.0001 then (0.0, 0.0, 1.0) else (dx/len, dy/len, dz/len)
-      let crossV (ax, ay, az) (bx, by, bz) = (ay*bz - az*by, az*bx - ax*bz, ax*by - ay*bx)
-      let norm (x, y, z) = let l = sqrt(x*x + y*y + z*z) in if l < 0.0001 then (0.0, 1.0, 0.0) else (x/l, y/l, z/l)
-      let stations =
-          [| for i in 0 .. segments ->
-              let t = float i / float segments
-              let (px, py, pz) = pathPt t
-              let (tx, ty, tz) = tangentAt t
-              let (rx, ry, rz) = norm (crossV (tx, ty, tz) (0.0, 1.0, 0.0))
-              let bank = if t > 0.45 && t < 0.65 then 0.25 else 0.0
-              let hw = trackWidth / 2.0
-              ((px - rx*hw, py - ry*hw + bank*hw, pz - rz*hw),
-               (px + rx*hw, py + ry*hw - bank*hw, pz + rz*hw),
-               (px - rx*hw, py - ry*hw + bank*hw + wallHeight, pz - rz*hw),
-               (px + rx*hw, py + ry*hw - bank*hw + wallHeight, pz + rz*hw)) |]
+              else 0.8 - (t - 0.85) / 0.15 * 0.3
+          let edgeLift = 0.3 * (x * x) / 4.0
+          let bank =
+              if t > 0.35 && t < 0.55 then 0.3 * sin((t - 0.35) / 0.20 * pi) * x / 3.0
+              else 0.0
+          baseY + edgeLift + bank
+      let xMin, xMax = -3.0, 3.0
+      let zMin, zMax = -15.0, 15.0
+      let xSteps = 4
+      let zSteps = 15
+      let dx = (xMax - xMin) / float xSteps
+      let dz = (zMax - zMin) / float zSteps
       let mutable tris = []
-      for i in 0 .. segments - 1 do
-          let (fl0, fr0, wl0, wr0) = stations.[i]
-          let (fl1, fr1, wl1, wr1) = stations.[i + 1]
-          tris <- (fl0, fr0, fl1) :: (fr0, fr1, fl1) :: (fl0, fl1, wl0) :: (fl1, wl1, wl0) :: (fr0, wr0, fr1) :: (wr0, wr1, fr1) :: tris
+      for zi in 0 .. zSteps - 1 do
+          for xi in 0 .. xSteps - 1 do
+              let x0 = xMin + float xi * dx
+              let x1 = x0 + dx
+              let z0 = zMin + float zi * dz
+              let z1 = z0 + dz
+              let p00 = (x0, terrainHeight x0 z0, z0)
+              let p10 = (x1, terrainHeight x1 z0, z0)
+              let p01 = (x0, terrainHeight x0 z1, z1)
+              let p11 = (x1, terrainHeight x1 z1, z1)
+              tris <- (p00, p10, p01) :: (p10, p11, p01) :: tris
       let trackTris = tris |> List.rev
 
       resetSimulation s
-      setDemoInfo s "Demo 23: Ball Rollercoaster" "Balls roll down a mesh rollercoaster track with drops, hills, and banked curves."
-      setNarration s "Building rollercoaster track..."
-      smoothCamera s (0.0, 14.0, -20.0) (0.0, 4.0, 0.0) 1.5
+      setDemoInfo s "Demo 23: Ball Rollercoaster" "Balls roll down a mesh terrain with drops, hills, and banked curves."
+      setNarration s "Building rollercoaster terrain..."
+      smoothCamera s (8.0, 14.0, -10.0) (0.0, 4.0, 0.0) 1.5
       sleep 1700
       batchAdd s [ makeMeshCmd (nextId "track") (0.0, 0.0, 0.0) trackTris 0.0
                    |> withMotionType BodyMotionType.Static
                    |> withColorAndMaterial (Some accentYellow) (Some slipperyMaterial) ]
       sleep 500
-      setNarration s "Releasing balls at the top of the track!"
-      smoothCamera s (3.0, 10.0, -16.0) (0.0, 8.0, -14.0) 1.5
+      setNarration s "Releasing balls at the top!"
+      smoothCamera s (4.0, 10.0, -16.0) (0.0, 8.0, -13.0) 1.5
       sleep 1700
       let ballColors = [| projectileColor; accentGreen; targetColor; accentOrange; accentPurple; kinematicColor |]
-      for i in 0 .. 5 do
-          let ballId = nextId "ball"
-          batchAdd s [ makeSphereCmd ballId (0.0, 8.4, -15.0 + float i * 0.5) 0.2 2.0
-                       |> withColorAndMaterial (Some ballColors.[i]) None ]
-          if i < 5 then play s |> ignore; sleep 300; pause s |> ignore
+      let ballCmds =
+          [ for i in 0 .. 5 ->
+              makeSphereCmd (nextId "ball") (0.0, 9.0, -14.5 + float i * 0.6) 0.3 2.0
+              |> withColorAndMaterial (Some ballColors.[i]) None ]
+      batchAdd s ballCmds
       setNarration s "Steep drop — balls accelerating!"
       play s |> ignore
-      smoothCamera s (4.0, 7.0, -10.0) (0.0, 4.0, -6.0) 2.0
+      smoothCamera s (5.0, 7.0, -8.0) (0.0, 3.0, -3.0) 2.0
       sleep 3500
       setNarration s "Over the hill!"
-      smoothCamera s (-4.0, 6.0, -2.0) (0.0, 3.0, 2.0) 2.0
+      smoothCamera s (-5.0, 7.0, 0.0) (0.0, 3.0, 3.0) 2.0
       sleep 3000
-      setNarration s "Banked curve section"
-      smoothCamera s (-6.0, 5.0, 5.0) (-1.0, 1.5, 8.0) 2.0
+      setNarration s "Banked descent"
+      smoothCamera s (-6.0, 5.0, 6.0) (0.0, 1.5, 9.0) 2.0
       sleep 3000
-      setNarration s "Second hill and final run-out"
-      smoothCamera s (4.0, 5.0, 10.0) (0.0, 1.5, 14.0) 2.0
+      setNarration s "Second hill and run-out"
+      smoothCamera s (5.0, 5.0, 10.0) (0.0, 1.5, 14.0) 2.0
       sleep 3000
-      setNarration s "Full track overview"
-      smoothCamera s (12.0, 12.0, 0.0) (0.0, 3.0, 0.0) 2.0
+      setNarration s "Full terrain overview"
+      smoothCamera s (12.0, 14.0, 0.0) (0.0, 3.0, 0.0) 2.0
       sleep 2500
       pause s |> ignore
       clearNarration s
@@ -1369,44 +1361,31 @@ let demos = [|
   { Name = "Halfpipe Arena"
     Description = "Objects oscillate in a halfpipe bowl built from mesh triangles."
     Run = fun s ->
-      let pi = System.Math.PI
-      let arcStrips = 12
-      let lengthSegments = 16
-      let radius = 3.0
-      let halfLength = 7.0
+      let pipeHeight (x: float) (z: float) =
+          let radius = 3.5
+          let ax = abs x |> min radius
+          let baseY = radius - sqrt(radius * radius - ax * ax)
+          let zEdge = (abs z - 5.0) |> max 0.0
+          let capLift = zEdge * zEdge * 0.15
+          baseY + capLift
+      let xMin, xMax = -4.0, 4.0
+      let zMin, zMax = -8.0, 8.0
+      let xSteps = 6
+      let zSteps = 8
+      let dx = (xMax - xMin) / float xSteps
+      let dz = (zMax - zMin) / float zSteps
       let mutable tris = []
-      for li in 0 .. lengthSegments - 1 do
-          let z0 = -halfLength + float li / float lengthSegments * 2.0 * halfLength
-          let z1 = -halfLength + float (li + 1) / float lengthSegments * 2.0 * halfLength
-          for ai in 0 .. arcStrips - 1 do
-              let a0 = -pi / 2.0 + float ai / float arcStrips * pi
-              let a1 = -pi / 2.0 + float (ai + 1) / float arcStrips * pi
-              let x0 = radius * cos a0
-              let y0 = radius * sin a0 + radius
-              let x1 = radius * cos a1
-              let y1 = radius * sin a1 + radius
-              tris <- ((x0, y0, z0), (x1, y1, z0), (x0, y0, z1)) :: ((x1, y1, z0), (x1, y1, z1), (x0, y0, z1)) :: tris
-      let capSegments = 6
-      for endSign in [-1.0; 1.0] do
-          let zBase = endSign * halfLength
-          for ai in 0 .. arcStrips - 1 do
-              let a0 = -pi / 2.0 + float ai / float arcStrips * pi
-              let a1 = -pi / 2.0 + float (ai + 1) / float arcStrips * pi
-              for ci in 0 .. capSegments - 1 do
-                  let t0 = float ci / float capSegments * (pi / 2.0)
-                  let t1 = float (ci + 1) / float capSegments * (pi / 2.0)
-                  let capR0 = radius * cos t0
-                  let capR1 = radius * cos t1
-                  let zOff0 = endSign * radius * sin t0
-                  let zOff1 = endSign * radius * sin t1
-                  let p00 = (capR0 * cos a0, capR0 * sin a0 + radius, zBase + zOff0)
-                  let p10 = (capR0 * cos a1, capR0 * sin a1 + radius, zBase + zOff0)
-                  let p01 = (capR1 * cos a0, capR1 * sin a0 + radius, zBase + zOff1)
-                  let p11 = (capR1 * cos a1, capR1 * sin a1 + radius, zBase + zOff1)
-                  if endSign > 0.0 then
-                      tris <- (p00, p01, p10) :: (p10, p01, p11) :: tris
-                  else
-                      tris <- (p00, p10, p01) :: (p10, p11, p01) :: tris
+      for zi in 0 .. zSteps - 1 do
+          for xi in 0 .. xSteps - 1 do
+              let x0 = xMin + float xi * dx
+              let x1 = x0 + dx
+              let z0 = zMin + float zi * dz
+              let z1 = z0 + dz
+              let p00 = (x0, pipeHeight x0 z0, z0)
+              let p10 = (x1, pipeHeight x1 z0, z0)
+              let p01 = (x0, pipeHeight x0 z1, z1)
+              let p11 = (x1, pipeHeight x1 z1, z1)
+              tris <- (p00, p10, p01) :: (p10, p11, p01) :: tris
       let pipeTris = tris |> List.rev
       let halfpipeMat = makeMaterialProperties 0.3 4.0 30.0 0.8
 
@@ -1420,38 +1399,40 @@ let demos = [|
                    |> withColorAndMaterial (Some accentYellow) (Some halfpipeMat) ]
       sleep 500
       setNarration s "Dropping balls into the halfpipe!"
-      smoothCamera s (0.0, 5.0, -14.0) (0.0, 1.0, 0.0) 1.5
+      smoothCamera s (0.0, 6.0, -14.0) (0.0, 1.0, 0.0) 1.5
       sleep 1700
       let ballColors = [| projectileColor; accentGreen; targetColor; accentOrange; accentPurple; kinematicColor |]
-      for i in 0 .. 5 do
-          let ballId = nextId "ball"
-          let x = (float i - 2.5) * 0.6
-          let z = (float i - 2.5) * 2.0
-          let y = 7.0 + float i * 0.3
-          batchAdd s [ makeSphereCmd ballId (x, y, z) 0.3 2.5
-                       |> withColorAndMaterial (Some ballColors.[i]) None ]
-      for i in 0 .. 1 do
-          let capId = nextId "capsule"
-          batchAdd s [ makeCapsuleCmd capId (0.0, 8.0, float i * 4.0 - 2.0) 0.25 0.7 3.0
-                       |> withColorAndMaterial (Some accentPurple) None ]
+      let ballCmds =
+          [ for i in 0 .. 5 ->
+              let x = (float i - 2.5) * 0.5
+              let z = (float i - 2.5) * 1.5
+              makeSphereCmd (nextId "ball") (x, 5.0, z) 0.35 2.5
+              |> withColorAndMaterial (Some ballColors.[i]) None ]
+      batchAdd s ballCmds
+      let capCmds =
+          [ for i in 0 .. 1 ->
+              makeCapsuleCmd (nextId "capsule") (0.0, 6.0, float i * 3.0 - 1.5) 0.25 0.7 3.0
+              |> withColorAndMaterial (Some accentPurple) None ]
+      batchAdd s capCmds
       setNarration s "Objects falling into the bowl!"
       play s |> ignore
       smoothCamera s (0.0, 10.0, 12.0) (0.0, 1.0, 0.0) 2.0
       sleep 4000
-      setNarration s "Oscillation — rolling back and forth on the curved surface"
-      smoothCamera s (10.0, 4.0, 0.0) (0.0, 1.5, 0.0) 2.0
+      setNarration s "Oscillation — rolling back and forth"
+      smoothCamera s (10.0, 5.0, 0.0) (0.0, 1.5, 0.0) 2.0
       sleep 4000
       setNarration s "Looking down the halfpipe"
-      smoothCamera s (0.0, 4.0, -14.0) (0.0, 1.0, 0.0) 2.0
+      smoothCamera s (0.0, 5.0, -14.0) (0.0, 1.0, 0.0) 2.0
       sleep 3500
-      setNarration s "Energy dissipating — objects settling at the bottom"
+      setNarration s "Objects settling at the bottom"
       smoothCamera s (0.0, 8.0, 5.0) (0.0, 0.5, 0.0) 2.0
       sleep 3500
       setNarration s "Second wave incoming!"
-      for i in 0 .. 2 do
-          let ballId = nextId "ball"
-          batchAdd s [ makeSphereCmd ballId (float i - 1.0, 9.0, float i * 2.0 - 2.0) 0.35 3.0
-                       |> withColorAndMaterial (Some accentGreen) None ]
+      let wave2 =
+          [ for i in 0 .. 2 ->
+              makeSphereCmd (nextId "ball") (float i - 1.0, 6.0, float i * 2.0 - 2.0) 0.4 3.0
+              |> withColorAndMaterial (Some accentGreen) None ]
+      batchAdd s wave2
       sleep 3000
       setNarration s "Wide view — halfpipe arena"
       smoothCamera s (10.0, 10.0, 10.0) (0.0, 2.0, 0.0) 2.0
