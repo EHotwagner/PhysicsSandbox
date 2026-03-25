@@ -12,3 +12,10 @@ let getPublicMembers (moduleType: Type) =
 
 let assertContains (members: string[]) (name: string) =
     Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+
+let assertModuleSurface (assemblyType: Type) (moduleName: string) (expectedMembers: string list) =
+    let t = assemblyType.Assembly.GetType(moduleName)
+    Assert.NotNull(t)
+    let members = getPublicMembers t
+    for name in expectedMembers do
+        assertContains members name

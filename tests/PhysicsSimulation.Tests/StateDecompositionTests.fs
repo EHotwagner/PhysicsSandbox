@@ -4,34 +4,9 @@ open System.Collections.Generic
 open System.Threading.Tasks
 open Xunit
 open PhysicsSandbox.Shared.Contracts
+open CommonTestBuilders
 
 module MR = PhysicsServer.Hub.MessageRouter
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-/// Create a Body proto with the given id and static/dynamic flag.
-let private makeBody id isStatic =
-    let b = Body(Id = id, IsStatic = isStatic)
-    b.Mass <- if isStatic then 0.0 else 1.0
-    b.MotionType <- if isStatic then BodyMotionType.Static else BodyMotionType.Dynamic
-    b.Position <- Vec3(X = 1.0, Y = 2.0, Z = 3.0)
-    b.Orientation <- Vec4(X = 0.0, Y = 0.0, Z = 0.0, W = 1.0)
-
-    if not isStatic then
-        b.Velocity <- Vec3(X = 0.5, Y = 0.0, Z = 0.0)
-        b.AngularVelocity <- Vec3(X = 0.0, Y = 0.1, Z = 0.0)
-
-    b.Shape <- Shape(Sphere = Sphere(Radius = 1.0))
-    b.Color <- Color(R = 1.0, G = 0.0, B = 0.0, A = 1.0)
-    b
-
-let private makeState (bodies: Body list) =
-    let s = SimulationState(Time = 1.0, Running = true)
-
-    for b in bodies do
-        s.Bodies.Add(b)
-
-    s
 
 // ─── Tests ──────────────────────────────────────────────────────────────────
 

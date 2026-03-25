@@ -4,23 +4,7 @@ open System.Threading.Tasks
 open Xunit
 open PhysicsSandbox.Shared.Contracts
 open PhysicsServer.Hub.MessageRouter
-
-/// Helper to create a test body with position/orientation/velocity.
-let private makeBody id isStatic =
-    let b = Body(Id = id, IsStatic = isStatic, Mass = (if isStatic then 0.0 else 1.0))
-    b.Position <- Vec3(X = 1.0, Y = 2.0, Z = 3.0)
-    b.Orientation <- Vec4(X = 0.0, Y = 0.0, Z = 0.0, W = 1.0)
-    if not isStatic then
-        b.Velocity <- Vec3(X = 0.1, Y = 0.2, Z = 0.3)
-        b.AngularVelocity <- Vec3(X = 0.01, Y = 0.02, Z = 0.03)
-    b.MotionType <- if isStatic then BodyMotionType.Static else BodyMotionType.Dynamic
-    b
-
-/// Helper to make a SimulationState from a list of bodies.
-let private makeState (bodies: Body list) =
-    let s = SimulationState(Time = 1.0, Running = true)
-    for b in bodies do s.Bodies.Add(b)
-    s
+open CommonTestBuilders
 
 [<Fact>]
 let ``T034: publishState broadcasts TickState to all subscribers`` () =

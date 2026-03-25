@@ -8,9 +8,13 @@
 
   <ItemGroup>
     <Compile Include="../SharedTestHelpers.fs" Link="SharedTestHelpers.fs" />
+    <Compile Include="../CommonTestBuilders.fs" Link="CommonTestBuilders.fs" />
     <Compile Include="FpsCounterTests.fs" />
-    <Compile Include="SceneManagerTests.fs" />
-    <Compile Include="CameraControllerTests.fs" />
+    <Compile Include="ShapeRenderingTests.fs" />
+    <Compile Include="CustomMeshTests.fs" />
+    <Compile Include="SceneStateBehaviorTests.fs" />
+    <Compile Include="CameraBasicsTests.fs" />
+    <Compile Include="CameraModeTests.fs" />
     <Compile Include="ViewerSettingsTests.fs" />
     <Compile Include="DisplayManagerTests.fs" />
     <Compile Include="ShapeGeometryTests.fs" />

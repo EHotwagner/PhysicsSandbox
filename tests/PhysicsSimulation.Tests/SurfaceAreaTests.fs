@@ -5,37 +5,33 @@ open TestHelpers
 
 [<Fact>]
 let ``SimulationWorld public API matches baseline`` () =
-    let t = typeof<PhysicsSimulation.SimulationWorld.World>.DeclaringType
-    let members = getPublicMembers t
-    let expected = [|
-        "addBody"; "addConstraint"; "applyForce"; "applyImpulse"; "applyTorque"
-        "clearForces"; "create"; "currentState"; "destroy"
-        "isRunning"; "registerShape"; "removeBody"; "removeConstraint"
-        "resetSimulation"; "setBodyPose"; "setCollisionFilter"
-        "setGravity"; "setRunning"; "step"; "time"
-        "unregisterShape"
-    |]
-    for name in expected do
-        Assert.True(members |> Array.exists (fun m -> m = name), $"Missing public member: {name}")
+    assertModuleSurface
+        typeof<PhysicsSimulation.SimulationWorld.World>
+        "PhysicsSimulation.SimulationWorld"
+        [ "addBody"; "addConstraint"; "applyForce"; "applyImpulse"; "applyTorque"
+          "clearForces"; "create"; "currentState"; "destroy"
+          "isRunning"; "registerShape"; "removeBody"; "removeConstraint"
+          "resetSimulation"; "setBodyPose"; "setCollisionFilter"
+          "setGravity"; "setRunning"; "step"; "time"
+          "unregisterShape" ]
 
 [<Fact>]
 let ``CommandHandler public API matches baseline`` () =
-    let t = typeof<PhysicsSimulation.SimulationWorld.World>.Assembly.GetType("PhysicsSimulation.CommandHandler")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    Assert.Contains("handle", members)
+    assertModuleSurface
+        typeof<PhysicsSimulation.SimulationWorld.World>
+        "PhysicsSimulation.CommandHandler"
+        [ "handle" ]
 
 [<Fact>]
 let ``SimulationClient public API matches baseline`` () =
-    let t = typeof<PhysicsSimulation.SimulationWorld.World>.Assembly.GetType("PhysicsSimulation.SimulationClient")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    Assert.Contains("run", members)
+    assertModuleSurface
+        typeof<PhysicsSimulation.SimulationWorld.World>
+        "PhysicsSimulation.SimulationClient"
+        [ "run" ]
 
 [<Fact>]
 let ``MeshIdGenerator public API matches baseline`` () =
-    let t = typeof<PhysicsSimulation.SimulationWorld.World>.Assembly.GetType("PhysicsSimulation.MeshIdGenerator")
-    Assert.NotNull(t)
-    let members = getPublicMembers t
-    Assert.Contains("computeMeshId", members)
-    Assert.Contains("computeBoundingBox", members)
+    assertModuleSurface
+        typeof<PhysicsSimulation.SimulationWorld.World>
+        "PhysicsSimulation.MeshIdGenerator"
+        [ "computeMeshId"; "computeBoundingBox" ]

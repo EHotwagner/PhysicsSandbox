@@ -50,6 +50,7 @@ Last updated: 2026-03-25
 - N/A (no storage changes) (004-upgrade-bepufsharp)
 - F# scripts (.fsx) on .NET 10.0; Python 3.10+ with grpcio + PhysicsClient 0.4.0 (NuGet, F#), PhysicsSandbox.Shared.Contracts 0.4.0 (proto types), grpcio + protobuf (Python) (004-mesh-terrain-demos)
 - F# on .NET 10.0 (MCP server, tool modules), C# on .NET 10.0 (integration tests) + ModelContextProtocol.AspNetCore 1.1.* (MCP framework), Grpc.Net.Client 2.x, xUnit 2.x, Aspire.Hosting.Testing 10.x (004-mcp-fix-aspire-config)
+- F# on .NET 10.0 (unit tests), C# on .NET 10.0 (integration tests) + xUnit 2.x, Aspire.Hosting.Testing 10.x (004-test-suite-cleanup)
 
 ## Project Structure
 
@@ -112,9 +113,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 004-test-suite-cleanup: Added F# on .NET 10.0 (unit tests), C# on .NET 10.0 (integration tests) + xUnit 2.x, Aspire.Hosting.Testing 10.x
 - 004-mcp-fix-aspire-config: Fixed 17 MCP tool deserialization failures by converting F# optional params to Nullable<T>. Improved tool descriptions (applicability, defaults). Configured Aspire Dashboard MCP stdio transport in .mcp.json. All 59 MCP tools now accept minimal relevant params.
 - 004-mesh-terrain-demos: Demo 23 (Ball Rollercoaster) and Demo 24 (Halfpipe Arena) — static mesh heightmap terrain, F#/Python, MotionType.Static for mesh bodies, heightmap grid approach for reliable BepuPhysics2 collision
-- 004-upgrade-bepufsharp: Added F# on .NET 10.0 (PhysicsSimulation), C# on .NET 10.0 (integration tests) + BepuFSharp 0.2.0-beta.1 → 0.3.0 (local NuGet at `~/.local/share/nuget-local/`). Transitive: BepuPhysics 2.5.0-beta.28 (unchanged), BepuUtilities 2.5.0-beta.28 (unchanged), FSharp.Core 10.0.104 (unchanged)
 
 ## Environment
 

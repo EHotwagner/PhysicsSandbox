@@ -1,24 +1,39 @@
 {
-  "generated": "2026-03-25T12:30:00Z",
+  "generated": "2026-03-25T14:00:00Z",
   "project": "PhysicsSandbox",
-  "feature": "004-mcp-fix-aspire-config",
+  "feature": "004-test-suite-cleanup",
   "summary": {
     "specs_analyzed": 1,
-    "requirements_checked": 13,
-    "aligned": 13,
-    "drifted": 0,
+    "requirements_checked": 12,
+    "aligned": 11,
+    "drifted": 1,
     "not_implemented": 0,
-    "unspecced_features": 0
+    "unspecced_features": 1
   },
   "specs": [
     {
-      "id": "004-mcp-fix-aspire-config",
-      "title": "MCP Tool Schema Fix & Aspire MCP Configuration",
-      "aligned": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "FR-008", "FR-009", "SC-001", "SC-002", "SC-003", "SC-004"],
-      "drifted": [],
+      "id": "004-test-suite-cleanup",
+      "title": "Test Suite Cleanup",
+      "aligned": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "SC-001", "SC-003", "SC-004", "SC-005"],
+      "drifted": [
+        {
+          "requirement": "SC-002",
+          "spec_text": "Number of test files containing duplicated helper functions decreases by at least 50%",
+          "actual": "CommonTestBuilders used in 2 files (not 4+). makeResolver not extracted due to different APIs in PhysicsClient vs PhysicsViewer. 2 of 3 duplicated helpers centralized (67%).",
+          "location": "tests/CommonTestBuilders.fs",
+          "severity": "minor"
+        }
+      ],
       "not_implemented": []
     }
   ],
-  "unspecced": [],
+  "unspecced": [
+    {
+      "feature": "CommandAuditStreamTests consolidation",
+      "location": "tests/PhysicsSandbox.Integration.Tests/CommandRoutingTests.cs",
+      "lines": 15,
+      "suggested_spec": "004-test-suite-cleanup (update US2 scope)"
+    }
+  ],
   "conflicts": []
 }

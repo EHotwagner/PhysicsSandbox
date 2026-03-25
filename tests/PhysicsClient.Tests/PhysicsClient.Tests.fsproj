@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="../SharedTestHelpers.fs" Link="SharedTestHelpers.fs" />
+    <Compile Include="../CommonTestBuilders.fs" Link="CommonTestBuilders.fs" />
     <Compile Include="IdGeneratorTests.fs" />
     <Compile Include="SessionTests.fs" />
     <Compile Include="SimulationCommandsTests.fs" />

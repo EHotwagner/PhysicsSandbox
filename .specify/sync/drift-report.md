@@ -2,62 +2,44 @@
 
 Generated: 2026-03-25
 Project: PhysicsSandbox
-Feature: 004-mcp-fix-aspire-config
+Spec: 004-test-suite-cleanup
 
 ## Summary
 
 | Category | Count |
 |----------|-------|
 | Specs Analyzed | 1 |
-| Requirements Checked | 13 (9 FR + 4 SC) |
-| Aligned | 13 (100%) |
-| Drifted | 0 (0%) |
+| Requirements Checked | 7 (FR) + 5 (SC) = 12 |
+| Aligned | 11 (92%) |
+| Drifted | 1 (8%) |
 | Not Implemented | 0 (0%) |
-| Unspecced Code | 0 |
+| Unspecced Code | 1 |
 
 ## Detailed Findings
 
-### Spec: 004-mcp-fix-aspire-config - MCP Tool Schema Fix & Aspire MCP Configuration
+### Spec: 004-test-suite-cleanup - Test Suite Cleanup
 
 #### Aligned
 
-- **FR-001**: All 59 MCP tools accept requests where optional parameters are omitted
-  - 21 MCP tool methods across 8 modules converted from `?param: Type` to `Nullable<T>`
-  - 0 remaining `?param:` patterns in MCP tool methods (2 in private helpers — acceptable)
-  - Files: `SimulationTools.fs`, `GeneratorTools.fs`, `RecordingTools.fs`, `RecordingQueryTools.fs`, `MeshFetchQueryTools.fs`, `StressTestTools.fs`, `ViewTools.fs`, `ComparisonTools.fs`
-
-- **FR-002**: 17 previously-failing tools return successful responses with minimal params
-  - All 17 tools converted plus 2 bonus: set_camera, start_comparison_test
-
-- **FR-003**: Tools with defaultable parameters apply sensible defaults
-  - seed: 0, spacing: 0.5, page_size: 100, start_time/end_time: 0.0, max_bodies: 500, duration_seconds: 30, time_limit_minutes: 10, size_limit_mb: 500
-
-- **FR-004**: Required parameters validated
-  - Regression test: `AddBody_MissingRequiredShape_ReturnsToolError` in `McpToolRegressionTests.cs`
-
-- **FR-005**: Aspire Dashboard MCP configured with stdio transport in `.mcp.json`
-  - Config: `aspire agent mcp --nologo --non-interactive`
-
-- **FR-006**: Aspire Dashboard MCP provides resource monitoring, logs, diagnostics, docs search
-  - 14 tools via `aspire agent mcp` including list_resources, list_console_logs, doctor, search_docs, list_docs
-
-- **FR-007**: Existing 42 working tools continue without regression
-  - Unit tests: 379/382 pass (3 pre-existing flaky failures unrelated)
-
-- **FR-008**: Automated regression test added to integration suite
-  - `McpTestClient.cs` + `McpToolRegressionTests.cs` — 31 test cases
-
-- **FR-009**: Tool/parameter descriptions improved with applicability and defaults
-  - 10 tool modules updated. Every optional param includes default and applicability.
-
-- **SC-001**: 100% tool coverage — 0 remaining `?param:` in MCP tool methods
-- **SC-002**: Zero deserialization errors — Nullable<T> recognized as optional
-- **SC-003**: Aspire Dashboard tools discoverable via `.mcp.json` stdio config
-- **SC-004**: No regressions — unit tests pass, build clean
+- **FR-001**: Test coverage maintained or improved. 384 unit tests (was 383, +1 idempotency test). No behavior lost.
+- **FR-002**: Duplicate helpers (`makeBody`, `makeState`) consolidated into `tests/CommonTestBuilders.fs`. Used by `StateStreamOptimizationTests.fs` and `StateDecompositionTests.fs`.
+- **FR-003**: All single-test integration files consolidated. 6 files merged (5 planned + CommandAuditStreamTests.cs discovered during validation).
+- **FR-004**: Shared utility module `tests/CommonTestBuilders.fs` created with `makeBody`, `makeState` helpers. Linked into 4 F# test projects via .fsproj.
+- **FR-005**: `assertModuleSurface` helper added to `tests/SharedTestHelpers.fs`. Used in 5 SurfaceAreaTests.fs files (32 total calls). PhysicsServer.Tests has no SurfaceAreaTests.fs (correctly skipped).
+- **FR-006**: All 4 oversized files split. Largest file now 23 tests (was 40). 10 new focused files created.
+- **FR-007**: Full test suite passes. 384 unit tests green (1 pre-existing Mcp.Tests flake unchanged).
+- **SC-001**: 384 vs 383 baseline = +0.3% (within 5% threshold).
+- **SC-003**: Max tests per file = 23 (McpToolRegressionTests.cs). Under 25 limit.
+- **SC-004**: Zero single-test integration files remain.
+- **SC-005**: Full suite passes with same pre-existing failures as baseline.
 
 #### Drifted
 
-(none)
+- **SC-002**: Spec says "Number of test files containing duplicated helper functions decreases by at least 50%"
+  - **Spec expectation**: CommonTestBuilders referenced in 4+ test files (as stated in tasks.md checkpoint)
+  - **Actual**: `open CommonTestBuilders` appears in 2 test files (StateStreamOptimizationTests.fs, StateDecompositionTests.fs). The MeshResolver `makeResolver` helper was NOT extracted because PhysicsClient and PhysicsViewer use different MeshResolver modules (`PhysicsClient.MeshResolver` vs `PhysicsViewer.Streaming.MeshResolver`), making a shared builder impractical.
+  - **Impact**: Minor. The 2 actual duplicated helpers (makeBody, makeState) ARE centralized. The makeResolver duplication remains by design (different APIs).
+  - Severity: minor
 
 #### Not Implemented
 
@@ -65,7 +47,9 @@ Feature: 004-mcp-fix-aspire-config
 
 ### Unspecced Code
 
-(none)
+| Feature | Location | Lines | Notes |
+|---------|----------|-------|-------|
+| CommandAuditStreamTests merge | CommandRoutingTests.cs | +15 | 6th single-test file merged; not in original spec's list of 5 files |
 
 ## Inter-Spec Conflicts
 
@@ -73,5 +57,6 @@ None.
 
 ## Recommendations
 
-1. Run integration tests with a live stack to validate SC-001/SC-002 end-to-end.
-2. Run Python test runner against live stack to confirm 59/59 tools pass.
+1. **Update SC-002 wording**: The "50% decrease" metric is ambiguous. Only 3 helpers were truly duplicated (makeBody, makeState in 2 files each; makeResolver in 2 files but with different APIs). 2 of 3 were centralized (67%). Consider rewording to "all extractable duplicated helpers are centralized".
+2. **Update US2 description**: The spec lists 5 single-test files but 6 were actually merged (CommandAuditStreamTests.cs was discovered during validation). Update the spec to reflect the actual scope.
+3. **Mark spec status as Complete**: Change status from "Draft" to "Implemented".
