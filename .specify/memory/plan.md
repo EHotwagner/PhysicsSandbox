@@ -40,6 +40,9 @@ src/
 │   └── Program.fs                       # Host setup
 │
 ├── PhysicsSimulation/                   # F# — physics simulation (gRPC client)
+│   ├── Conversions/
+│   │   ├── ProtoConversions.fsi/.fs     # Canonical Vec3↔Vector3, Vec4↔Quaternion conversions + proto type aliases
+│   │   └── ShapeConversion.fsi/.fs      # convertShape (10 types), convertConstraintType (10 types), toBepuMaterial
 │   ├── World/
 │   │   ├── MeshIdGenerator.fsi/.fs      # Content-addressed mesh ID (SHA-256) + AABB computation
 │   │   ├── SimulationWorld.fsi/.fs      # BepuFSharp world wrapper, body/force management, CachedShapeRef emission
@@ -53,6 +56,7 @@ src/
 │
 ├── PhysicsViewer/                       # F# — 3D viewer (Stride3D + gRPC client)
 │   ├── Rendering/
+│   │   ├── ProtoConversions.fsi/.fs     # Canonical protoVec3ToStride, protoQuatToStride (shared by SceneManager, DebugRenderer, CameraController)
 │   │   ├── SceneManager.fsi/.fs         # SimulationState → Stride entities, per-body color, wireframe, custom mesh/compound/ShapeRef rendering, NarrationText
 │   │   ├── ShapeGeometry.fsi/.fs        # Shape→geometry dispatch: primitives (type/size), custom mesh (Triangle/Mesh/ConvexHull → CustomMeshData), color palette
 │   │   ├── DebugRenderer.fsi/.fs        # Wireframe overlay, constraint line visualization, F3 toggle
@@ -68,15 +72,19 @@ src/
 │   └── Program.fs                       # Host + Stride game loop + F11/F2/Escape input
 │
 └── PhysicsClient/                       # F# — REPL client library (gRPC client, Spectre.Console)
+    ├── Utilities/
+    │   └── Vec3Helpers.fsi/.fs          # Canonical toVec3 (tuple→proto Vec3), toTuple
     ├── Bodies/
-    │   ├── IdGenerator.fsi/.fs          # Thread-safe human-readable ID generation
+    │   ├── IdGenerator.fsi/.fs          # Thread-safe human-readable ID generation (canonical, used by MCP)
     │   ├── Presets.fsi/.fs              # 7 body presets (marble, bowlingBall, crate, etc.)
     │   └── Generators.fsi/.fs           # Random generators + scene builders
+    ├── Shapes/
+    │   └── ShapeBuilders.fsi/.fs        # mkSphere, mkBox, mkCapsule, mkCylinder, mkPlane, mkTriangle
     ├── Connection/
-    │   ├── MeshResolver.fsi/.fs         # Local mesh cache + sync FetchMeshes client
+    │   ├── MeshResolver.fsi/.fs         # Local mesh cache + sync FetchMeshes (canonical, used by MCP)
     │   └── Session.fsi/.fs              # gRPC connection, state caching, body registry, MeshResolver
     ├── Commands/
-    │   ├── SimulationCommands.fsi/.fs   # All simulation command wrappers
+    │   ├── SimulationCommands.fsi/.fs   # All simulation command wrappers (uses addGenericBody + ShapeBuilders)
     │   └── ViewCommands.fsi/.fs         # Camera, zoom, wireframe, smooth camera, body-relative modes, narration wrappers
     ├── Steering/
     │   └── Steering.fsi/.fs             # Push, launch, spin, stop + Direction DU

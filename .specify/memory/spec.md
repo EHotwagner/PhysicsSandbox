@@ -385,6 +385,18 @@ Shared test data builders (`makeBody`, `makeState`) extracted to `tests/CommonTe
 ### US-125: Rebalance Oversized Test Files (P3)
 Four oversized test files (SceneManagerTests 40 tests, CameraControllerTests 32, ExtendedFeatureTests 36, SimulationWorldTests 30) split into 10 focused files. Largest file now 23 tests. [Source: specs/004-test-suite-cleanup]
 
+### US-126: Eliminate Duplicate Utility Code (P1)
+Consolidate vector conversions (14 duplicate functions across 7 files), MeshResolver (Client+MCP share canonical), and ID generation (3 independent counters merged to 1). [Source: specs/004-codebase-cleanup-refactor]
+
+### US-127: Reduce Shape-Building Boilerplate (P2)
+Extract ShapeBuilders module (mkSphere, mkBox, mkCapsule, mkCylinder, mkPlane, mkTriangle) and addGenericBody pattern. SimulationCommands reduced from 577 to 442 lines. [Source: specs/004-codebase-cleanup-refactor]
+
+### US-128: Simplify Large Modules (P3)
+Split SimulationWorld.fs (708→538 lines) by extracting ProtoConversions and ShapeConversion modules. No src/ file exceeds 550 lines. [Source: specs/004-codebase-cleanup-refactor]
+
+### US-129: Consolidate Integration Test Helpers (P4)
+Extract CreateGrpcChannel private method from IntegrationTestHelpers.cs, eliminating 3x duplicated gRPC channel + SSL setup code. [Source: specs/004-codebase-cleanup-refactor]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -716,6 +728,14 @@ Four oversized test files (SceneManagerTests 40 tests, CameraControllerTests 32,
 - **FR-327**: Integration test files with only 1 test MUST be consolidated into logically related files. [Source: specs/004-test-suite-cleanup]
 - **FR-328**: Test files exceeding 30 tests SHOULD be split into focused sub-files organized by behavior (max 25 tests per file). [Source: specs/004-test-suite-cleanup]
 - **FR-329**: All tests MUST continue to pass after restructuring — cleanup is behavior-preserving. [Source: specs/004-test-suite-cleanup]
+- **FR-330**: All vector/quaternion conversion functions MUST have exactly one canonical definition per logical conversion. [Source: specs/004-codebase-cleanup-refactor]
+- **FR-331**: MeshResolver MUST be consolidated where the dependency graph permits — PhysicsClient and MCP share a single implementation; PhysicsViewer retains its async variant. [Source: specs/004-codebase-cleanup-refactor]
+- **FR-332**: ID generation logic MUST exist in exactly one module (IdGenerator), with all consumers referencing it. [Source: specs/004-codebase-cleanup-refactor]
+- **FR-333**: Shape-building code MUST follow a unified pattern (ShapeBuilders + addGenericBody) eliminating per-shape boilerplate. [Source: specs/004-codebase-cleanup-refactor]
+- **FR-334**: No source file in `src/` MUST exceed 550 lines after module splitting. [Source: specs/004-codebase-cleanup-refactor]
+- **FR-335**: Integration test helper duplication MUST be eliminated by extracting shared CreateGrpcChannel method. [Source: specs/004-codebase-cleanup-refactor]
+- **FR-336**: All refactoring MUST preserve existing behavior — full test suite passes with zero regressions. [Source: specs/004-codebase-cleanup-refactor]
+- **FR-337**: Signature files (.fsi) MUST be created for all new public F# modules. [Source: specs/004-codebase-cleanup-refactor]
 
 ## Key Entities
 

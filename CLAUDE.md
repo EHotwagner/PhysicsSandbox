@@ -114,7 +114,7 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
-- 004-codebase-cleanup-refactor: Added F# on .NET 10.0 (services, MCP, client, scripting, viewer), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts, integration tests) + BepuFSharp 0.3.0, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, ModelContextProtocol.AspNetCore 1.1.*, Stride.CommunityToolkit 1.0.0-preview.62
+- 004-codebase-cleanup-refactor: Consolidated 14 duplicate conversions into 4 canonical modules (ProtoConversions, ShapeConversion, Vec3Helpers, viewer ProtoConversions). Extracted ShapeBuilders + addGenericBody. Split SimulationWorld.fs (708→538). MCP MeshResolver/IdGenerator consolidated to PhysicsClient. No src/ file over 550 lines.
 - 004-test-suite-cleanup: Test suite structural cleanup — shared CommonTestBuilders.fs + assertModuleSurface helper, 6 single-test integration files consolidated, 4 oversized files (30-40 tests) split into 10 focused files (max 23 tests). 384 unit tests, zero regressions.
 - 004-mcp-fix-aspire-config: Fixed 17 MCP tool deserialization failures by converting F# optional params to Nullable<T>. Improved tool descriptions (applicability, defaults). Configured Aspire Dashboard MCP stdio transport in .mcp.json. All 59 MCP tools now accept minimal relevant params.
 

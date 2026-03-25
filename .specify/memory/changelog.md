@@ -1,5 +1,32 @@
 # Merged Features Log
 
+## Codebase Cleanup and Refactoring — 2026-03-25
+**Branch:** 004-codebase-cleanup-refactor
+**Spec:** specs/004-codebase-cleanup-refactor (archived to .specify/archive/)
+
+**What was added:**
+- Canonical ProtoConversions module (PhysicsSimulation): Vec3↔Vector3, Vec4↔Quaternion
+- ShapeConversion module (PhysicsSimulation): convertShape (10 types), convertConstraintType (10 types), toBepuMaterial
+- ProtoConversions module (PhysicsViewer): protoVec3ToStride, protoQuatToStride
+- Vec3Helpers module (PhysicsClient): canonical toVec3, toTuple
+- ShapeBuilders module (PhysicsClient): mkSphere, mkBox, mkCapsule, mkCylinder, mkPlane, mkTriangle
+- addGenericBody pattern in SimulationCommands (eliminates per-shape boilerplate)
+- CreateGrpcChannel extracted in IntegrationTestHelpers.cs
+
+**Removed:**
+- MCP MeshResolver (replaced by PhysicsClient.MeshResolver)
+- 14 duplicate conversion functions across 7 files
+- 3 independent ID generator counter states (consolidated to 1)
+
+**Key Metrics:**
+- SimulationWorld.fs: 708 → 538 lines (-24%)
+- SimulationCommands.fs: 577 → 442 lines (-23%)
+- No src/ file exceeds 550 lines
+
+**Tasks Completed:** 63/63 tasks
+
+---
+
 ## Test Suite Cleanup — 2026-03-25
 **Branch:** 004-test-suite-cleanup
 **Spec:** specs/004-test-suite-cleanup (archived to .specify/archive/)
