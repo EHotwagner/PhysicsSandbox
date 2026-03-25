@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-mcp-fix-aspire-config`
 **Created**: 2026-03-25
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "Fix 17 MCP tool deserialization failures — the tools work but the auto-generated schemas mark nullable params as required. A targeted fix in the F# tool signatures would bring MCP coverage from 75% to ~100%. Configure Aspire MCP in Claude Code — add the aspire agent mcp stdio config so you get resource monitoring, logs, and docs search in your AI workflow."
 
 ## Clarifications

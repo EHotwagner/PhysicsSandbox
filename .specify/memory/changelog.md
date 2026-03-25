@@ -1,5 +1,28 @@
 # Merged Features Log
 
+## MCP Tool Schema Fix & Aspire MCP Configuration — 2026-03-25
+**Branch:** 004-mcp-fix-aspire-config
+**Spec:** specs/004-mcp-fix-aspire-config (archived to .specify/archive/)
+
+**What was added:**
+- Fixed 17 MCP tool deserialization failures by converting F# optional params (`?param: Type`) to `Nullable<T>` across 21 MCP tool methods in 8 modules
+- Converted logically-optional required params (pagination, time ranges, seeds) to `Nullable<T>` with sensible defaults
+- Improved tool/parameter descriptions across all 59 tools with applicability and default values
+- Added McpTestClient.cs (HTTP/SSE JSON-RPC 2.0) and McpToolRegressionTests.cs (31 test cases) to integration suite
+- Configured Aspire Dashboard MCP in `.mcp.json` via stdio transport (`aspire agent mcp`)
+- Upgraded Aspire from 13.1.3 to 13.2.0
+- Added `/dashboard-token` Claude Code command and `dashboard-token.sh` script
+
+**New Components:**
+- `tests/PhysicsSandbox.Integration.Tests/McpTestClient.cs` — MCP HTTP/SSE test client
+- `tests/PhysicsSandbox.Integration.Tests/McpToolRegressionTests.cs` — 31-test MCP regression suite
+- `dashboard-token.sh` — Aspire Dashboard token extraction script
+- `.claude/commands/dashboard-token.md` — Claude Code slash command
+
+**Tasks Completed:** 38/38 tasks
+
+---
+
 ## Static Mesh Terrain Demos — 2026-03-25
 **Branch:** 004-mesh-terrain-demos
 **Spec:** specs/004-mesh-terrain-demos

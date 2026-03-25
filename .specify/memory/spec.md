@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
-**Last Updated**: 2026-03-24
-**Revision**: Updated with 005-robust-network-connectivity archival
+**Last Updated**: 2026-03-25
+**Revision**: Updated with 004-mcp-fix-aspire-config archival
 
 ## Overview
 
@@ -367,6 +367,12 @@ Camera modes hold position when target body not yet in simulation state rather t
 ### US-119: Viewer 60 FPS When Unfocused (P3)
 Stride3D viewer maintains 60 FPS even when window loses focus or is minimized, preventing command loss from throttled frame rates during demo script execution. [Source: specs/005-robust-network-connectivity]
 
+### US-120: AI Assistant Calls Any MCP Tool Successfully (P1)
+An AI assistant connected to the PhysicsSandbox MCP server invokes any of the 59 available tools with only the parameters relevant to the current operation (e.g., only sphere parameters for sphere creation). All 59 tools accept minimal relevant params without deserialization errors. [Source: specs/004-mcp-fix-aspire-config]
+
+### US-121: Developer Uses Aspire Dashboard Tools in AI Workflow (P2)
+A developer working in Claude Code has access to Aspire Dashboard tools (resource listing, console logs, diagnostics, documentation search) alongside PhysicsSandbox tools via stdio transport, enabling infrastructure monitoring without leaving the AI workflow. [Source: specs/004-mcp-fix-aspire-config]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -683,6 +689,15 @@ Stride3D viewer maintains 60 FPS even when window loses focus or is minimized, p
 - **FR-312**: Both F# and Python versions of each mesh terrain demo MUST be created. [Source: specs/004-mesh-terrain-demos]
 - **FR-313**: Mesh terrain bodies MUST be colored distinctly from dynamic objects. [Source: specs/004-mesh-terrain-demos]
 - **FR-314**: Mesh terrain demos MUST use appropriate material properties (slippery for rollercoaster, moderate friction for halfpipe). [Source: specs/004-mesh-terrain-demos]
+- **FR-315**: All 59 MCP tools MUST accept requests where optional parameters are omitted from the payload (not just set to null). Uses `Nullable<T>` instead of F# `Option<T>` for MCP framework compatibility. [Source: specs/004-mcp-fix-aspire-config]
+- **FR-316**: Tools with defaultable parameters (seed, page_size, spacing, time ranges) MUST apply sensible defaults when omitted. [Source: specs/004-mcp-fix-aspire-config]
+- **FR-317**: Required parameters MUST still be validated — omitting a required param produces a clear error, not a deserialization crash. [Source: specs/004-mcp-fix-aspire-config]
+- **FR-318**: Aspire Dashboard MCP MUST be configured in `.mcp.json` using stdio transport (`aspire agent mcp --nologo --non-interactive`). [Source: specs/004-mcp-fix-aspire-config]
+- **FR-319**: Aspire Dashboard MCP MUST provide resource monitoring, console logs, diagnostics, and documentation search. [Source: specs/004-mcp-fix-aspire-config]
+- **FR-320**: Existing MCP tools MUST not regress after schema fix. [Source: specs/004-mcp-fix-aspire-config]
+- **FR-321**: An automated MCP regression test (McpToolRegressionTests.cs, 31 test cases) MUST validate all 59 tools in the integration test suite. [Source: specs/004-mcp-fix-aspire-config]
+- **FR-322**: Every optional parameter description MUST include (a) when it applies and (b) its default value. Tool-level descriptions MUST summarize parameter groups for multi-variant tools. [Source: specs/004-mcp-fix-aspire-config]
+- **FR-323**: Sending `null` explicitly for an optional parameter and omitting the parameter entirely MUST produce identical behavior. [Source: specs/004-mcp-fix-aspire-config]
 
 ## Key Entities
 
@@ -747,6 +762,8 @@ Stride3D viewer maintains 60 FPS even when window loses focus or is minimized, p
 - **PropertyEvent**: Server→client event wrapper — oneof body_created (BodyProperties), body_removed (string), body_updated (BodyProperties), constraints_snapshot, registered_shapes_snapshot, new_meshes. [Source: specs/004-state-stream-optimization]
 - **PropertySnapshot**: Late-joiner backfill message — all existing BodyProperties + constraints + registered shapes + mesh geometries. [Source: specs/004-state-stream-optimization]
 - **PendingQueryEntry**: Wrapper for `TaskCompletionSource<QueryResponse>` with `CreatedAt: DateTime` timestamp. Keyed by CorrelationId. States: Created → Resolved | Expired (TimeoutException) | Cancelled. [Source: specs/004-backlog-fix-test-progress]
+- **MCP Tool Schema**: Auto-generated JSON schema describing each MCP tool's parameters, types, and required/optional status. Uses `Nullable<T>` for optional value-type params (framework compatibility). [Source: specs/004-mcp-fix-aspire-config]
+- **McpTestClient**: C# HTTP/SSE JSON-RPC 2.0 client for MCP integration testing — initialize handshake, tool call, response parsing. [Source: specs/004-mcp-fix-aspire-config]
 - **Constraint Builder**: Stateless typed function in Scripting library that constructs proto `SimulationCommand → AddConstraint → ConstraintType` from domain parameters. 10 types: BallSocket, Hinge, Weld, DistanceLimit, DistanceSpring, SwingLimit, TwistLimit, LinearAxisMotor, AngularMotor, PointOnLine. [Source: specs/004-backlog-fix-test-progress]
 - **CustomMeshData**: Vertex positions, normals, color, indices, and wireframe edge data generated from proto shape definitions (triangles, meshes, convex hulls). Used to create Stride MeshDraw objects for non-primitive shapes. [Source: specs/004-proper-shape-rendering]
 - **Hull Face**: A triangular face of a convex hull, computed from the input point cloud via MIConvexHull, used for both solid rendering and wireframe display. [Source: specs/004-proper-shape-rendering]
