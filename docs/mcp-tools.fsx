@@ -4,17 +4,22 @@ title: MCP Tools Reference
 category: Reference
 categoryindex: 5
 index: 1
-description: 38 MCP tools for AI-assisted physics simulation control.
+description: 59 MCP tools for AI-assisted physics simulation control.
 ---
 *)
 
 (**
 # MCP Tools Reference
 
-The Physics Sandbox MCP server exposes tools that AI assistants (Claude, GPT, etc.) can
+The Physics Sandbox MCP server exposes **59 tools** that AI assistants (Claude, GPT, etc.) can
 call over the Model Context Protocol to control a live physics simulation. Tools are
 registered automatically at startup via `WithToolsFromAssembly()` and communicate with
 the physics server over gRPC.
+
+<div class="alert alert-info">
+<strong>Note:</strong> All optional value-type parameters use <code>Nullable&lt;T&gt;</code> (not F# <code>Option&lt;T&gt;</code>)
+for correct JSON schema generation by the MCP framework.
+</div>
 
 This page documents every tool grouped by category.
 
@@ -22,7 +27,7 @@ This page documents every tool grouped by category.
 
 | # | Category | Tool | Description |
 |---|----------|------|-------------|
-| 1 | Simulation | `add_body` | Add a rigid body (sphere or box) to the simulation |
+| 1 | Simulation | `add_body` | Add a rigid body (10 shape types) to the simulation |
 | 2 | Simulation | `apply_force` | Apply a continuous force to a body |
 | 3 | Simulation | `apply_impulse` | Apply an instantaneous impulse to a body |
 | 4 | Simulation | `apply_torque` | Apply a torque to a body |
@@ -33,35 +38,56 @@ This page documents every tool grouped by category.
 | 9 | Simulation | `remove_body` | Remove a body from the simulation |
 | 10 | Simulation | `clear_forces` | Clear all forces on a body |
 | 11 | Simulation | `restart_simulation` | Reset the simulation to initial state |
-| 12 | View | `set_camera` | Set the 3D viewer camera position and target |
-| 13 | View | `set_zoom` | Set the 3D viewer zoom level |
-| 14 | View | `toggle_wireframe` | Toggle wireframe rendering mode |
-| 15 | Presets | `add_marble` | Add a marble (tiny sphere) |
-| 16 | Presets | `add_bowling_ball` | Add a bowling ball (dense sphere) |
-| 17 | Presets | `add_beach_ball` | Add a beach ball (large, lightweight sphere) |
-| 18 | Presets | `add_crate` | Add a crate (1x1x1 box) |
-| 19 | Presets | `add_brick` | Add a brick (flat rectangular box) |
-| 20 | Presets | `add_boulder` | Add a boulder (heavy sphere) |
-| 21 | Presets | `add_die` | Add a die (tiny cube) |
-| 22 | Generators | `generate_random_bodies` | Generate a random mix of spheres and boxes |
-| 23 | Generators | `generate_stack` | Generate a vertical stack of crates |
-| 24 | Generators | `generate_row` | Generate a horizontal row of spheres |
-| 25 | Generators | `generate_grid` | Generate a grid of crates on a plane |
-| 26 | Generators | `generate_pyramid` | Generate a pyramid of crates |
-| 27 | Steering | `push_body` | Push a body in a compass direction |
-| 28 | Steering | `launch_body` | Launch a body toward a target position |
-| 29 | Steering | `spin_body` | Spin a body around an axis |
-| 30 | Steering | `stop_body` | Stop a body by cancelling its velocity |
-| 31 | Batch | `batch_commands` | Submit multiple simulation commands in one call |
-| 32 | Batch | `batch_view_commands` | Submit multiple view commands in one call |
-| 33 | Query | `get_state` | Get the current simulation state |
-| 34 | Query | `get_status` | Get MCP server connection health |
-| 35 | Metrics | `get_metrics` | Get performance metrics from all services |
-| 36 | Metrics | `get_diagnostics` | Get pipeline timing diagnostics |
-| 37 | Audit | `get_command_log` | Get the recent command audit trail |
-| 38 | Stress Test | `start_stress_test` | Start a background stress test scenario |
-| 39 | Stress Test | `get_stress_test_status` | Get status and results of a stress test |
-| 40 | Comparison | `start_comparison_test` | Run an MCP vs direct scripting comparison |
+| 12 | Simulation | `add_constraint` | Add a constraint between two bodies (10 types) |
+| 13 | Simulation | `remove_constraint` | Remove a constraint |
+| 14 | Simulation | `register_shape` | Register a reusable shape (hull, mesh, compound) |
+| 15 | Simulation | `unregister_shape` | Remove a registered shape |
+| 16 | Simulation | `set_collision_filter` | Set group/mask collision filter on a body |
+| 17 | Simulation | `set_body_pose` | Set position/velocity of a body at runtime |
+| 18 | Simulation | `raycast` | Cast a ray and return hit results |
+| 19 | Simulation | `sweep_cast` | Sweep a shape along a direction |
+| 20 | Simulation | `overlap` | Test for overlapping bodies at a position |
+| 21 | View | `set_camera` | Set the 3D viewer camera position and target |
+| 22 | View | `set_zoom` | Set the 3D viewer zoom level |
+| 23 | View | `toggle_wireframe` | Toggle wireframe rendering mode |
+| 24 | Presets | `add_marble` | Add a marble (tiny sphere) |
+| 25 | Presets | `add_bowling_ball` | Add a bowling ball (dense sphere) |
+| 26 | Presets | `add_beach_ball` | Add a beach ball (large, lightweight sphere) |
+| 27 | Presets | `add_crate` | Add a crate (1x1x1 box) |
+| 28 | Presets | `add_brick` | Add a brick (flat rectangular box) |
+| 29 | Presets | `add_boulder` | Add a boulder (heavy sphere) |
+| 30 | Presets | `add_die` | Add a die (tiny cube) |
+| 31 | Presets | `add_capsule` | Add a capsule preset |
+| 32 | Generators | `generate_random_bodies` | Generate a random mix of spheres and boxes |
+| 33 | Generators | `generate_stack` | Generate a vertical stack of crates |
+| 34 | Generators | `generate_row` | Generate a horizontal row of spheres |
+| 35 | Generators | `generate_grid` | Generate a grid of crates on a plane |
+| 36 | Generators | `generate_pyramid` | Generate a pyramid of crates |
+| 37 | Steering | `push_body` | Push a body in a compass direction |
+| 38 | Steering | `launch_body` | Launch a body toward a target position |
+| 39 | Steering | `spin_body` | Spin a body around an axis |
+| 40 | Steering | `stop_body` | Stop a body by cancelling its velocity |
+| 41 | Batch | `batch_commands` | Submit multiple simulation commands in one call |
+| 42 | Batch | `batch_view_commands` | Submit multiple view commands in one call |
+| 43 | Batch | `batch_view_commands` | Submit a raw JSON view command batch |
+| 44 | Query | `get_state` | Get the current simulation state |
+| 45 | Query | `get_status` | Get MCP server connection health |
+| 46 | Metrics | `get_metrics` | Get performance metrics from all services |
+| 47 | Metrics | `get_diagnostics` | Get pipeline timing diagnostics |
+| 48 | Audit | `get_command_log` | Get the recent command audit trail |
+| 49 | Audit | `query_summary` | Get summary statistics for a recording session |
+| 50 | Recording | `start_recording` | Begin recording simulation events to disk |
+| 51 | Recording | `stop_recording` | Stop the active recording |
+| 52 | Recording | `recording_status` | Get current recording state |
+| 53 | Recording | `list_sessions` | List all recorded sessions |
+| 54 | Recording | `delete_session` | Delete a recorded session |
+| 55 | Recording Query | `query_snapshots` | Query recorded state snapshots |
+| 56 | Recording Query | `query_events` | Query recorded simulation events |
+| 57 | Recording Query | `query_body_trajectory` | Query a body's position over time |
+| 58 | Recording Query | `query_mesh_fetches` | Query mesh fetch events from recordings |
+| 59 | Stress Test | `start_stress_test` | Start a background stress test scenario |
+| 60 | Stress Test | `get_stress_test_status` | Get status and results of a stress test |
+| 61 | Comparison | `start_comparison_test` | Run an MCP vs direct scripting comparison |
 
 ---
 

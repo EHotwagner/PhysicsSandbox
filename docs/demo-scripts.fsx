@@ -4,14 +4,14 @@ title: Demo Scripts
 category: Tutorials
 categoryindex: 2
 index: 1
-description: 15 physics demos available in F# and Python.
+description: 22 physics demos available in F# and Python.
 ---
 *)
 
 (**
 # Demo Scripts
 
-Physics Sandbox includes 15 demo scripts that showcase different physics scenarios.
+Physics Sandbox includes 22 demo scripts that showcase different physics scenarios.
 Each demo is available in both F# (`.fsx`) and Python, with identical behavior.
 
 ## Running Demos
@@ -65,6 +65,17 @@ Each demo is available in both F# (`.fsx`) and Python, with identical behavior.
 | 13 | Force Frenzy | Continuous forces applied to multiple bodies |
 | 14 | Domino Cascade | Large-scale domino chain reaction |
 | 15 | Overload | Stress test with maximum body count |
+| 19 | Shape Gallery | All 10 shape types displayed side by side |
+| 20 | Compound Constructions | Compound shapes built from child primitives |
+| 21 | Mesh & Hull Playground | Convex hulls, triangle meshes, and shape references |
+| 22 | Camera Showcase | Smooth camera transitions with narration overlay |
+| 23 | Ball Rollercoaster | Heightmap mesh terrain with balls rolling along a track |
+| 24 | Halfpipe Arena | Halfpipe terrain with bodies launched into the arena |
+
+<div class="alert alert-info">
+<strong>Note:</strong> Demos 16–18 are reserved for future use. Demos 19–24 were added in later releases
+and use advanced shape types (compound, mesh, convex hull) and heightmap terrain.
+</div>
 
 ## Shared Prelude
 
@@ -93,6 +104,12 @@ Key helpers:
 // play session
 // pause session
 
+// Camera control with smooth transitions
+// smoothCamera session (20.0, 15.0, 20.0) (0.0, 5.0, 0.0) 2.0
+
+// Narration overlay
+// narrate session "Demo Title" "Description text"
+
 (**
 ### Python Prelude (`Scripting/demos_py/prelude.py`)
 
@@ -111,6 +128,10 @@ Mirrors the F# prelude with identical function names and behavior:
 //
 // # Generators
 // cmds = make_stack("s", 5, 0.0, 0.0, 0.0)
+//
+// # Camera + narration
+// smooth_camera(stub, (20, 15, 20), (0, 5, 0), 2.0)
+// narrate(stub, "Demo Title", "Description")
 
 (**
 ## Demo Structure

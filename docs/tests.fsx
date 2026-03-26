@@ -4,14 +4,14 @@ title: Test Suite Documentation
 category: Reference
 categoryindex: 5
 index: 5
-description: 165 tests across 5 projects — unit tests, integration tests, and surface-area validation.
+description: 467 tests across 7 projects — unit tests, integration tests, and surface-area validation.
 ---
 *)
 
 (**
 # Test Suite Documentation
 
-The Physics Sandbox has 165 tests across 5 projects, covering unit tests for each
+The Physics Sandbox has 467 tests across 7 projects, covering unit tests for each
 service layer, surface-area validation to guard against accidental API changes,
 and end-to-end integration tests using .NET Aspire's distributed application testing
 infrastructure.
@@ -20,12 +20,14 @@ infrastructure.
 
 | Project | Language | Framework | Files | Tests |
 |---|---|---|---|---|
-| PhysicsClient.Tests | F# | xUnit | 8 | 52 |
-| PhysicsServer.Tests | F# | xUnit | 4 | 27 |
-| PhysicsSimulation.Tests | F# | xUnit | 5 | 49 |
-| PhysicsViewer.Tests | F# | xUnit | 4 | 24 |
-| PhysicsSandbox.Integration.Tests | C# | xUnit + Aspire | 15 | 42 |
-| **Total** | | | **36** | **194** |
+| PhysicsSimulation.Tests | F# | xUnit | 11 | 114 |
+| PhysicsViewer.Tests | F# | xUnit | 11 | 99 |
+| PhysicsClient.Tests | F# | xUnit | 11 | 78 |
+| PhysicsServer.Tests | F# | xUnit | 7 | 48 |
+| PhysicsSandbox.Scripting.Tests | F# | xUnit | 5 | 26 |
+| PhysicsSandbox.Mcp.Tests | F# | xUnit | 4 | 18 |
+| PhysicsSandbox.Integration.Tests | C# | xUnit + Aspire | 14 | 84 |
+| **Total** | | | **63** | **467** |
 
 All F# unit test projects follow the same pattern: focused module-level tests
 that exercise logic in isolation (no gRPC connections, no Aspire orchestrator),
@@ -36,7 +38,7 @@ gRPC round-trips end to end.
 
 ---
 
-## PhysicsClient.Tests (52 tests)
+## PhysicsClient.Tests (78 tests)
 
 ### GeneratorsTests.fs -- Body generator count computations (10 tests)
 
@@ -109,7 +111,7 @@ let ``nextId is thread-safe`` () =
 (**
 ---
 
-## PhysicsServer.Tests (27 tests)
+## PhysicsServer.Tests (48 tests)
 
 ### BatchRoutingTests.fs -- Batch command dispatch (5 tests)
 
@@ -169,7 +171,7 @@ let ``State fanout delivers to multiple subscribers`` () =
 (**
 ---
 
-## PhysicsSimulation.Tests (49 tests)
+## PhysicsSimulation.Tests (114 tests)
 
 ### CommandHandlerTests.fs -- Command dispatch (11 tests)
 
@@ -239,7 +241,7 @@ let ``100 bodies stable operation`` () =
 (**
 ---
 
-## PhysicsViewer.Tests (24 tests)
+## PhysicsViewer.Tests (99 tests)
 
 ### CameraControllerTests.fs -- Camera state management (6 tests)
 
@@ -285,7 +287,7 @@ let ``update smooths FPS drop gradually`` () =
 (**
 ---
 
-## PhysicsSandbox.Integration.Tests (42 tests)
+## PhysicsSandbox.Integration.Tests (84 tests)
 
 These C# tests use `Aspire.Hosting.Testing` to spin up the full distributed
 application (AppHost, server, simulation, viewer, MCP) and exercise gRPC

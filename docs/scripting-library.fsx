@@ -202,8 +202,8 @@ All scripting folders live under `Scripting/` at the repo root:
 |--------|---------|---------|
 | `Scripting/scripts/` | Git | Curated, production-quality scripts |
 | `Scripting/scratch/` | Gitignored | Developer-local experimentation |
-| `Scripting/demos/` | Git | F# demo suite (15 demos + runners) |
-| `Scripting/demos_py/` | Git | Python demo suite (15 demos + runners) |
+| `Scripting/demos/` | Git | F# demo suite (22 demos + runners) |
+| `Scripting/demos_py/` | Git | Python demo suite (22 demos + runners) |
 
 `scripts/` and `scratch/` use the same relative path to the library DLL,
 so moving a script between them requires no code changes.
@@ -218,5 +218,5 @@ between the scripting and MCP tool surfaces.
 
 - [Getting Started](getting-started.html) — build and run the full sandbox
 - [Demo Scripts](demo-scripts.html) — 15 physics demos in F# and Python
-- [MCP Tools](mcp-tools.html) — 38 AI-assisted debugging tools
+- [MCP Tools](mcp-tools.html) — 59 AI-assisted debugging tools
 *)

@@ -252,7 +252,7 @@ All three client interfaces received new commands and tools:
 </details>
 
 <details>
-<summary><strong>MCP Server</strong> — 6 new tools (44 total)</summary>
+<summary><strong>MCP Server</strong> — expanded to 59 tools total</summary>
 
 | Tool | Description |
 |------|-------------|
@@ -291,14 +291,14 @@ The local NuGet package is available at `~/.local/share/nuget-local/`.
 
 ## Known Drift and Limitations
 
-### Partially Implemented
+### Resolved Since Release
 
-<div class="alert alert-warning">
+<div class="alert alert-info">
 
-**Complex shape rendering** — Triangle, Compound, and Mesh shapes render as bounding-box cubes
-in the Stride3D viewer rather than accurate geometry. Sphere, Box, Capsule, Cylinder, and
-Convex Hull render with accurate collider shapes. Full mesh rendering requires Stride model
-asset generation, which is planned for a future release.
+**Complex shape rendering** — Triangle, Mesh, and Convex Hull shapes now render with actual
+geometry (custom vertex/index buffers) in both solid and wireframe views. Compound shapes
+decompose into individually-rendered children. All 10 shape types render with accurate
+collision-matching geometry.
 
 </div>
 
@@ -328,12 +328,14 @@ over 225 tests across five test projects:
 
 | Project | Tests | Focus |
 |---------|------:|-------|
-| PhysicsSimulation.Tests | 85 | Shape creation, constraints, queries, kinematic bodies, collision filters |
-| PhysicsClient.Tests | 52 | Command building, REPL parsing, color/material handling |
-| PhysicsViewer.Tests | 40 | Scene management, shape geometry, debug renderer |
-| PhysicsServer.Tests | 27 | Message routing, state fan-out, constraint cleanup |
-| PhysicsSandbox.Scripting.Tests | 20 | Surface area, builder correctness, query helpers |
-| **Total** | **224** | |
+| PhysicsSimulation.Tests | 114 | Shape creation, constraints, queries, kinematic bodies, collision filters |
+| PhysicsClient.Tests | 78 | Command building, REPL parsing, color/material handling |
+| PhysicsViewer.Tests | 99 | Scene management, shape geometry, debug renderer |
+| PhysicsServer.Tests | 48 | Message routing, state fan-out, constraint cleanup |
+| PhysicsSandbox.Scripting.Tests | 26 | Surface area, builder correctness, query helpers |
+| PhysicsSandbox.Mcp.Tests | 18 | MCP tool correctness, deserialization |
+| PhysicsSandbox.Integration.Tests | 84 | End-to-end Aspire integration tests |
+| **Total** | **467** | |
 
 All tests run headless with `StrideCompilerSkipBuild=true`:
 *)
@@ -351,6 +353,6 @@ All tests run headless with `StrideCompilerSkipBuild=true`:
 - [Architecture Overview](architecture.html) — how the services fit together
 - [API Reference](reference/index.html) — full API documentation
 - [Scripting Library](scripting-library.html) — convenience functions for F# scripts
-- [Demo Scripts](demo-scripts.html) — 15 annotated demos in F# and Python
+- [Demo Scripts](demo-scripts.html) — 22 annotated demos in F# and Python
 
 *)

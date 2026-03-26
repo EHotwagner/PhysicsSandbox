@@ -23,7 +23,7 @@ graph TD
     Sim["Simulation\n(BepuPhysics2)"]
     Viewer["3D Viewer\n(Stride3D)"]
     Client["REPL Client\n(Spectre.Console)"]
-    MCP["MCP Server\n(38 AI Tools)"]
+    MCP["MCP Server\n(59 AI Tools)"]
     Server <-->|"SimulationCommand ↓ · SimulationState ↑\nbidirectional stream (ConnectSimulation)"| Sim
     Client -->|"SendCommand / SendBatchCommand\nSendViewCommand"| Server
     Server -->|"StreamState"| Client
@@ -40,7 +40,7 @@ graph TD
 | **PhysicsSimulation** | F# | Runs BepuPhysics2 via BepuFSharp — steps the physics world, streams state back |
 | **PhysicsViewer** | F# | Stride3D-based 3D renderer — receives state and camera commands, renders scene |
 | **PhysicsClient** | F# | REPL console with Spectre.Console TUI — sends commands, displays state |
-| **PhysicsSandbox.Mcp** | F# | MCP server (38 tools) — enables AI assistants to control the simulation |
+| **PhysicsSandbox.Mcp** | F# | MCP server (59 tools) — enables AI assistants to control the simulation |
 | **AppHost** | C# | Aspire orchestrator — service discovery, health checks, startup ordering |
 
 ## Communication Flows

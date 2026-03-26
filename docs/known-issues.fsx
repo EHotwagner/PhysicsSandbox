@@ -200,18 +200,15 @@ noisy.
 (**
 ---
 
-## Stride3D / Viewer (005 Release)
+## Stride3D / Viewer (Post-005)
 
-### Complex Shape Rendering (Triangle, Compound, Mesh)
+### Custom Shape Rendering
 
-Triangle, Compound, and Mesh shapes render as bounding-box cubes rather than
-geometrically accurate meshes. This is because generating custom Stride MeshDraw
-from vertex data requires graphics device context that isn't available in the
-current rendering pipeline. The bounding box approximation is functionally correct
-for debugging but not visually accurate.
-
-**Workaround:** Use debug wireframe mode (F3) for accurate collider outlines of
-all shapes.
+Triangle, mesh, and convex hull shapes now render with actual geometry (custom
+vertex/index buffers) in both solid and wireframe views. Compound shapes decompose
+into individually-rendered children. ConvexHull face computation uses the MIConvexHull
+NuGet library. ShapeRef and CachedRef resolve to their underlying shapes before
+rendering. All 10 shape types render with accurate collision-matching geometry.
 
 ---
 
@@ -251,6 +248,46 @@ versions. Clear the global packages folder if new proto types are not visible:
 //   dotnet restore --force
 
 (**
+---
+
+## Physics Engine (Post-005)
+
+### Static Mesh Body MotionType
+
+Static mesh bodies (mass=0) require explicit `MotionType.Static` (enum value 2).
+The default MotionType is Dynamic (0), and mass=0 + Dynamic is rejected by the server.
+Without the explicit MotionType, the mesh body silently fails to be created.
+*)
+
+(*** do-not-eval ***)
+// F#: use withMotionType BodyMotionType.Static
+// Python: with_motion_type(cmd, 2)
+
+(**
+### Mesh Triangle Size
+
+Mesh collision triangles must be approximately 2m+ per edge for reliable collision
+detection. Very thin or narrow triangles (from parametric cross-section strips)
+allow small objects to fall through. Use heightmap grids with well-shaped quads
+(2 triangles per ~2×2m cell) instead of narrow strip geometry.
+
+---
+
+## MCP Server (Post-005)
+
+### Nullable Parameter Pattern
+
+MCP tool parameters use `Nullable<T>` (not F# `Option<T>`) for optional value types.
+The ModelContextProtocol.AspNetCore framework only recognizes `Nullable<T>` as optional
+in auto-generated JSON schemas — F#'s `?param: Type` (which compiles to `FSharpOption<T>`)
+is treated as required. Use `param.HasValue`/`param.Value` instead of `defaultArg`.
+
+### Proto MeshShape vs Triangle Naming
+
+The proto `MeshShape` message (Shape oneof field `mesh`) uses `MeshTriangle` for its
+triangle elements — not `Triangle` (which is a separate shape type). In F# scripts
+use `MeshShape()` and `MeshTriangle()`. In Python use `pb.MeshShape(triangles=[pb.MeshTriangle(...)])`.
+
 ---
 
 ## No Unimplemented Features

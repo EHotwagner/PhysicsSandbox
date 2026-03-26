@@ -8,7 +8,7 @@ description: A real-time physics simulation built with F# microservices, .NET As
 
 # Physics Sandbox
 
-A real-time 3D physics simulation built as an F# microservices architecture, orchestrated by .NET Aspire. Create bodies with 10 shape types, connect them with constraints, cast rays, toggle debug wireframes, and watch the results in a live 3D viewer — all controlled through a REPL client, scripting (F# and Python), or AI assistants via MCP.
+A real-time 3D physics simulation built as an F# microservices architecture, orchestrated by .NET Aspire 13.2. Create bodies with 10 shape types, connect them with 10 constraint types, cast rays, toggle debug wireframes, record and replay sessions, and watch the results in a live 3D viewer — all controlled through a REPL client, scripting (F# and Python), or AI assistants via MCP.
 
 ## Architecture
 
@@ -20,7 +20,7 @@ graph TD
     Sim["Simulation\n(BepuPhysics2)"]
     Viewer["3D Viewer\n(Stride3D)"]
     Client["REPL Client\n(Spectre.Console)"]
-    MCP["MCP Server\n(44 AI Tools)"]
+    MCP["MCP Server\n(59 AI Tools)"]
     Server <-->|"commands / state\nbidirectional stream"| Sim
     Client -->|"commands\nview commands"| Server
     Server -->|"state stream"| Client
@@ -31,12 +31,12 @@ graph TD
 
 ## Documentation
 
-- **[Getting Started](getting-started.html)** — Build, run, and interact with the sandbox
+- **[Getting Started](getting-started.html)** — Build, run, and interact with the sandbox (includes container option)
 - **[Release: Stride BepuPhysics Integration](release-005.html)** — 10 shapes, constraints, queries, debug viz, per-body color
 - **[Architecture](architecture.html)** — Service design, data flow, and gRPC contracts
 - **[Scripting Library](scripting-library.html)** — Convenience library for F# script authors
-- **[Demo Scripts](demo-scripts.html)** — 15 physics demos in F# and Python
-- **[MCP Tools](mcp-tools.html)** — 38 tools for AI-assisted physics debugging
+- **[Demo Scripts](demo-scripts.html)** — 22 physics demos in F# and Python
+- **[MCP Tools](mcp-tools.html)** — 59 tools for AI-assisted physics debugging
 - **[Known Issues](known-issues.html)** — Current limitations and workarounds
-- **[Test Suite](tests.html)** — 165 tests across 5 projects
+- **[Test Suite](tests.html)** — 467 tests across 7 projects
 - **[API Reference](reference/index.html)** — PhysicsSandbox.Scripting module documentation
