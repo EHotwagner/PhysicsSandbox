@@ -6,7 +6,7 @@ Last updated: 2026-03-25
 - F# on .NET 10.0 (services, MCP, client), C# on .NET 10.0 (AppHost, ServiceDefaults, Contracts)
 - .NET Aspire 13.2.0, Grpc.AspNetCore.Server 2.x, Google.Protobuf 3.x, Grpc.Tools 2.x
 - BepuFSharp 0.3.0 (local NuGet, physics engine wrapper — 10 shape types, 10 constraint types, sweep/overlap queries, collision filtering, material properties), Grpc.Net.Client 2.x
-- Stride.CommunityToolkit* 1.0.0-preview.62 (4 packages, 3D viewer)
+- Stride.CommunityToolkit* 1.0.0-preview.62 (3 packages: base, Skyboxes, Linux — 3D viewer)
 - Spectre.Console (client library TUI display)
 - ModelContextProtocol.AspNetCore 1.1.* (MCP server, persistent HTTP/SSE transport)
 - xUnit 2.x, Aspire.Hosting.Testing 10.x
@@ -171,7 +171,7 @@ Do not use Stride's `Add3DCameraController()` alongside a custom CameraControlle
 Viewer needs `openal`, `freetype2`, `sdl2`, `ttf-liberation` system packages. FreeImage requires `freeimage.so` symlink (`ln -sf /usr/lib/libfreeimage.so /usr/lib/freeimage.so`). GLSL shader compiler binary must be at `linux-x64/glslangValidator.bin`.
 
 ### Stride Create3DPrimitive Size Semantics
-`Bepu3DPhysicsOptions.Size` interpretation varies by primitive type: Sphere/Capsule/Cylinder use Size.X as **radius** (not diameter); Cube uses full extents. When computing sizes from physics dimensions, pass radius directly — do not double it. This was the root cause of the original shape sizing bug.
+`Create3DPrimitive` size interpretation varies by primitive type: Sphere/Capsule/Cylinder use Size.X as **radius** (not diameter); Cube uses full extents. When computing sizes from physics dimensions, pass radius directly — do not double it.
 
 ### Viewer Custom Shape Rendering
 Triangle, mesh, and convex hull shapes render with actual geometry (custom vertex/index buffers) in both solid and wireframe views. Compound shapes decompose into individually-rendered children. ConvexHull face computation uses MIConvexHull NuGet library. ShapeRef and CachedRef resolve to their underlying shapes before rendering. All 10 shape types render with accurate collision-matching geometry.
