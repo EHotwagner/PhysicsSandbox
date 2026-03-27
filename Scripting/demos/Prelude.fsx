@@ -1,7 +1,7 @@
 // Shared preamble for all demo scripts
 // Usage: #load "Prelude.fsx" at the top of any demo script
 
-#r "nuget: PhysicsClient, 0.5.0"
+#r "nuget: PhysicsClient, 0.6.0"
 #r "nuget: Spectre.Console"
 
 open PhysicsClient.Session
