@@ -71,6 +71,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PhysicsSandbox.Shared.Contracts\PhysicsSandbox.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\PhysicsSandbox.ServiceDefaults\PhysicsSandbox.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

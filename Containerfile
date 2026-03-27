@@ -4,14 +4,14 @@
 #
 # Run (allow X11 access first):
 #   xhost +local:
-#   podman run --rm -it \
-#     --device /dev/dri \
-#     --network host \
-#     -e DISPLAY=$DISPLAY \
-#     -v /tmp/.X11-unix:/tmp/.X11-unix \
-#     physicssandbox
 #
-# NVIDIA GPU: replace --device /dev/dri with --device nvidia.com/gpu=all
+# AMD / Intel:
+#   podman run --rm -it --device /dev/dri --network host \
+#     -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix physicssandbox
+#
+# NVIDIA (requires nvidia-container-toolkit + CDI spec on host):
+#   podman run --rm -it --device nvidia.com/gpu=all --network host \
+#     -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix physicssandbox
 #
 # MCP: http://localhost:5199/sse
 

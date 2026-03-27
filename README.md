@@ -54,17 +54,18 @@ podman build -t physicssandbox .
 
 # Allow X11 access from the container
 xhost +local:
-
-# Run
-podman run --rm -it \
-  --device /dev/dri \
-  --network host \
-  -e DISPLAY=$DISPLAY \
-  -v /tmp/.X11-unix:/tmp/.X11-unix \
-  physicssandbox
 ```
 
-For NVIDIA GPUs, replace `--device /dev/dri` with `--device nvidia.com/gpu=all`.
+Then run with the appropriate GPU flag:
+
+| GPU | Run command |
+|---|---|
+| **AMD / Intel** | `podman run --rm -it --device /dev/dri --network host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix physicssandbox` |
+| **NVIDIA** | `podman run --rm -it --device nvidia.com/gpu=all --network host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix physicssandbox` |
+
+**GPU prerequisites:**
+- **AMD / Intel** — works out of the box with Mesa drivers (included in the image).
+- **NVIDIA** — install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) and generate the CDI spec (`sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml`) on the host. The toolkit injects the host's NVIDIA drivers into the container at runtime.
 
 MCP is available at `http://localhost:5199/sse`.
 
