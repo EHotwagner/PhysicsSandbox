@@ -90,21 +90,46 @@ The Aspire dashboard opens at `http://localhost:8081`.
 
 ### Interact
 
-**REPL Client** — starts automatically with the AppHost.
+There are four ways to interact with the running simulation. All require the AppHost to be running first (via `./start.sh` or `dotnet run --project src/PhysicsSandbox.AppHost`).
 
-**F# Scripts** — 22 demos in `Scripting/demos/`:
+**REPL Client** — The AppHost launches a PhysicsClient process, but it is a headless keep-alive service, not an interactive REPL. To get an interactive F# session, open a separate terminal and load the REPL script:
+
+```bash
+dotnet fsi src/PhysicsClient/PhysicsClient.fsx
+```
+
+This drops you into F# Interactive with all client modules loaded. Connect to the server and start sending commands:
+
+```fsharp
+let s = Session.connect "http://localhost:5180" |> Result.defaultWith failwith
+SimulationCommands.play s        // start the simulation
+SimulationCommands.pause s       // pause it
+Presets.boxStack s               // run a preset scene
+ViewCommands.smoothCamera s (10.0, 8.0, 10.0) (0.0, 2.0, 0.0) 2.0  // move camera
+```
+
+**F# Scripts** — 24 demos in `Scripting/demos/`:
 ```bash
 dotnet fsi Scripting/demos/Demo01_HelloDrop.fsx    # single demo
-dotnet fsi Scripting/demos/AutoRun.fsx             # run all automatically
+dotnet fsi Scripting/demos/AutoRun.fsx             # run all demos sequentially
 ```
 
-**Python Scripts** — equivalent demos in `Scripting/demos_py/`:
+Each script connects to the server automatically (defaults to `http://localhost:5180`, pass a different address as the first argument).
+
+**Python Scripts** — 21 demos in `Scripting/demos_py/` (requires generated gRPC stubs):
 ```bash
-pip install grpcio grpcio-tools protobuf
-python -m Scripting.demos_py.demo01_hello_drop
+pip install -r Scripting/demos_py/requirements.txt
+python -m Scripting.demos_py.demo01_hello_drop           # single demo
+python -m Scripting.demos_py.auto_run                    # run all demos
 ```
 
-**MCP (AI Assistants)** — 59 tools for Claude Code, etc.:
+**MCP (AI Assistants)** — 59 tools for Claude Code, etc. The MCP server starts automatically with the AppHost on `http://localhost:5199/sse`. To use it with Claude Code, start the AppHost first, then launch Claude:
+
+```bash
+./start.sh && MCP_TIMEOUT=10000 claude
+```
+
+For standalone use outside Aspire, run the MCP server directly:
 ```bash
 dotnet run --project src/PhysicsSandbox.Mcp
 ```
@@ -124,7 +149,7 @@ Then open http://localhost:8901.
 
 - [Getting Started](https://EHotwagner.github.io/PhysicsSandbox/getting-started.html) — build, run, and interact (includes container option)
 - [Architecture](https://EHotwagner.github.io/PhysicsSandbox/architecture.html) — service design and gRPC contracts
-- [Demo Scripts](https://EHotwagner.github.io/PhysicsSandbox/demo-scripts.html) — 22 physics demos in F# and Python
+- [Demo Scripts](https://EHotwagner.github.io/PhysicsSandbox/demo-scripts.html) — 24 F# and 21 Python physics demos
 - [MCP Tools](https://EHotwagner.github.io/PhysicsSandbox/mcp-tools.html) — 59 tools for AI-assisted control
 - [Test Suite](https://EHotwagner.github.io/PhysicsSandbox/tests.html) — 467 tests across 7 projects
 - [Release: Stride BepuPhysics Integration](https://EHotwagner.github.io/PhysicsSandbox/release-005.html) — what's new in the latest release
@@ -146,7 +171,7 @@ Then open http://localhost:8901.
 - **gRPC communication** — contract-first design with proto files
 - **Aspire orchestration** — service discovery, health checks, telemetry dashboard
 - **MCP integration** — 59 tools for AI assistants (simulation, queries, recording, stress tests)
-- **Dual scripting** — 22 demos in both F# and Python
+- **Dual scripting** — 24 F# demos and 21 Python demos
 - **467 tests** — unit tests (xUnit) + Aspire integration tests across 7 projects
 - **Container support** — single Containerfile for Podman/Docker deployment
 
@@ -196,8 +221,8 @@ tests/
   PhysicsSandbox.Scripting.Tests/   # 26 unit tests
   PhysicsSandbox.Integration.Tests/ # 84 integration tests
 Scripting/
-  demos/                            # F# demo scripts (22 demos + runners)
-  demos_py/                         # Python demo scripts (22 demos + runners)
+  demos/                            # F# demo scripts (24 demos + runners)
+  demos_py/                         # Python demo scripts (21 demos + runners)
   scripts/                          # Curated F# scripts (Scripting library)
   scratch/                          # Experimentation (gitignored)
 ```
