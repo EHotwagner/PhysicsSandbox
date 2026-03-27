@@ -95,8 +95,8 @@ dotnet build PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true
 dotnet run --project src/PhysicsSandbox.AppHost
 
 # Run (with process cleanup, kills existing instances first)
-./start.sh          # HTTPS profile
-./start.sh --http   # HTTP profile
+./start.sh          # HTTP profile (default, required for MCP with Claude Code)
+./start.sh --https  # HTTPS profile
 
 # Test
 dotnet test PhysicsSandbox.slnx -p:StrideCompilerSkipBuild=true

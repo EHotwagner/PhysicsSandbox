@@ -1,17 +1,23 @@
 # PhysicsSandbox — GPU-accelerated physics sandbox with Aspire orchestration
 #
 # Build:  podman build -t physicssandbox .
-# Run:    podman run --rm -it \
-#           --device nvidia.com/gpu=all \
-#           -e DISPLAY=$DISPLAY \
-#           -v /tmp/.X11-unix:/tmp/.X11-unix \
-#           physicssandbox
 #
-# Dashboard: http://localhost:8081  |  MCP: http://localhost:5199/sse
+# Run (allow X11 access first):
+#   xhost +local:
+#   podman run --rm -it \
+#     --device /dev/dri \
+#     --network host \
+#     -e DISPLAY=$DISPLAY \
+#     -v /tmp/.X11-unix:/tmp/.X11-unix \
+#     physicssandbox
+#
+# NVIDIA GPU: replace --device /dev/dri with --device nvidia.com/gpu=all
+#
+# MCP: http://localhost:5199/sse
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0
 
-# System dependencies for Stride3D viewer
+# System dependencies for Stride3D viewer + Python for demo scripts
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         libopenal1 \
@@ -22,6 +28,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         mesa-vulkan-drivers \
         libgl1 \
         libgles2 \
+        python3 \
+        python3-pip \
+        python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 # Native library symlinks expected by Stride
@@ -43,6 +52,14 @@ RUN dotnet pack src/PhysicsSandbox.ServiceDefaults -c Release -o /src/local-pack
     && dotnet pack src/PhysicsSandbox.Shared.Contracts -c Release -o /src/local-packages \
     && dotnet pack src/PhysicsClient -c Release -o /src/local-packages \
     && dotnet pack src/PhysicsSandbox.Scripting -c Release -o /src/local-packages
+
+# Register local-packages in the global NuGet config so F# Interactive scripts
+# (which run from temp directories) can resolve local packages
+RUN dotnet nuget add source /src/local-packages --name local-packages \
+        --configfile /root/.nuget/NuGet/NuGet.Config
+
+# Install Python dependencies for demo scripts
+RUN pip install --break-system-packages -r Scripting/demos_py/requirements.txt
 
 # Build (skip Stride asset compile — needs GPU, runs at container start via entrypoint)
 RUN dotnet build PhysicsSandbox.slnx -c Release -p:StrideCompilerSkipBuild=true
