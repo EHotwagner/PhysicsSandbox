@@ -7,7 +7,7 @@
     <IsAspireSharedProject>false</IsAspireSharedProject>
     <IsPackable>true</IsPackable>
     <PackageId>PhysicsSandbox.ServiceDefaults</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
   </PropertyGroup>
 
