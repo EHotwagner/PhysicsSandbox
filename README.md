@@ -52,6 +52,9 @@ No local .NET SDK or system packages needed — just a GPU and an X11 display:
 # Build from source (clones repos inside the container)
 podman build -t physicssandbox .
 
+# Allow X11 access from the container
+xhost +local:
+
 # Run
 podman run --rm -it \
   --device /dev/dri \
@@ -61,7 +64,9 @@ podman run --rm -it \
   physicssandbox
 ```
 
-The Aspire dashboard opens at `http://localhost:8081`, MCP at `http://localhost:5199/sse`.
+For NVIDIA GPUs, replace `--device /dev/dri` with `--device nvidia.com/gpu=all`.
+
+MCP is available at `http://localhost:5199/sse`.
 
 ### Option B: Build from Source
 
