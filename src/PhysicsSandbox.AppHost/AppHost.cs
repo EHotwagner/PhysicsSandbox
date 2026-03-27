@@ -12,10 +12,6 @@ builder.AddProject<Projects.PhysicsViewer>("viewer")
     .WaitFor(server)
     .WithEnvironment("DISPLAY", Environment.GetEnvironmentVariable("DISPLAY") ?? ":0");
 
-builder.AddProject<Projects.PhysicsClient>("client")
-    .WithReference(server)
-    .WaitFor(server);
-
 builder.AddProject<Projects.PhysicsSandbox_Mcp>("mcp")
     .WithReference(server)
     .WaitFor(server)

@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import physics_hub_pb2 as physics__hub__pb2
+from . import physics_hub_pb2 as physics__hub__pb2
 
 GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
