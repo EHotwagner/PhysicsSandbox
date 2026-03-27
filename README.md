@@ -16,7 +16,7 @@ graph TD
     Sim["Simulation\n(BepuPhysics2)"]
     Viewer["3D Viewer\n(Stride3D)"]
     Client["REPL Client\n(Spectre.Console)"]
-    MCP["MCP Server\n(59 AI Tools)"]
+    MCP["MCP Server\n(60 AI Tools)"]
 
     Server <-->|"commands / state\nbidirectional stream"| Sim
     Client -->|"commands\nview commands"| Server
@@ -32,7 +32,7 @@ graph TD
 | **PhysicsSimulation** | BepuPhysics2 engine — steps the world, streams state |
 | **PhysicsViewer** | Stride3D renderer — visualizes bodies, applies camera commands |
 | **PhysicsClient** | REPL console — sends commands, displays state with Spectre.Console |
-| **PhysicsSandbox.Mcp** | MCP server — 59 tools for AI-assisted simulation control, recording & replay |
+| **PhysicsSandbox.Mcp** | MCP server — 60 tools for AI-assisted simulation control, recording & replay |
 
 ## Key Technologies
 
@@ -109,7 +109,7 @@ This drops you into F# Interactive with all client modules loaded. Connect to th
 let s = Session.connect "http://localhost:5180" |> Result.defaultWith failwith
 SimulationCommands.play s        // start the simulation
 SimulationCommands.pause s       // pause it
-Presets.boxStack s               // run a preset scene
+Presets.marble s None None None   // drop a marble
 ViewCommands.smoothCamera s (10.0, 8.0, 10.0) (0.0, 2.0, 0.0) 2.0  // move camera
 ```
 
@@ -128,7 +128,7 @@ python -m Scripting.demos_py.demo01_hello_drop           # single demo
 python -m Scripting.demos_py.auto_run                    # run all demos
 ```
 
-**MCP (AI Assistants)** — 59 tools for Claude Code, etc. The MCP server starts automatically with the AppHost on `http://localhost:5199/sse`. To use it with Claude Code, start the AppHost first, then launch Claude:
+**MCP (AI Assistants)** — 60 tools for Claude Code, etc. The MCP server starts automatically with the AppHost on `http://localhost:5199/sse`. To use it with Claude Code, start the AppHost first, then launch Claude:
 
 ```bash
 ./start.sh && MCP_TIMEOUT=10000 claude
@@ -155,7 +155,7 @@ Then open http://localhost:8901.
 - [Getting Started](https://EHotwagner.github.io/PhysicsSandbox/getting-started.html) — build, run, and interact (includes container option)
 - [Architecture](https://EHotwagner.github.io/PhysicsSandbox/architecture.html) — service design and gRPC contracts
 - [Demo Scripts](https://EHotwagner.github.io/PhysicsSandbox/demo-scripts.html) — 24 F# and 21 Python physics demos
-- [MCP Tools](https://EHotwagner.github.io/PhysicsSandbox/mcp-tools.html) — 59 tools for AI-assisted control
+- [MCP Tools](https://EHotwagner.github.io/PhysicsSandbox/mcp-tools.html) — 60 tools for AI-assisted control
 - [Test Suite](https://EHotwagner.github.io/PhysicsSandbox/tests.html) — 467 tests across 7 projects
 - [Release: Stride BepuPhysics Integration](https://EHotwagner.github.io/PhysicsSandbox/release-005.html) — what's new in the latest release
 - [Known Issues](https://EHotwagner.github.io/PhysicsSandbox/known-issues.html) — limitations and workarounds
@@ -175,7 +175,7 @@ Then open http://localhost:8901.
 - **MCP recording & replay** — record simulation sessions, query snapshots, trajectories, and events
 - **gRPC communication** — contract-first design with proto files
 - **Aspire orchestration** — service discovery, health checks, telemetry dashboard
-- **MCP integration** — 59 tools for AI assistants (simulation, queries, recording, stress tests)
+- **MCP integration** — 60 tools for AI assistants (simulation, queries, recording, stress tests)
 - **Dual scripting** — 24 F# demos and 21 Python demos
 - **467 tests** — unit tests (xUnit) + Aspire integration tests across 7 projects
 - **Container support** — single Containerfile for Podman/Docker deployment
@@ -212,7 +212,7 @@ src/
     Rendering/ShapeGeometry         #   procedural mesh generation (all 10 types)
     Rendering/DebugRenderer         #   wireframe collider + constraint visualization
   PhysicsClient/                    # F# REPL client (Spectre.Console)
-  PhysicsSandbox.Mcp/               # F# MCP server (59 tools, recording & query)
+  PhysicsSandbox.Mcp/               # F# MCP server (60 tools, recording & query)
     Recording/                      #   append-only protobuf recording engine
   PhysicsSandbox.Scripting/         # F# scripting library (6 modules)
     ConstraintBuilders              #   constraint creation helpers

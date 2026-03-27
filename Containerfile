@@ -68,7 +68,8 @@ COPY entrypoint.sh /src/entrypoint.sh
 
 ENV ASPNETCORE_ENVIRONMENT=Production \
     DOTNET_ENVIRONMENT=Production \
-    DISPLAY=:0
+    DISPLAY=:0 \
+    PYTHONPATH=/src/Scripting/demos_py/generated
 
 EXPOSE 8081 5199
 
