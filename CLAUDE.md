@@ -55,6 +55,7 @@ Last updated: 2026-03-27
 - F# on .NET 10.0 (PhysicsClient, Scripting), C# on .NET 10.0 (ServiceDefaults, Contracts) + Grpc.Net.Client 2.x, Google.Protobuf 3.x, Spectre.Console 0.49.x, Microsoft.Extensions.Logging.Abstractions 10.x (new explicit) (004-fix-fsi-assembly-mismatch)
 - F# scripts on .NET 10.0, Python 3.10+, Bash + PhysicsClient 0.5.0 (NuGet), Grpc.Net.Client 2.76.0, grpcio-tools (Python) (005-fix-container-build-scripts)
 - F# on .NET 10.0 + Grpc.Net.Client 2.x, Google.Protobuf 3.x, Spectre.Console 0.49.x, Microsoft.Extensions.Logging.Abstractions 10.x (006-client-exe-analysis)
+- C# on .NET 10.0 (Shared.Contracts is the only C# project affected) + Grpc.Net.Client 2.*, Google.Protobuf 3.*, Grpc.Tools 2.* (PrivateAssets=All) (005-contracts-grpc-cleanup)
 
 ## Project Structure
 
@@ -117,9 +118,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 005-contracts-grpc-cleanup: Added C# on .NET 10.0 (Shared.Contracts is the only C# project affected) + Grpc.Net.Client 2.*, Google.Protobuf 3.*, Grpc.Tools 2.* (PrivateAssets=All)
 - 006-client-exe-analysis: Added F# on .NET 10.0 + Grpc.Net.Client 2.x, Google.Protobuf 3.x, Spectre.Console 0.49.x, Microsoft.Extensions.Logging.Abstractions 10.x
 - 005-fix-container-build-scripts: Added F# scripts on .NET 10.0, Python 3.10+, Bash + PhysicsClient 0.5.0 (NuGet), Grpc.Net.Client 2.76.0, grpcio-tools (Python)
-- 004-fix-fsi-assembly-mismatch: Added F# on .NET 10.0 (PhysicsClient, Scripting), C# on .NET 10.0 (ServiceDefaults, Contracts) + Grpc.Net.Client 2.x, Google.Protobuf 3.x, Spectre.Console 0.49.x, Microsoft.Extensions.Logging.Abstractions 10.x (new explicit)
 
 ## Environment
 
