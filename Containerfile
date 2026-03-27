@@ -1,6 +1,8 @@
 # PhysicsSandbox — GPU-accelerated physics sandbox with Aspire orchestration
 #
 # Build:  podman build -t physicssandbox .
+# Rebuild (bust git clone cache):
+#   podman build --build-arg CACHE_DATE=$(date +%s) -t physicssandbox .
 #
 # Run (allow X11 access first):
 #   xhost +local:
@@ -38,7 +40,8 @@ RUN ln -sf /usr/lib/x86_64-linux-gnu/libfreeimage.so.3 /usr/lib/freeimage.so \
     && ln -sf /usr/lib/x86_64-linux-gnu/libfreetype.so.6 /usr/lib/libfreetype.so \
     && ln -sf /usr/lib/x86_64-linux-gnu/libfreetype.so.6 /usr/lib/freetype.so
 
-# Clone PhysicsSandbox
+# Clone PhysicsSandbox (ARG busts the layer cache so rebuilds pick up new commits)
+ARG CACHE_DATE=0
 WORKDIR /src
 RUN git clone https://github.com/EHotwagner/PhysicsSandbox.git .
 
@@ -64,7 +67,7 @@ RUN pip install --break-system-packages -r Scripting/demos_py/requirements.txt
 # Build (skip Stride asset compile — needs GPU, runs at container start via entrypoint)
 RUN dotnet build PhysicsSandbox.slnx -c Release -p:StrideCompilerSkipBuild=true
 
-COPY entrypoint.sh /src/entrypoint.sh
+RUN chmod +x /src/entrypoint.sh
 
 ENV ASPNETCORE_ENVIRONMENT=Production \
     DOTNET_ENVIRONMENT=Production \

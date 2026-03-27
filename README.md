@@ -56,6 +56,8 @@ podman build -t physicssandbox .
 xhost +local:
 ```
 
+> **Rebuilding after updates:** The `git clone` step inside the Containerfile gets cached by Podman/Docker. To pick up new commits, either bust the cache with `podman build --build-arg CACHE_DATE=$(date +%s) -t physicssandbox .` or use `podman build --no-cache -t physicssandbox .`.
+
 Then run with the appropriate GPU flag:
 
 | GPU | Run command |
@@ -68,6 +70,11 @@ Then run with the appropriate GPU flag:
 - **NVIDIA** — install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) and generate the CDI spec (`sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml`) on the host. The toolkit injects the host's NVIDIA drivers into the container at runtime.
 
 MCP is available at `http://localhost:5199/sse`.
+
+**Container notes:**
+- Python dependencies are pre-installed in the image — skip the `pip install` step below when running inside the container.
+- The container runs Aspire in `Production` mode, so the `/health` and `/alive` endpoints are not mapped. Set `-e ASPNETCORE_ENVIRONMENT=Development` on the run command to enable them.
+- The MCP `add_body` tool currently marks all 36 parameters as required in its schema (including shape-specific fields like `tri_ax`, `capsule_radius`, etc.). Pass `null` for unused shape parameters. Only `shape` and position are functionally required.
 
 ### Option B: Build from Source
 

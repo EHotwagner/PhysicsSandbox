@@ -3,7 +3,12 @@ set -euo pipefail
 
 # Compile Stride assets (requires GPU — skipped during image build)
 echo "Compiling Stride assets…"
-dotnet /root/.nuget/packages/stride.core.assets.compilerapp/4.3.0.2507/lib/net10.0/Stride.Core.Assets.CompilerApp.dll \
+STRIDE_COMPILER=$(find /root/.nuget/packages/stride.core.assets.compilerapp -name 'Stride.Core.Assets.CompilerApp.dll' -path '*/net10.0/*' | head -1)
+if [ -z "$STRIDE_COMPILER" ]; then
+    echo "ERROR: Stride asset compiler not found" >&2
+    exit 1
+fi
+dotnet "$STRIDE_COMPILER" \
     --disable-auto-compile \
     --project-configuration Release \
     --platform=Linux \
