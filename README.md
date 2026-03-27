@@ -229,7 +229,9 @@ Scripting/
 
 ## Known Issues
 
-See [Known Issues](https://EHotwagner.github.io/PhysicsSandbox/known-issues.html) for current limitations and workarounds.
+- **Box-box collision detection** — Occasional incorrect collision detection between box shapes. Under investigation.
+
+See [Known Issues](https://EHotwagner.github.io/PhysicsSandbox/known-issues.html) for the full list of limitations and workarounds.
 
 ## License
 
