@@ -92,7 +92,7 @@ The Aspire dashboard opens at `http://localhost:8081`.
 
 There are four ways to interact with the running simulation. All require the AppHost to be running first (via `./start.sh` or `dotnet run --project src/PhysicsSandbox.AppHost`).
 
-**REPL Client** — The AppHost launches a PhysicsClient process, but it is a headless keep-alive service, not an interactive REPL. To get an interactive F# session, open a separate terminal and load the REPL script:
+**REPL Client** — The PhysicsClient project is a library of modules (`Session`, `SimulationCommands`, `ViewCommands`, `Presets`, etc.) used by the demo scripts and MCP server. The AppHost registers it as an Aspire resource for dashboard visibility, but the launched process itself is not interactive. To get an interactive F# session, open a separate terminal and load the REPL script:
 
 ```bash
 dotnet fsi src/PhysicsClient/PhysicsClient.fsx
