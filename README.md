@@ -129,9 +129,23 @@ dotnet fsi Scripting/demos/AutoRun.fsx             # run all demos sequentially
 
 Each script connects to the server automatically (defaults to `http://localhost:5180`, pass a different address as the first argument).
 
+**Python REPL** — Interactive session mirroring the F# REPL above:
+```bash
+pip install -r Scripting/demos_py/requirements.txt       # first time only (pre-installed in container)
+python3 -i -m Scripting.demos_py.repl
+```
+
+This drops you into a Python shell with all prelude functions loaded:
+```python
+s = connect("http://localhost:5180")
+play(s)
+marble(s, (0, 10, 0))
+list_bodies(s)
+smooth_camera(s, (10, 8, 10), (0, 2, 0), 2.0)
+```
+
 **Python Scripts** — 21 demos in `Scripting/demos_py/` (gRPC stubs are pre-generated in `Scripting/demos_py/generated/`; regenerate with `bash Scripting/demos_py/generate_stubs.sh` after proto changes):
 ```bash
-pip install -r Scripting/demos_py/requirements.txt
 python -m Scripting.demos_py.demo01_hello_drop           # single demo
 python -m Scripting.demos_py.auto_run                    # run all demos
 ```
