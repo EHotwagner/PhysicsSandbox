@@ -39,4 +39,5 @@ graph TD
 - **[MCP Tools](mcp-tools.html)** — 59 tools for AI-assisted physics debugging
 - **[Known Issues](known-issues.html)** — Current limitations and workarounds
 - **[Test Suite](tests.html)** — 467 tests across 7 projects
+- **[Python API Reference](python-api.html)** — Python prelude library: session, bodies, camera, queries, batching
 - **[API Reference](reference/index.html)** — PhysicsSandbox.Scripting module documentation
