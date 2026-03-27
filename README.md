@@ -129,7 +129,7 @@ dotnet fsi Scripting/demos/AutoRun.fsx             # run all demos sequentially
 
 Each script connects to the server automatically (defaults to `http://localhost:5180`, pass a different address as the first argument).
 
-**Python Scripts** — 21 demos in `Scripting/demos_py/` (requires generated gRPC stubs):
+**Python Scripts** — 21 demos in `Scripting/demos_py/` (gRPC stubs are pre-generated in `Scripting/demos_py/generated/`; regenerate with `bash Scripting/demos_py/generate_stubs.sh` after proto changes):
 ```bash
 pip install -r Scripting/demos_py/requirements.txt
 python -m Scripting.demos_py.demo01_hello_drop           # single demo
