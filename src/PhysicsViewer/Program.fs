@@ -256,6 +256,8 @@ let startViewCommandStream (serverAddress: string) =
 
 let start (scene: Scene) =
     game.AddGraphicsCompositor().AddCleanUIStage() |> ignore
+    // Stride sets DebugTextSystem.Visible = Platform.IsRunningDebugAssembly (false in Release builds)
+    game.DebugTextSystem.Visible <- true
     let camEntity = game.Add3DCamera()
     cameraEntity <- Some camEntity
     game.AddDirectionalLight() |> ignore
