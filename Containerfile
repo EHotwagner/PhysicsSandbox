@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libsdl2-2.0-0 \
         libfreeimage3 \
         fonts-liberation \
+        fontconfig \
         mesa-vulkan-drivers \
         libgl1 \
         libgles2 \
