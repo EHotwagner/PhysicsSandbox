@@ -254,15 +254,15 @@ let internal client (session: Session) : PhysicsHub.PhysicsHubClient =
     session.Client
 
 /// <summary>Gets the local body registry that maps body IDs to their shape kinds.</summary>
-let internal bodyRegistry (session: Session) : ConcurrentDictionary<string, string> =
+let bodyRegistry (session: Session) : ConcurrentDictionary<string, string> =
     session.BodyRegistry
 
 /// <summary>Gets the most recently received simulation state from the background stream, if any.</summary>
-let internal latestState (session: Session) : SimulationState option =
+let latestState (session: Session) : SimulationState option =
     session.LatestState
 
 /// <summary>Gets the UTC timestamp of the last state update received from the server.</summary>
-let internal lastStateUpdate (session: Session) : DateTime =
+let lastStateUpdate (session: Session) : DateTime =
     session.LastStateUpdate
 
 /// <summary>Gets the mesh resolver state for resolving CachedShapeRef.</summary>

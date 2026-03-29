@@ -18,14 +18,14 @@ val isConnected : session: Session -> bool
 /// Internal: get the gRPC client from a session. Used by command modules.
 val internal client : session: Session -> PhysicsSandbox.Shared.Contracts.PhysicsHub.PhysicsHubClient
 
-/// Internal: get the body registry from a session.
-val internal bodyRegistry : session: Session -> System.Collections.Concurrent.ConcurrentDictionary<string, string>
+/// Get the body registry from a session. Maps body names to shape kinds.
+val bodyRegistry : session: Session -> System.Collections.Concurrent.ConcurrentDictionary<string, string>
 
-/// Internal: get the latest cached simulation state.
-val internal latestState : session: Session -> PhysicsSandbox.Shared.Contracts.SimulationState option
+/// Get the latest cached simulation state, or None if no state has arrived yet.
+val latestState : session: Session -> PhysicsSandbox.Shared.Contracts.SimulationState option
 
-/// Internal: get the timestamp of the last state update.
-val internal lastStateUpdate : session: Session -> System.DateTime
+/// Get the timestamp of the last state update received from the server.
+val lastStateUpdate : session: Session -> System.DateTime
 
 /// Internal: clear all client-side caches (body registry, properties, constraints, shapes, state).
 val internal clearCaches : session: Session -> unit
