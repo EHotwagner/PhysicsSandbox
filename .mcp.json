@@ -2,7 +2,7 @@
   "mcpServers": {
     "physics-sandbox": {
       "type": "sse",
-      "url": "http://localhost:5180/sse"
+      "url": "http://localhost:5199/"
     },
     "aspire-dashboard": {
       "type": "stdio",
