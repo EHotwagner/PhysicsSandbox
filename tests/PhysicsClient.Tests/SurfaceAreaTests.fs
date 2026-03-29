@@ -14,7 +14,8 @@ let ``IdGenerator public API matches baseline`` () =
 let ``Session public API matches baseline`` () =
     assertModuleSurface anchorType "PhysicsClient.Session"
         [ "connect"; "disconnect"; "reconnect"; "isConnected"
-          "bodyRegistry"; "latestState"; "lastStateUpdate" ]
+          "bodyRegistry"; "latestState"; "lastStateUpdate"
+          "bodyPropertiesCache"; "cachedConstraints"; "cachedRegisteredShapes"; "serverAddress" ]
 
 [<Fact>]
 let ``SimulationCommands public API matches baseline`` () =

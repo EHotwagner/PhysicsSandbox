@@ -265,6 +265,22 @@ let latestState (session: Session) : SimulationState option =
 let lastStateUpdate (session: Session) : DateTime =
     session.LastStateUpdate
 
+/// <summary>Gets the cached body properties (mass, shape, color, motion type, collision config, material) for all known bodies.</summary>
+let bodyPropertiesCache (session: Session) : ConcurrentDictionary<string, BodyProperties> =
+    session.BodyPropertiesCache
+
+/// <summary>Gets the cached list of active constraints from the property event stream.</summary>
+let cachedConstraints (session: Session) : ConstraintState list =
+    session.CachedConstraints
+
+/// <summary>Gets the cached list of registered custom shapes from the property event stream.</summary>
+let cachedRegisteredShapes (session: Session) : RegisteredShapeState list =
+    session.CachedRegisteredShapes
+
+/// <summary>Gets the server address this session is connected to.</summary>
+let serverAddress (session: Session) : string =
+    session.ServerAddress
+
 /// <summary>Gets the mesh resolver state for resolving CachedShapeRef.</summary>
 let internal meshResolver (session: Session) : MeshResolver.MeshResolverState =
     session.MeshResolver

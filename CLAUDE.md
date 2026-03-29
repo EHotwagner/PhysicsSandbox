@@ -59,6 +59,8 @@ Last updated: 2026-03-29
 - F# on .NET 10.0 (PhysicsClient, Scripting), C# on .NET 10.0 (Contracts, integration tests) + Grpc.Net.Client 2.x, Google.Protobuf 3.x, Grpc.AspNetCore.Server 2.x, xUnit 2.x, Aspire.Hosting.Testing 10.x (005-fix-session-state-sync)
 - N/A (in-memory state only) (005-fix-session-state-sync)
 - F# on .NET 10.0 + PhysicsClient (target), PhysicsSandbox.Scripting (downstream consumer), Google.Protobuf 3.x (SimulationState type) (005-expose-session-state)
+- F# on .NET 10.0 + PhysicsClient (target), Google.Protobuf 3.x (BodyProperties, ConstraintState, RegisteredShapeState types) (005-expose-session-caches)
+- N/A (in-memory caches only) (005-expose-session-caches)
 
 ## Project Structure
 
@@ -121,9 +123,9 @@ dotnet run --project src/PhysicsSandbox.Mcp -- https://localhost:7180
 - Proto files: `physics_sandbox` package, `PhysicsSandbox.Shared.Contracts` C# namespace
 
 ## Recent Changes
+- 005-expose-session-caches: Added F# on .NET 10.0 + PhysicsClient (target), Google.Protobuf 3.x (BodyProperties, ConstraintState, RegisteredShapeState types)
 - 005-expose-session-state: Added F# on .NET 10.0 + PhysicsClient (target), PhysicsSandbox.Scripting (downstream consumer), Google.Protobuf 3.x (SimulationState type)
 - 005-fix-session-state-sync: Added F# on .NET 10.0 (PhysicsClient, Scripting), C# on .NET 10.0 (Contracts, integration tests) + Grpc.Net.Client 2.x, Google.Protobuf 3.x, Grpc.AspNetCore.Server 2.x, xUnit 2.x, Aspire.Hosting.Testing 10.x
-- 005-contracts-grpc-cleanup: Added C# on .NET 10.0 (Shared.Contracts is the only C# project affected) + Grpc.Net.Client 2.*, Google.Protobuf 3.*, Grpc.Tools 2.* (PrivateAssets=All)
 
 ## Environment
 
