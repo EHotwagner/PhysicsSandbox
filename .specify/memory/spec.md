@@ -406,6 +406,15 @@ A scripter uses `overlapSphere` and `raycast` to find bodies in the scene. Both 
 ### US-132: Actionable Error Feedback from Batch Operations (P3)
 A scripter submits a batch of body-creation commands. If any command fails (e.g., duplicate ID), the scripter receives clear feedback about which commands succeeded and which failed, along with the reason for failure. [Source: specs/005-fix-session-state-sync]
 
+### US-133: Read Current Simulation State (P1)
+A developer using the PhysicsClient library wants to read the current simulation state to inspect body positions, velocities, and other properties without relying on internal module access. [Source: specs/005-expose-session-state]
+
+### US-134: Look Up Body Names (P1)
+A developer wants to look up the mapping between body IDs and their human-readable names to correlate simulation state entries with the bodies they created. [Source: specs/005-expose-session-state]
+
+### US-135: Check State Freshness (P2)
+A developer wants to check when the last state update was received to determine if the state stream is active and data is fresh. [Source: specs/005-expose-session-state]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -752,6 +761,11 @@ A scripter submits a batch of body-creation commands. If any command fails (e.g.
 - **FR-342**: Batch operations MUST return per-command success/failure status, including the reason for any failures. [Source: specs/005-fix-session-state-sync]
 - **FR-343**: When a body-creation command fails due to a duplicate ID, the system MUST report the failure with a clear message identifying the conflicting ID. [Source: specs/005-fix-session-state-sync]
 - **FR-344**: Establishing a new session connection MUST start with empty caches and populate from the server's property stream. [Source: specs/005-fix-session-state-sync]
+- **FR-345**: The `latestState` function MUST be publicly accessible to consumers outside the PhysicsClient assembly. [Source: specs/005-expose-session-state]
+- **FR-346**: The `bodyRegistry` function MUST be publicly accessible to consumers outside the PhysicsClient assembly. [Source: specs/005-expose-session-state]
+- **FR-347**: The `lastStateUpdate` function MUST be publicly accessible to consumers outside the PhysicsClient assembly. [Source: specs/005-expose-session-state]
+- **FR-348**: The public signatures and return types of `latestState`, `bodyRegistry`, and `lastStateUpdate` MUST remain identical to their prior internal signatures. [Source: specs/005-expose-session-state]
+- **FR-349**: Existing internal consumers within the PhysicsClient assembly MUST continue to work without modification after exposure. [Source: specs/005-expose-session-state]
 
 ## Key Entities
 
@@ -929,6 +943,8 @@ A scripter submits a batch of body-creation commands. If any command fails (e.g.
 - ViewCommand broadcast subscriber list modified during publish (concurrent add/remove): ConcurrentDictionary iteration is snapshot-safe; new/removed subscribers take effect on next publish. [Source: specs/005-robust-network-connectivity]
 - Viewer connects but never reads from stream (backpressure): per-subscriber channel fills to 1024, subsequent commands skipped for that subscriber via TryWrite newest-drop. [Source: specs/005-robust-network-connectivity]
 - ViewCommands sent before any viewer connected: silently dropped (no buffering, no replay). [Source: specs/005-robust-network-connectivity]
+- Session disconnected while reading exposed state: accessors return last known values (no error thrown). [Source: specs/005-expose-session-state]
+- Multiple threads read `latestState`/`bodyRegistry`/`lastStateUpdate` concurrently: thread-safe via ConcurrentDictionary and atomic reference/value assignments. [Source: specs/005-expose-session-state]
 
 ## Success Criteria
 
@@ -1069,3 +1085,6 @@ A scripter submits a batch of body-creation commands. If any command fails (e.g.
 - **SC-135**: overlapSphere and raycast agree on body existence for 100% of bodies in the scene. [Source: specs/005-fix-session-state-sync]
 - **SC-136**: Batch operation failures are reported for 100% of failed commands, with each failure including the body ID and reason. [Source: specs/005-fix-session-state-sync]
 - **SC-137**: The complete reset-and-recreate workflow completes reliably without requiring manual workarounds. [Source: specs/005-fix-session-state-sync]
+- **SC-138**: All three functions (`latestState`, `bodyRegistry`, `lastStateUpdate`) can be called from code outside the PhysicsClient assembly without compilation errors. [Source: specs/005-expose-session-state]
+- **SC-139**: Existing tests continue to pass with no modifications required after exposure. [Source: specs/005-expose-session-state]
+- **SC-140**: Downstream consumers (e.g., Scripting library) can access all three functions directly. [Source: specs/005-expose-session-state]

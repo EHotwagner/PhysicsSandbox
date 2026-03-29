@@ -2,7 +2,7 @@
 
 **Feature Branch**: `005-expose-session-state`
 **Created**: 2026-03-29
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "Make latestState, bodyRegistry, and lastStateUpdate publicly exposed in PhysicsClient Session module"
 
 ## User Scenarios & Testing *(mandatory)*

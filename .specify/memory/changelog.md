@@ -932,3 +932,19 @@
 - `tests/PhysicsSandbox.Integration.Tests/` — C# integration tests
 
 **Tasks Completed:** 34/34 tasks
+
+---
+
+## Expose Session State — 2026-03-29
+**Branch:** 005-expose-session-state
+**Spec:** specs/005-expose-session-state
+
+**What was added:**
+- Promoted three internal Session module accessors (`latestState`, `bodyRegistry`, `lastStateUpdate`) to public visibility
+- Enables downstream consumers (Scripting library, custom scripts) to directly read simulation state, body name mappings, and state freshness timestamps
+- Updated surface area baseline test to validate the expanded public API (4 → 7 functions)
+
+**New Components:**
+- No new files — visibility-only change to existing `Session.fsi`, `Session.fs`, and `SurfaceAreaTests.fs`
+
+**Tasks Completed:** 4/4 tasks
