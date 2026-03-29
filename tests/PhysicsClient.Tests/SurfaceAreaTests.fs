@@ -13,7 +13,8 @@ let ``IdGenerator public API matches baseline`` () =
 [<Fact>]
 let ``Session public API matches baseline`` () =
     assertModuleSurface anchorType "PhysicsClient.Session"
-        [ "connect"; "disconnect"; "reconnect"; "isConnected" ]
+        [ "connect"; "disconnect"; "reconnect"; "isConnected"
+          "bodyRegistry"; "latestState"; "lastStateUpdate" ]
 
 [<Fact>]
 let ``SimulationCommands public API matches baseline`` () =
