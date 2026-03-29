@@ -1,5 +1,31 @@
 # Merged Features Log
 
+## Fix Session State and Cache Synchronization — 2026-03-29
+**Branch:** 005-fix-session-state-sync
+**Spec:** specs/005-fix-session-state-sync (archived to .specify/archive/)
+
+**What was added:**
+- ConfirmedReset gRPC RPC using fence query pattern — blocks until simulation confirms reset is processed
+- Session.clearCaches internal helper for deterministic client-side cache clearing
+- SimulationCommands.confirmedReset function in PhysicsClient
+- BatchResult record type in Scripting library; batchAdd returns per-command success/failure
+- resetSimulation now uses confirmed reset path (removed sleep 100ms)
+- 7 integration tests (ResetReliability, QueryConsistency, BatchResult)
+- 4 unit tests (clearCaches, BatchResult construction, surface area baselines)
+
+**New Components:**
+- `ConfirmedResetRequest`/`ConfirmedResetResponse` proto messages
+- `ConfirmedReset` RPC on PhysicsHub service
+- `BatchResult` type in `PhysicsSandbox.Scripting.BatchOperations`
+- `tests/PhysicsSandbox.Integration.Tests/ResetReliabilityTests.cs`
+- `tests/PhysicsSandbox.Integration.Tests/QueryConsistencyTests.cs`
+- `tests/PhysicsSandbox.Integration.Tests/BatchResultTests.cs`
+- `tests/PhysicsSandbox.Scripting.Tests/BatchOperationsTests.fs`
+
+**Tasks Completed:** 29/29 tasks
+
+---
+
 ## Codebase Cleanup and Refactoring — 2026-03-25
 **Branch:** 004-codebase-cleanup-refactor
 **Spec:** specs/004-codebase-cleanup-refactor (archived to .specify/archive/)

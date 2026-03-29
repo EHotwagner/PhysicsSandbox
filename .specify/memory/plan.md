@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Implementation Plan
 
-**Last Updated**: 2026-03-25
-**Revision**: Updated with 004-test-suite-cleanup archival
+**Last Updated**: 2026-03-29
+**Revision**: Updated with 005-fix-session-state-sync archival
 
 ## Technical Context
 
@@ -355,3 +355,7 @@ All five services (Server, Simulation, Viewer, Client, MCP) are now Aspire-manag
 - MCP tool parameters use `Nullable<T>` (not F# `Option<T>`) for optional value types. ModelContextProtocol.AspNetCore only recognizes `Nullable<T>` as optional in auto-generated schemas — F#'s `?param: Type` (`FSharpOption<T>`) is marked as required. Use `param.HasValue`/`param.Value` instead of `defaultArg`. String optionals use plain `string` with null checks. [Source: specs/004-mcp-fix-aspire-config]
 - Aspire Dashboard MCP uses stdio transport (`aspire agent mcp --nologo --non-interactive`) in `.mcp.json`. The HTTP/SSE endpoint at port 18093 returns 403 Forbidden. [Source: specs/004-mcp-fix-aspire-config]
 - Aspire upgraded to 13.2.0: new CLI commands (aspire ps, describe, resource rebuild, start/stop, wait, doctor, docs search). Dashboard has telemetry HTTP API at `/api/telemetry`. [Source: specs/004-mcp-fix-aspire-config]
+- All `SendCommand` RPCs are fire-and-forget: MessageRouter.submitCommand writes to a channel and returns "Command forwarded" immediately. The simulation processes commands async. For operations requiring confirmation, use `ConfirmedReset` RPC (fence query pattern) or similar. [Source: specs/005-fix-session-state-sync]
+- `ConfirmedReset` uses a fence query (zero-radius overlap at origin) through the existing query infrastructure to block until the simulation has processed the reset. Commands are ordered in the channel, so the fence query completes only after the reset. [Source: specs/005-fix-session-state-sync]
+- `batchAdd` return type changed from `unit` to `BatchResult` in Scripting library. Callers that ignore the return value get a compiler warning. All existing demo scripts are unaffected. [Source: specs/005-fix-session-state-sync]
+- Batch command per-command results from the router reflect "forwarded" status, not simulation-level validation. Duplicate ID rejection happens asynchronously in the simulation. A future `ConfirmedBatch` RPC could use the same fence pattern to provide true per-command validation. [Source: specs/005-fix-session-state-sync]

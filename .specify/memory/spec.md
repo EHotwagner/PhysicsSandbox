@@ -1,7 +1,7 @@
 # PhysicsSandbox — Main Specification
 
-**Last Updated**: 2026-03-25
-**Revision**: Updated with 004-test-suite-cleanup archival
+**Last Updated**: 2026-03-29
+**Revision**: Updated with 005-fix-session-state-sync archival
 
 ## Overview
 
@@ -397,6 +397,15 @@ Split SimulationWorld.fs (708→538 lines) by extracting ProtoConversions and Sh
 ### US-129: Consolidate Integration Test Helpers (P4)
 Extract CreateGrpcChannel private method from IntegrationTestHelpers.cs, eliminating 3x duplicated gRPC channel + SSL setup code. [Source: specs/004-codebase-cleanup-refactor]
 
+### US-130: Reliable Simulation Reset (P1)
+A scripter calls `resetSimulation` to start a fresh experiment. After the reset completes, the session reflects a clean state — no leftover bodies from previous runs, and newly created bodies appear correctly with auto-generated IDs. [Source: specs/005-fix-session-state-sync]
+
+### US-131: Consistent Query Results (P2)
+A scripter uses `overlapSphere` and `raycast` to find bodies in the scene. Both queries return consistent results that accurately reflect the current state of the physics simulation after any mutation. [Source: specs/005-fix-session-state-sync]
+
+### US-132: Actionable Error Feedback from Batch Operations (P3)
+A scripter submits a batch of body-creation commands. If any command fails (e.g., duplicate ID), the scripter receives clear feedback about which commands succeeded and which failed, along with the reason for failure. [Source: specs/005-fix-session-state-sync]
+
 ## Functional Requirements
 
 - **FR-001**: Solution structure with Aspire AppHost, shared contracts, service defaults, and server hub. [Source: specs/001-server-hub]
@@ -736,6 +745,13 @@ Extract CreateGrpcChannel private method from IntegrationTestHelpers.cs, elimina
 - **FR-335**: Integration test helper duplication MUST be eliminated by extracting shared CreateGrpcChannel method. [Source: specs/004-codebase-cleanup-refactor]
 - **FR-336**: All refactoring MUST preserve existing behavior — full test suite passes with zero regressions. [Source: specs/004-codebase-cleanup-refactor]
 - **FR-337**: Signature files (.fsi) MUST be created for all new public F# modules. [Source: specs/004-codebase-cleanup-refactor]
+- **FR-338**: The reset operation MUST remove all bodies from the server's physics world AND clear the client-side cached body collection before returning control to the user. [Source: specs/005-fix-session-state-sync]
+- **FR-339**: The reset operation MUST wait for server confirmation that all bodies have been removed before resetting the client-side ID counter. [Source: specs/005-fix-session-state-sync]
+- **FR-340**: Spatial queries (overlap) MUST query the physics server directly, ensuring results reflect the actual simulation state. [Source: specs/005-fix-session-state-sync]
+- **FR-341**: Spatial queries (raycast and overlap) MUST return consistent results for the same scene state. [Source: specs/005-fix-session-state-sync]
+- **FR-342**: Batch operations MUST return per-command success/failure status, including the reason for any failures. [Source: specs/005-fix-session-state-sync]
+- **FR-343**: When a body-creation command fails due to a duplicate ID, the system MUST report the failure with a clear message identifying the conflicting ID. [Source: specs/005-fix-session-state-sync]
+- **FR-344**: Establishing a new session connection MUST start with empty caches and populate from the server's property stream. [Source: specs/005-fix-session-state-sync]
 
 ## Key Entities
 
@@ -812,6 +828,8 @@ Extract CreateGrpcChannel private method from IntegrationTestHelpers.cs, elimina
 - **Narration Label**: Single string displayed at screen position (10, 50) via DebugTextSystem.Print. Set via SetNarration ViewCommand, cleared by sending empty text. Independent of demo metadata overlay. [Source: specs/004-camera-smooth-demos]
 - **Body Position Map**: Transient Map<string, Vector3> built each frame from latestSimState.Bodies. Used by body-relative camera modes to resolve bodyId → world position. Not persisted. [Source: specs/004-camera-smooth-demos]
 - **ViewCommand Subscriber**: A connected viewer instance with a unique Guid, a bounded Channel<ViewCommand>(1024), and a connection lifecycle (subscribe on StreamViewCommands connect, unsubscribe on disconnect). Registered in MessageRouter.ViewCommandSubscribers ConcurrentDictionary. [Source: specs/005-robust-network-connectivity]
+- **BatchResult**: Aggregated outcome of a batch operation — Succeeded (int count), Failed (list of index + error message pairs). Produced by `batchAdd`, consumed by callers. [Source: specs/005-fix-session-state-sync]
+- **ConfirmedResetResponse**: Server response confirming simulation reset has been fully processed — success (bool), message (string), bodies_removed (int), constraints_removed (int). [Source: specs/005-fix-session-state-sync]
 
 ## Edge Cases
 
@@ -837,6 +855,9 @@ Extract CreateGrpcChannel private method from IntegrationTestHelpers.cs, elimina
 - MCP server cannot reach PhysicsServer: returns clear connection-failure errors per tool invocation, no crash. [Source: specs/005-mcp-server-testing]
 - Simulation disconnects mid-stream: MCP get_state returns last cached state with staleness indicator. [Source: specs/005-mcp-server-testing]
 - Multiple MCP clients simultaneously: each creates independent gRPC channel. [Source: specs/005-mcp-server-testing]
+- Reset called while server is mid-step: ConfirmedReset blocks via fence query until simulation processes reset command in order. [Source: specs/005-fix-session-state-sync]
+- Reset called when server unreachable: confirmedReset returns Error result; resetSimulation falls back to manual clearAll. [Source: specs/005-fix-session-state-sync]
+- Batch with duplicate body ID: server returns per-command CommandResult with Success=false and "already exists" message. Router acks "forwarded" for all commands; simulation-level validation is async. [Source: specs/005-fix-session-state-sync]
 - Server command channel full (100 capacity): MCP relays "dropped" response. [Source: specs/005-mcp-server-testing]
 - Integration tests without GPU/display: tests only exercise gRPC communication, not rendering. [Source: specs/005-mcp-server-testing]
 - Simulation gRPC stream dies but process alive: auto-reconnects with exponential backoff (1s → 10s max), preserving world state. [Source: specs/005-mcp-server-testing]
@@ -1043,3 +1064,8 @@ Extract CreateGrpcChannel private method from IntegrationTestHelpers.cs, elimina
 - **SC-130**: Halfpipe demo shows at least 3 visible oscillation cycles of objects rolling back and forth before settling. [Source: specs/004-mesh-terrain-demos]
 - **SC-131**: Both mesh terrain demos complete within 30 seconds of total runtime. [Source: specs/004-mesh-terrain-demos]
 - **SC-132**: Demo narration and camera work provide a clear, watchable experience. [Source: specs/004-mesh-terrain-demos]
+- **SC-133**: After a simulation reset, 100% of subsequent overlap and raycast queries return zero stale bodies from prior sessions. [Source: specs/005-fix-session-state-sync]
+- **SC-134**: After a simulation reset, auto-generated body IDs succeed on first attempt with no silent collisions. [Source: specs/005-fix-session-state-sync]
+- **SC-135**: overlapSphere and raycast agree on body existence for 100% of bodies in the scene. [Source: specs/005-fix-session-state-sync]
+- **SC-136**: Batch operation failures are reported for 100% of failed commands, with each failure including the body ID and reason. [Source: specs/005-fix-session-state-sync]
+- **SC-137**: The complete reset-and-recreate workflow completes reliably without requiring manual workarounds. [Source: specs/005-fix-session-state-sync]
