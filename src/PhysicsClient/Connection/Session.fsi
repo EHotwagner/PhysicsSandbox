@@ -27,6 +27,9 @@ val internal latestState : session: Session -> PhysicsSandbox.Shared.Contracts.S
 /// Internal: get the timestamp of the last state update.
 val internal lastStateUpdate : session: Session -> System.DateTime
 
+/// Internal: clear all client-side caches (body registry, properties, constraints, shapes, state).
+val internal clearCaches : session: Session -> unit
+
 /// Internal: send a simulation command and return the ack result.
 val internal sendCommand : session: Session -> PhysicsSandbox.Shared.Contracts.SimulationCommand -> Result<unit, string>
 

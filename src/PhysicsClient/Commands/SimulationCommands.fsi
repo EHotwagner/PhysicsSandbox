@@ -24,6 +24,7 @@ val play : session: Session -> Result<unit, string>
 val pause : session: Session -> Result<unit, string>
 val step : session: Session -> Result<unit, string>
 val reset : session: Session -> Result<unit, string>
+val confirmedReset : session: Session -> Result<ConfirmedResetResponse, string>
 val setBodyPose : session: Session -> bodyId: string -> position: (float * float * float) -> orientation: (float * float * float * float) option -> velocity: (float * float * float) option -> angularVelocity: (float * float * float) option -> Result<unit, string>
 val raycast : session: Session -> origin: (float * float * float) -> direction: (float * float * float) -> maxDistance: float -> allHits: bool -> collisionMask: uint32 option -> Result<RaycastResponse, string>
 val sweepCast : session: Session -> shape: Shape -> startPosition: (float * float * float) -> direction: (float * float * float) -> maxDistance: float -> orientation: (float * float * float * float) option -> collisionMask: uint32 option -> Result<SweepCastResponse, string>

@@ -49,6 +49,9 @@ service PhysicsHub {
   rpc SweepCastBatch (SweepCastBatchRequest) returns (SweepCastBatchResponse);
   rpc Overlap (OverlapRequest) returns (OverlapResponse);
   rpc OverlapBatch (OverlapBatchRequest) returns (OverlapBatchResponse);
+
+  // Confirmed reset: blocks until the simulation has fully processed the reset
+  rpc ConfirmedReset (ConfirmedResetRequest) returns (ConfirmedResetResponse);
 }
 
 // ─── Simulation-facing service ──────────────────────────────────────────────
@@ -769,4 +772,15 @@ message PipelineTimings {
 message MetricsResponse {
   repeated ServiceMetricsReport services = 1;
   PipelineTimings pipeline = 2;
+}
+
+// ─── Confirmed reset messages ───────────────────────────────────────────────
+
+message ConfirmedResetRequest {}
+
+message ConfirmedResetResponse {
+  bool success = 1;
+  string message = 2;
+  int32 bodies_removed = 3;
+  int32 constraints_removed = 4;
 }

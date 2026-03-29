@@ -269,6 +269,14 @@ let internal lastStateUpdate (session: Session) : DateTime =
 let internal meshResolver (session: Session) : MeshResolver.MeshResolverState =
     session.MeshResolver
 
+/// <summary>Clears all client-side caches to ensure a clean state after a confirmed reset.</summary>
+let internal clearCaches (session: Session) : unit =
+    session.BodyRegistry.Clear()
+    session.BodyPropertiesCache.Clear()
+    session.CachedConstraints <- []
+    session.CachedRegisteredShapes <- []
+    session.LatestState <- None
+
 /// <summary>Sends a simulation command to the server and returns the acknowledgement result. Marks the session as disconnected on gRPC transport errors.</summary>
 let internal sendCommand (session: Session) (cmd: SimulationCommand) : Result<unit, string> =
     if not session.IsConnected then

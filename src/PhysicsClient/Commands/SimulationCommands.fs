@@ -271,6 +271,22 @@ let reset (session: Session) : Result<unit, string> =
         Ok ()
     | Error e -> Error e
 
+/// <summary>Resets the simulation and blocks until the server confirms the reset is fully processed.
+/// Clears all client-side caches (body registry, properties, constraints, shapes, state) on success.</summary>
+let confirmedReset (session: Session) : Result<ConfirmedResetResponse, string> =
+    if not (isConnected session) then
+        Error "Not connected to server"
+    else
+        try
+            let response = (client session).ConfirmedReset(ConfirmedResetRequest())
+            clearCaches session
+            Ok response
+        with
+        | :? Grpc.Core.RpcException as ex ->
+            Error $"Confirmed reset failed ({ex.StatusCode}): {ex.Status.Detail}"
+        | ex ->
+            Error $"Confirmed reset failed: {ex.Message}"
+
 /// <summary>Sends multiple simulation commands in a single batch request for better performance.</summary>
 /// <param name="session">The active server session.</param>
 /// <param name="commands">List of simulation commands to execute atomically.</param>

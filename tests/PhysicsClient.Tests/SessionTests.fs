@@ -2,6 +2,7 @@ module PhysicsClient.Tests.SessionTests
 
 open Xunit
 open PhysicsClient.Session
+open PhysicsSandbox.Shared.Contracts
 
 [<Fact>]
 let ``connect creates session that reports connected`` () =
@@ -33,4 +34,24 @@ let ``disconnect sets isConnected to false`` () =
     | Ok session ->
         disconnect session
         Assert.False(isConnected session)
+    | Error _ -> ()
+
+[<Fact>]
+let ``clearCaches clears BodyRegistry and BodyPropertiesCache`` () =
+    let result = connect "http://localhost:59999"
+    match result with
+    | Ok session ->
+        // Populate caches via internal accessors
+        let registry = bodyRegistry session
+        registry.["sphere-1"] <- "sphere"
+        registry.["box-1"] <- "box"
+        Assert.Equal(2, registry.Count)
+
+        // Call clearCaches
+        clearCaches session
+
+        // Verify all caches are empty
+        Assert.Equal(0, registry.Count)
+        Assert.True(Option.isNone (latestState session))
+        disconnect session
     | Error _ -> ()

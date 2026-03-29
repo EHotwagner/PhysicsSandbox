@@ -29,14 +29,13 @@ open PhysicsSandbox.Scripting.Helpers
 let resetSimulation (s: Session) =
     pause s |> ignore
     try
-        reset s |> ok
+        confirmedReset s |> ok |> ignore
     with ex ->
         printfn "  [RESET ERROR] %s — falling back to manual clear" ex.Message
         clearAll s |> ignore
     PhysicsClient.IdGenerator.reset ()
     addPlane s None None |> ignore
     setGravity s (0.0, -9.81, 0.0) |> ignore
-    sleep 100
 
 /// <summary>Runs the simulation for the specified duration, then pauses automatically.</summary>
 /// <param name="s">Active session connected to the physics server.</param>

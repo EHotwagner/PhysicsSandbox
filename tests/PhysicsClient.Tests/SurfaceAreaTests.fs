@@ -23,7 +23,7 @@ let ``SimulationCommands public API matches baseline`` () =
           "registerShape"; "unregisterShape"; "setCollisionFilter"
           "removeBody"; "clearAll"
           "applyForce"; "applyImpulse"; "applyTorque"; "clearForces"
-          "setGravity"; "play"; "pause"; "step"
+          "setGravity"; "play"; "pause"; "step"; "reset"; "confirmedReset"
           "raycast"; "sweepCast"; "overlap"
           "batchCommands"; "batchViewCommands" ]
 

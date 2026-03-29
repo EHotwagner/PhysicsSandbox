@@ -159,10 +159,10 @@ val sweepSphere : session: Session -> radius: float -> startPosition: (float * f
 /// <summary>Tests for overlapping bodies using a sphere. Returns overlapping body IDs.</summary>
 val overlapSphere : session: Session -> radius: float -> position: (float * float * float) -> string list
 
-/// <summary>Sends commands in auto-chunked batches of 100. Logs per-command failures.</summary>
+/// <summary>Sends commands in auto-chunked batches of 100. Returns per-command success/failure results.</summary>
 /// <param name="s">Active session.</param>
 /// <param name="commands">Commands to send. Any length; auto-split at 100.</param>
-val batchAdd : Session -> SimulationCommand list -> unit
+val batchAdd : Session -> SimulationCommand list -> BatchOperations.BatchResult
 
 /// <summary>Resets simulation: pause, clear bodies, reset IDs, add ground plane, set gravity -9.81, wait 100ms.</summary>
 /// <param name="s">Active session.</param>

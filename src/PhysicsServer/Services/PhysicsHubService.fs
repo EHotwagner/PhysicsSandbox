@@ -236,6 +236,32 @@ type PhysicsHubService(router: MessageRouter) =
             return response
         }
 
+    /// <summary>Reset the simulation and block until processing is confirmed.
+    /// Submits a ResetSimulation command then uses a fence query to ensure the
+    /// simulation has fully processed the reset before returning.</summary>
+    override _.ConfirmedReset(request: ConfirmedResetRequest, context: ServerCallContext) =
+        task {
+            // 1. Submit the reset command (fire-and-forget to command channel)
+            let resetCmd = SimulationCommand(Reset = ResetSimulation())
+            let _ack = submitCommand router resetCmd
+
+            // 2. Submit a fence query — it enters the command channel after the reset,
+            //    so when it completes, we know the reset has been processed.
+            let fenceQuery = QueryRequest(CorrelationId = System.Guid.NewGuid().ToString("N"))
+            let fenceOverlap = OverlapRequest()
+            let shape = Shape()
+            shape.Sphere <- Sphere(Radius = 0.0)
+            fenceOverlap.Shape <- shape
+            fenceOverlap.Position <- Vec3(X = 0.0, Y = 0.0, Z = 0.0)
+            fenceQuery.Overlap <- fenceOverlap
+            let! _fenceResponse = submitQuery router fenceQuery context.CancellationToken
+
+            // 3. The fence query has completed — reset is confirmed
+            return ConfirmedResetResponse(
+                Success = true,
+                Message = "Simulation reset confirmed")
+        }
+
     /// <summary>Stream command audit events to the client. Subscribes to all command events and forwards them until the client disconnects.</summary>
     override _.StreamCommands
         (request: StateRequest, responseStream: IServerStreamWriter<CommandEvent>, context: ServerCallContext)

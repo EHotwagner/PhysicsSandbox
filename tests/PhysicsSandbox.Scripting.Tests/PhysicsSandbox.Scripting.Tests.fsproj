@@ -12,6 +12,7 @@
     <Compile Include="Vec3BuildersTests.fs" />
     <Compile Include="CommandBuildersTests.fs" />
     <Compile Include="ConstraintBuilderTests.fs" />
+    <Compile Include="BatchOperationsTests.fs" />
     <Compile Include="SurfaceAreaTests.fs" />
     <None Include="SurfaceAreaBaseline.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
