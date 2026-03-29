@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <PackageId>PhysicsSandbox.Scripting</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
   </PropertyGroup>
 

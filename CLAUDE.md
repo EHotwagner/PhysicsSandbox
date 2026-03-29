@@ -192,7 +192,7 @@ The proto `MeshShape` message (Shape oneof field `mesh`) uses `MeshTriangle` for
 The viewer displays a demo name/description overlay at (10, 10) via `DebugTextSystem.Print()`. Status bar (FPS/time/status) is at (10, 30). Demo metadata is transported via `SetDemoMetadata` ViewCommand (field 4) — auto-forwarded by server, no server code changes needed.
 
 ### PhysicsClient NuGet Version
-Demo scripts pin `PhysicsClient 0.7.0` (0.7.0 exposed `latestState`, `bodyRegistry`, `lastStateUpdate` as public API). The Prelude.fsx uses `#r "nuget: PhysicsClient, 0.7.0"`. Contracts at 0.5.0.
+Demo scripts pin `PhysicsClient 0.8.0` (0.8.0 exposed `bodyPropertiesCache`, `cachedConstraints`, `cachedRegisteredShapes`, `serverAddress` as public API). The Prelude.fsx uses `#r "nuget: PhysicsClient, 0.8.0"`. Contracts at 0.5.0.
 
 ### Static Mesh Body MotionType
 Static mesh bodies (mass=0) require explicit `MotionType.Static` (enum value 2) via `withMotionType BodyMotionType.Static` (F#) or `with_motion_type(cmd, 2)` (Python). The default MotionType is Dynamic (0), and mass=0 + Dynamic is rejected by the server. Without the explicit MotionType, the mesh body silently fails to be created.
