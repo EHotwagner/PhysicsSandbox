@@ -27,6 +27,18 @@ val latestState : session: Session -> PhysicsSandbox.Shared.Contracts.Simulation
 /// Get the timestamp of the last state update received from the server.
 val lastStateUpdate : session: Session -> System.DateTime
 
+/// Get the cached body properties for all known bodies.
+val bodyPropertiesCache : session: Session -> System.Collections.Concurrent.ConcurrentDictionary<string, PhysicsSandbox.Shared.Contracts.BodyProperties>
+
+/// Get the cached list of active constraints.
+val cachedConstraints : session: Session -> PhysicsSandbox.Shared.Contracts.ConstraintState list
+
+/// Get the cached list of registered custom shapes.
+val cachedRegisteredShapes : session: Session -> PhysicsSandbox.Shared.Contracts.RegisteredShapeState list
+
+/// Get the server address this session is connected to.
+val serverAddress : session: Session -> string
+
 /// Internal: clear all client-side caches (body registry, properties, constraints, shapes, state).
 val internal clearCaches : session: Session -> unit
 
